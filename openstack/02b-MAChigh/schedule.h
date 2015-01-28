@@ -62,7 +62,7 @@ See MINBE for an explanation of backoff.
 typedef uint8_t    channelOffset_t;
 typedef uint16_t   slotOffset_t;
 typedef uint16_t   frameLength_t;
-//typedef uint16_t   trackId_t;
+typedef uint16_t   trackId_t;
 
 typedef enum {
    CELLTYPE_OFF              = 0,
@@ -84,7 +84,7 @@ typedef struct {
    uint8_t         numTx;
    uint8_t         numTxACK;
    asn_t           lastUsedAsn;
- //  trackId_t       trackId;
+   trackId_t       trackId;
    void*           next;
 } scheduleEntry_t;
 
@@ -100,7 +100,7 @@ typedef struct {
    uint8_t         numTx;
    uint8_t         numTxACK;
    asn_t           lastUsedAsn;
-//   trackId_t     trackId;
+   trackId_t     trackId;
 } debugScheduleEntry_t;
 END_PACK
 
@@ -137,8 +137,8 @@ owerror_t          schedule_addActiveSlot(
    cellType_t           type,
    bool                 shared,
    uint8_t              channelOffset,
-   open_addr_t*         neighbor
- //  trackId_t			trackId
+   open_addr_t*         neighbor,
+   trackId_t			trackId
 );
 
 void               schedule_getSlotInfo(

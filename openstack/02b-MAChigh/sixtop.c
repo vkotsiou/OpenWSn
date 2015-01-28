@@ -98,8 +98,8 @@ void          sixtop_addCellsByState(
    uint8_t              numOfLinks,
    cellInfo_ht*         cellList,
    open_addr_t*         previousHop,
-   uint8_t              state
- //  trackId_t            trackId
+   uint8_t              state,
+   trackId_t            trackId
 );
 void          sixtop_removeCellsByState(
    uint8_t              slotframeID,
@@ -994,8 +994,10 @@ void sixtop_notifyReceiveLinkRequest(
       sixtop_addCellsByState(
          frameID,
          bw,
-         schedule_ie->cellList,addr,sixtop_vars.six2six_state);
-         //TRACK_BESTEFFORT);	//TODO: add an IE in the 6top-request
+         schedule_ie->cellList,
+         addr,
+         sixtop_vars.six2six_state,
+         TRACK_BESTEFFORT);	//TODO: add an IE in the 6top-request
       scheduleCellSuccess = TRUE;
    }
   
@@ -1099,8 +1101,8 @@ void sixtop_notifyReceiveLinkResponse(
                                 bw,
                                 schedule_ie->cellList,
                                 addr,
-                                sixtop_vars.six2six_state);
-                                //TRACK_BESTEFFORT); //TDOO: an an IE in the 6top-request
+                                sixtop_vars.six2six_state,
+                                TRACK_BESTEFFORT); //TDOO: an an IE in the 6top-request
       // link request success,inform uplayer
       }
    }
@@ -1207,8 +1209,8 @@ void sixtop_addCellsByState(
       uint8_t      numOfLinks,
       cellInfo_ht* cellList,
       open_addr_t* previousHop,
-      uint8_t      state
- //     trackId_t	   trackId
+      uint8_t      state,
+      trackId_t	   trackId
    ){
    uint8_t     i;
    uint8_t     j;
@@ -1230,8 +1232,8 @@ void sixtop_addCellsByState(
                   CELLTYPE_RX,
                   FALSE,
                   cellList[i].choffset,
-                  &temp_neighbor
-                 // trackId
+                  &temp_neighbor,
+                  trackId
 
                );
                
@@ -1244,8 +1246,8 @@ void sixtop_addCellsByState(
                   CELLTYPE_TX,
                   FALSE,
                   cellList[i].choffset,
-                  &temp_neighbor
-                //  trackId
+                  &temp_neighbor,
+                  trackId
                );
                break;
             default:

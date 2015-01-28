@@ -48,8 +48,8 @@ void schedule_init() {
          CELLTYPE_ADV,            // type of slot
          FALSE,                   // shared?
          0,                       // channel offset
-         &temp_neighbor          // neighbor
-      //   TRACK_BESTEFFORT		  //for best effort traffic
+         &temp_neighbor,          // neighbor
+         TRACK_BESTEFFORT		  //for best effort traffic
       );
       running_slotOffset++;
    } 
@@ -63,8 +63,8 @@ void schedule_init() {
          CELLTYPE_TXRX,           // type of slot
          TRUE,                    // shared?
          0,                       // channel offset
-         &temp_neighbor          // neighbor
-    //     TRACK_BESTEFFORT		  //for best effort traffic
+         &temp_neighbor,          // neighbor
+         TRACK_BESTEFFORT		  //for best effort traffic
      );
       running_slotOffset++;
    }
@@ -76,8 +76,8 @@ void schedule_init() {
       CELLTYPE_SERIALRX,          // type of slot
       FALSE,                      // shared?
       0,                          // channel offset
-      &temp_neighbor             // neighbor
-    //  TRACK_BESTEFFORT  		  //for best effort traffic
+      &temp_neighbor,             // neighbor
+      TRACK_BESTEFFORT  		  //for best effort traffic
    );
    running_slotOffset++;
 }
@@ -116,7 +116,7 @@ bool debugPrint_schedule() {
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTx;
    temp.numTxACK                       = \
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTxACK;
- //  temp.trackId                       = \
+   temp.trackId                       = \
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].trackId;
    memcpy(
       &temp.lastUsedAsn,
@@ -124,6 +124,10 @@ bool debugPrint_schedule() {
       sizeof(asn_t)
    );
    
+  // openserial_printInfo(COMPONENT_SCHEDULE,ERR_SYNCHRONIZED,
+    //                      (errorparameter_t)1,
+      //                    (errorparameter_t)0);
+
    // send status data over serial port
    openserial_printStatus(
       STATUS_SCHEDULE,
@@ -225,8 +229,8 @@ owerror_t schedule_addActiveSlot(
       cellType_t      type,
       bool            shared,
       channelOffset_t channelOffset,
-      open_addr_t*    neighbor
- //     trackId_t       trackId
+      open_addr_t*    neighbor,
+      trackId_t       trackId
    ) {
    scheduleEntry_t* slotContainer;
    scheduleEntry_t* previousSlotWalker;
@@ -260,7 +264,7 @@ owerror_t schedule_addActiveSlot(
    slotContainer->type                      = type;
    slotContainer->shared                    = shared;
    slotContainer->channelOffset             = channelOffset;
-//   slotContainer->trackId                   = trackId;
+   slotContainer->trackId                   = trackId;
    memcpy(&slotContainer->neighbor,neighbor,sizeof(open_addr_t));
    
    // insert in circular list
@@ -505,7 +509,7 @@ void schedule_getNeighbor(open_addr_t* addrToWrite) {
 
 \returns The channel offset of the current schedule entry.
 */
-/*
+
 channelOffset_t schedule_getTrackId() {
    channelOffset_t returnVal;
 
@@ -518,7 +522,7 @@ channelOffset_t schedule_getTrackId() {
 
    return returnVal;
 }
-*/
+
 /**
 \brief Get the channel offset of the current schedule entry.
 
