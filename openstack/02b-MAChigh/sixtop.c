@@ -99,6 +99,7 @@ void          sixtop_addCellsByState(
    cellInfo_ht*         cellList,
    open_addr_t*         previousHop,
    uint8_t              state
+ //  trackId_t            trackId
 );
 void          sixtop_removeCellsByState(
    uint8_t              slotframeID,
@@ -994,6 +995,7 @@ void sixtop_notifyReceiveLinkRequest(
          frameID,
          bw,
          schedule_ie->cellList,addr,sixtop_vars.six2six_state);
+         //TRACK_BESTEFFORT);	//TODO: add an IE in the 6top-request
       scheduleCellSuccess = TRUE;
    }
   
@@ -1098,6 +1100,7 @@ void sixtop_notifyReceiveLinkResponse(
                                 schedule_ie->cellList,
                                 addr,
                                 sixtop_vars.six2six_state);
+                                //TRACK_BESTEFFORT); //TDOO: an an IE in the 6top-request
       // link request success,inform uplayer
       }
    }
@@ -1205,6 +1208,7 @@ void sixtop_addCellsByState(
       cellInfo_ht* cellList,
       open_addr_t* previousHop,
       uint8_t      state
+ //     trackId_t	   trackId
    ){
    uint8_t     i;
    uint8_t     j;
@@ -1227,6 +1231,8 @@ void sixtop_addCellsByState(
                   FALSE,
                   cellList[i].choffset,
                   &temp_neighbor
+                 // trackId
+
                );
                
                break;
@@ -1239,6 +1245,7 @@ void sixtop_addCellsByState(
                   FALSE,
                   cellList[i].choffset,
                   &temp_neighbor
+                //  trackId
                );
                break;
             default:

@@ -232,6 +232,11 @@ enum {
    ERR_WRONG_CRC_INPUT                 = 0x39, // wrong CRC in input Buffer (input length {0})
 };
 
+
+enum{
+	TRACK_BESTEFFORT                   = 0, // for best effort traffic
+};
+
 //=========================== typedef =========================================
 
 
@@ -292,6 +297,7 @@ typedef struct {
    uint8_t       l2_joinPriority;                // the join priority received in EB
    bool          l2_IEListPresent;               //did have IE field?
    bool          l2_joinPriorityPresent;
+   uint32_t		 l2_trackid;					//the trackid associated with this packet
    //l1 (drivers)
    uint8_t       l1_txPower;                     // power for packet to Tx at
    int8_t        l1_rssi;                        // RSSI of received packet

@@ -48,7 +48,8 @@ void schedule_init() {
          CELLTYPE_ADV,            // type of slot
          FALSE,                   // shared?
          0,                       // channel offset
-         &temp_neighbor           // neighbor
+         &temp_neighbor          // neighbor
+      //   TRACK_BESTEFFORT		  //for best effort traffic
       );
       running_slotOffset++;
    } 
@@ -62,8 +63,9 @@ void schedule_init() {
          CELLTYPE_TXRX,           // type of slot
          TRUE,                    // shared?
          0,                       // channel offset
-         &temp_neighbor           // neighbor
-      );
+         &temp_neighbor          // neighbor
+    //     TRACK_BESTEFFORT		  //for best effort traffic
+     );
       running_slotOffset++;
    }
    
@@ -74,13 +76,13 @@ void schedule_init() {
       CELLTYPE_SERIALRX,          // type of slot
       FALSE,                      // shared?
       0,                          // channel offset
-      &temp_neighbor              // neighbor
+      &temp_neighbor             // neighbor
+    //  TRACK_BESTEFFORT  		  //for best effort traffic
    );
    running_slotOffset++;
 }
 
-/**
-\brief Trigger this module to print status information, over serial.
+/** brief Trigger this module to print status information, over serial.
 
 debugPrint_* functions are used by the openserial module to continuously print
 status information about several modules in the OpenWSN stack.
@@ -114,6 +116,8 @@ bool debugPrint_schedule() {
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTx;
    temp.numTxACK                       = \
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTxACK;
+ //  temp.trackId                       = \
+      schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].trackId;
    memcpy(
       &temp.lastUsedAsn,
       &schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].lastUsedAsn,
@@ -222,6 +226,7 @@ owerror_t schedule_addActiveSlot(
       bool            shared,
       channelOffset_t channelOffset,
       open_addr_t*    neighbor
+ //     trackId_t       trackId
    ) {
    scheduleEntry_t* slotContainer;
    scheduleEntry_t* previousSlotWalker;
@@ -255,6 +260,7 @@ owerror_t schedule_addActiveSlot(
    slotContainer->type                      = type;
    slotContainer->shared                    = shared;
    slotContainer->channelOffset             = channelOffset;
+//   slotContainer->trackId                   = trackId;
    memcpy(&slotContainer->neighbor,neighbor,sizeof(open_addr_t));
    
    // insert in circular list
@@ -495,6 +501,25 @@ void schedule_getNeighbor(open_addr_t* addrToWrite) {
 }
 
 /**
+\brief Get the trackid of the current schedule entry.
+
+\returns The channel offset of the current schedule entry.
+*/
+/*
+channelOffset_t schedule_getTrackId() {
+   channelOffset_t returnVal;
+
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+
+   returnVal = schedule_vars.currentScheduleEntry->trackId;
+
+   ENABLE_INTERRUPTS();
+
+   return returnVal;
+}
+*/
+/**
 \brief Get the channel offset of the current schedule entry.
 
 \returns The channel offset of the current schedule entry.
@@ -511,6 +536,7 @@ channelOffset_t schedule_getChannelOffset() {
    
    return returnVal;
 }
+
 
 /**
 \brief Check whether I can send on this slot.
