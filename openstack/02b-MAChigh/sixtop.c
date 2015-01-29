@@ -578,6 +578,10 @@ owerror_t sixtop_send_internal(
    packetfunctions_reserveFooterSize(msg,2);
    // change owner to IEEE802154E fetches it from queue
    msg->owner  = COMPONENT_SIXTOP_TO_IEEE802154E;
+
+   //otf notification
+   otf_notification_mac_transfer(msg);
+
    return E_SUCCESS;
 }
 

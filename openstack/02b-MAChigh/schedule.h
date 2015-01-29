@@ -22,6 +22,7 @@ The superframe repears over time and can be arbitrarly long.
 #define NUMADVSLOTS          1
 #define NUMSHAREDTXRX        5 
 #define NUMSERIALRX          3
+#define NUMDYNAMIC           8
 
 /**
 \brief Maximum number of active slots in a superframe.
@@ -33,7 +34,7 @@ in that table; a slot is "active" when it is not of type CELLTYPE_OFF.
 Set this number to the exact number of active slots you are planning on having
 in your schedule, so not to waste RAM.
 */
-#define MAXACTIVESLOTS       (NUMADVSLOTS+NUMSHAREDTXRX+NUMSERIALRX)
+#define MAXACTIVESLOTS       (NUMADVSLOTS+NUMSHAREDTXRX+NUMSERIALRX+NUMDYNAMIC)
 
 /**
 \brief Minimum backoff exponent.
@@ -157,6 +158,7 @@ void               schedule_syncSlotOffset(slotOffset_t targetSlotOffset);
 void               schedule_advanceSlot(void);
 slotOffset_t       schedule_getNextActiveSlotOffset(void);
 frameLength_t      schedule_getFrameLength(void);
+uint8_t            schedule_getNbCellsWithTrackId(trackId_t id);
 cellType_t         schedule_getType(void);
 void               schedule_getNeighbor(open_addr_t* addrToWrite);
 trackId_t          schedule_getTrackId(void);

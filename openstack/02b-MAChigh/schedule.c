@@ -123,8 +123,6 @@ bool debugPrint_schedule() {
       &schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].lastUsedAsn,
       sizeof(asn_t)
    );
-   
-
 
    // send status data over serial port
    openserial_printStatus(
@@ -503,11 +501,32 @@ void schedule_getNeighbor(open_addr_t* addrToWrite) {
 }
 
 /**
+\brief Get the number of cells with a particular trackId in the schedule
+
+\returns The number of cells with this trackId
+*/
+uint8_t schedule_getNbCellsWithTrackId(trackId_t id){
+   uint8_t  returnVal = 0;
+   uint8_t  i;
+
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+
+   for (i=0;i<MAXACTIVESLOTS;i++) {
+      if (schedule_vars.scheduleBuf[i].trackId == id)
+         returnVal++;
+   }
+
+   ENABLE_INTERRUPTS();
+
+   return returnVal;
+}
+
+/**
 \brief Get the trackid of the current schedule entry.
 
 \returns The channel offset of the current schedule entry.
 */
-
 trackId_t schedule_getTrackId() {
    channelOffset_t returnVal;
 

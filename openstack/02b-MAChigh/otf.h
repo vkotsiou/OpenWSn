@@ -29,4 +29,12 @@ void      otf_notif_removedCell(void);
 \}
 */
 
+//a packet is pushed to the MAC layer -> OTF notification
+void otf_notification_mac_transfer(OpenQueueEntry_t* msg);
+
+
+typedef struct{
+
+}otf_vars_t;
+
 #endif
