@@ -18,8 +18,9 @@
 //=========================== defines =========================================
 
 /// inter-packet period (in ms)
-#define CEXAMPLEPERIOD  10000
-#define PAYLOADLEN      62
+#define CEXAMPLEPERIOD  	10000
+#define CEXAMPLE_TRACKID	12
+#define PAYLOADLEN     		62
 
 const uint8_t cexample_path0[] = "ex";
 
@@ -49,7 +50,8 @@ void cexample_init() {
    cexample_vars.desc.componentID          = COMPONENT_CEXAMPLE;
    cexample_vars.desc.callbackRx           = &cexample_receive;
    cexample_vars.desc.callbackSendDone     = &cexample_sendDone;
-   
+   cexample_vars.trackId				   = openrandom_get16b();
+
    
    opencoap_register(&cexample_vars.desc);
    cexample_vars.timerId    = opentimers_start(CEXAMPLEPERIOD,
@@ -119,8 +121,8 @@ void cexample_task_cb() {
    avg = openrandom_get16b();
    pkt->payload[0]                = (avg>>8)&0xff;
    pkt->payload[1]                = (avg>>0)&0xff;
-   
    numOptions = 0;
+   
    // location-path option
    packetfunctions_reserveHeaderSize(pkt,sizeof(cexample_path0)-1);
    memcpy(&pkt->payload[0],cexample_path0,sizeof(cexample_path0)-1);
@@ -133,7 +135,9 @@ void cexample_task_cb() {
    pkt->payload[1]                = COAP_MEDTYPE_APPOCTETSTREAM;
    numOptions++;
    
+
    // metadata
+   pkt->l2_trackId                = cexample_vars.trackId;
    pkt->l4_destination_port       = WKP_UDP_COAP;
    pkt->l3_destinationAdd.type    = ADDR_128B;
    memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_motesEecs,16);

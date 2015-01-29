@@ -8,6 +8,8 @@
 \{
 */
 #include "opencoap.h"
+
+
 //=========================== define ==========================================
 
 //=========================== typedef =========================================
@@ -15,6 +17,7 @@
 typedef struct {
    coap_resource_desc_t desc;
    opentimer_id_t       timerId;
+   trackId_t            trackId;
 } cexample_vars_t;
 
 //=========================== variables =======================================

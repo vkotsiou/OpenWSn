@@ -124,9 +124,7 @@ bool debugPrint_schedule() {
       sizeof(asn_t)
    );
    
-  // openserial_printInfo(COMPONENT_SCHEDULE,ERR_SYNCHRONIZED,
-    //                      (errorparameter_t)1,
-      //                    (errorparameter_t)0);
+
 
    // send status data over serial port
    openserial_printStatus(
@@ -510,7 +508,7 @@ void schedule_getNeighbor(open_addr_t* addrToWrite) {
 \returns The channel offset of the current schedule entry.
 */
 
-channelOffset_t schedule_getTrackId() {
+trackId_t schedule_getTrackId() {
    channelOffset_t returnVal;
 
    INTERRUPT_DECLARATION();

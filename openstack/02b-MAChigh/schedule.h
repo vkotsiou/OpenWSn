@@ -62,7 +62,6 @@ See MINBE for an explanation of backoff.
 typedef uint8_t    channelOffset_t;
 typedef uint16_t   slotOffset_t;
 typedef uint16_t   frameLength_t;
-typedef uint16_t   trackId_t;
 
 typedef enum {
    CELLTYPE_OFF              = 0,
@@ -160,6 +159,7 @@ slotOffset_t       schedule_getNextActiveSlotOffset(void);
 frameLength_t      schedule_getFrameLength(void);
 cellType_t         schedule_getType(void);
 void               schedule_getNeighbor(open_addr_t* addrToWrite);
+trackId_t          schedule_getTrackId(void);
 channelOffset_t    schedule_getChannelOffset(void);
 bool               schedule_getOkToSend(void);
 void               schedule_resetBackoff(void);

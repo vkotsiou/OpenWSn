@@ -243,6 +243,8 @@ enum{
 typedef uint16_t  errorparameter_t;
 typedef uint16_t  dagrank_t;
 typedef uint8_t   owerror_t;
+typedef uint16_t  trackId_t;
+
 
 BEGIN_PACK
 typedef struct {
@@ -297,7 +299,7 @@ typedef struct {
    uint8_t       l2_joinPriority;                // the join priority received in EB
    bool          l2_IEListPresent;               //did have IE field?
    bool          l2_joinPriorityPresent;
-   uint32_t		 l2_trackId;					 //the trackid associated with this packet
+   trackId_t     l2_trackId;					 //the trackid associated with this packet
    //l1 (drivers)
    uint8_t       l1_txPower;                     // power for packet to Tx at
    int8_t        l1_rssi;                        // RSSI of received packet
