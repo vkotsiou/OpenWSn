@@ -1133,6 +1133,14 @@ void sixtop_notifyReceiveLinkResponse(
    if(bw == 0){
       // link request failed
       // todo- should inform some one
+      //TODO: bug, it was refused !!!!
+       openserial_printError(
+                    COMPONENT_SIXTOP_RES,
+                    ERR_GENERIC,
+                    (errorparameter_t)5,
+                    (errorparameter_t)bw
+                 );
+
       return;
    } else {
       // need to check whether the links are available to be scheduled.
@@ -1143,7 +1151,27 @@ void sixtop_notifyReceiveLinkResponse(
                                                schedule_ie->cellList, 
                                                bw) == FALSE){
          // link request failed,inform uplayer
+
+         //TODO: bug, it was refused !!!!
+         openserial_printError(
+                      COMPONENT_SIXTOP_RES,
+                      ERR_GENERIC,
+                      (errorparameter_t)6,
+                      (errorparameter_t)bw
+                   );
+
+
       } else {
+         openserial_printError(
+               COMPONENT_SIXTOP_RES,
+               ERR_GENERIC,
+               (errorparameter_t)4,
+               (errorparameter_t)bw
+            );
+         //TODO: the request has been accepted
+         //-> MUST verify a slot is correctly allocated in the schedule (in both motes)
+         //-> MUST include the trackid in the request / response 6to6
+
          sixtop_addCellsByState(frameID,
                                 bw,
                                 schedule_ie->cellList,
