@@ -28,7 +28,7 @@ void otf_notif_removedCell(void) {
 }
 
 //a packet is pushed to the MAC layer -> OTF notification
-void otf_notification_mac_transfer(OpenQueueEntry_t* msg){
+void otf_NotifTransmit(OpenQueueEntry_t* msg){
       uint8_t nbCells_curr, nbCells_req;
 
       nbCells_curr   = schedule_getNbCellsWithTrackId(msg->l2_trackId);
@@ -45,6 +45,8 @@ void otf_notification_mac_transfer(OpenQueueEntry_t* msg){
          (errorparameter_t)msg->l2_trackId,
          (errorparameter_t)nbCells_curr
       );
+
+      sixtop_addCells(&(msg->l2_nextORpreviousHop), nbCells_req - nbCells_curr, msg->l2_trackId);
 }
 
 //=========================== private =========================================
@@ -62,7 +64,8 @@ void otf_addCell_task(void) {
    // call sixtop
    sixtop_addCells(
       &neighbor,
-      1
+      1,
+      TRACK_BESTEFFORT
    );
 }
 
@@ -78,6 +81,7 @@ void otf_removeCell_task(void) {
    
    // call sixtop
    sixtop_removeCell(
-      &neighbor
+      &neighbor,
+      TRACK_BESTEFFORT
    );
 }

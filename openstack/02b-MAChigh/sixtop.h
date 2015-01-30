@@ -63,8 +63,11 @@ typedef struct {
 void      sixtop_init(void);
 void      sixtop_setKaPeriod(uint16_t kaPeriod);
 // scheduling
-void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells);
-void      sixtop_removeCell(open_addr_t*  neighbor);
+//void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells);
+//void      sixtop_removeCell(open_addr_t*  neighbor);
+// scheduling with trackId
+void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId);
+void      sixtop_removeCell(open_addr_t*  neighbor, trackId_t trackId);
 // from upper layer
 owerror_t sixtop_send(OpenQueueEntry_t *msg);
 // from lower layer

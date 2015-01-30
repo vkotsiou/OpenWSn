@@ -136,7 +136,6 @@ enum {
    //IPHC
    COMPONENT_OPENBRIDGE                = 0x10,
    COMPONENT_IPHC                      = 0x11,
-   COMPONENT_OTF                       = 0x24,
    //IPv6
    COMPONENT_FORWARDING                = 0x12,
    COMPONENT_ICMPv6                    = 0x13,
@@ -158,6 +157,8 @@ enum {
    COMPONENT_TOHLONE                   = 0x21,
    COMPONENT_UECHO                     = 0x22,
    COMPONENT_RRT                       = 0x23,
+   // fabrice
+   COMPONENT_OTF                       = 0x24,
 };
 
 /**
@@ -231,7 +232,11 @@ enum {
    ERR_INVALIDPACKETFROMRADIO          = 0x37, // invalid packet frome radio, length {1} (code location {0})
    ERR_BUSY_RECEIVING                  = 0x38, // busy receiving when stop of serial activity, buffer input length {1} (code location {0})
    ERR_WRONG_CRC_INPUT                 = 0x39, // wrong CRC in input Buffer (input length {0})
+   //NEW FABRICE
    ERR_OTF_INSUFFICIENT                = 0x3a, // otf does not have enough cells (trackId {0}, nbCells {1})
+   ERR_UNKNOWN_NEIGHBOR                = 0x3b, // Unknown neighbor {0}{1} (4 last bytes)
+   ERR_WRONG_SIXTOP_STATE              = 0x3c, // sixtop current state {0} while {1} is expected
+   ERR_GENERIC                         = 0x3d, // generic error {0} {1}
 };
 
 

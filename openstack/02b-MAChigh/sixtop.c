@@ -150,7 +150,7 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 //======= scheduling
 
-void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells){
+void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId){
    OpenQueueEntry_t* pkt;
    uint8_t           len;
    uint8_t           type;
@@ -165,9 +165,21 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells){
    
    // filter parameters
    if(sixtop_vars.six2six_state!=SIX_IDLE){
+      openserial_printError(
+            COMPONENT_SIXTOP_RES,
+            ERR_WRONG_SIXTOP_STATE,
+            (errorparameter_t)sixtop_vars.six2six_state,
+            (errorparameter_t)SIX_IDLE
+      );
       return;
    }
    if (neighbor==NULL){
+      openserial_printError(
+            COMPONENT_SIXTOP_RES,
+            ERR_UNKNOWN_NEIGHBOR,
+            (errorparameter_t)(neighbor->addr_64b[4] | neighbor->addr_64b[5]),
+            (errorparameter_t)(neighbor->addr_64b[6] | neighbor->addr_64b[7])
+      );
       return;
    }
    
@@ -179,7 +191,13 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells){
       cellList
    );
    if (outcome == FALSE) {
-     return;
+      openserial_printError(
+            COMPONENT_SIXTOP_RES,
+            ERR_GENERIC,
+            (errorparameter_t)0,
+            (errorparameter_t)0
+            );
+    return;
    }
    
    // get a free packet buffer
@@ -220,6 +238,14 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells){
    // send packet
    sixtop_send(pkt);
    
+
+   openserial_printError(
+      COMPONENT_SIXTOP_RES,
+      ERR_GENERIC,
+      (errorparameter_t)1,
+      (errorparameter_t)1
+   );
+
    // update state
    sixtop_vars.six2six_state = SIX_WAIT_ADDREQUEST_SENDDONE;
    
@@ -232,7 +258,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells){
    opentimers_restart(sixtop_vars.timeoutTimerId);
 }
 
-void sixtop_removeCell(open_addr_t* neighbor){
+void sixtop_removeCell(open_addr_t* neighbor, trackId_t trackId){
    OpenQueueEntry_t* pkt;
    bool              outcome;
    uint8_t           len;
@@ -580,7 +606,7 @@ owerror_t sixtop_send_internal(
    msg->owner  = COMPONENT_SIXTOP_TO_IEEE802154E;
 
    //otf notification
-   otf_notification_mac_transfer(msg);
+   otf_NotifTransmit(msg);
 
    return E_SUCCESS;
 }
@@ -949,6 +975,14 @@ void sixtop_notifyReceiveCommand(
       case SIXTOP_SOFT_CELL_REQ:
          if(sixtop_vars.six2six_state == SIX_IDLE)
          {
+            openserial_printError(
+                 COMPONENT_SIXTOP_RES,
+                 ERR_GENERIC,
+                 (errorparameter_t)2,
+                 (errorparameter_t)2
+              );
+
+
             sixtop_vars.six2six_state = SIX_ADDREQUEST_RECEIVED;
             //received uResCommand is reserve link request
             sixtop_notifyReceiveLinkRequest(bandwidth_ie,schedule_ie,addr);
@@ -959,6 +993,15 @@ void sixtop_notifyReceiveCommand(
            sixtop_vars.six2six_state = SIX_ADDRESPONSE_RECEIVED;
            //received uResCommand is reserve link response
            sixtop_notifyReceiveLinkResponse(bandwidth_ie,schedule_ie,addr);
+
+
+           openserial_printError(
+                COMPONENT_SIXTOP_RES,
+                ERR_GENERIC,
+                (errorparameter_t)3,
+                (errorparameter_t)3
+             );
+
          }
          break;
       case SIXTOP_REMOVE_SOFT_CELL_REQUEST:
