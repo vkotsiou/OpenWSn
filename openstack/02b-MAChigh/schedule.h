@@ -138,7 +138,7 @@ owerror_t          schedule_addActiveSlot(
    bool                 shared,
    uint8_t              channelOffset,
    open_addr_t*         neighbor,
-   trackId_t			trackId
+   trackId_t			   trackId
 );
 
 void               schedule_getSlotInfo(
