@@ -512,8 +512,13 @@ uint8_t schedule_getNbCellsWithTrackId(trackId_t id){
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
 
+   //count the nb of usable cells (in tx) for this trackId
    for (i=0;i<MAXACTIVESLOTS;i++) {
-      if (schedule_vars.scheduleBuf[i].trackId == id)
+      if ((schedule_vars.scheduleBuf[i].trackId == id) &&
+            (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
+                  ||
+            schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX)
+            )
          returnVal++;
    }
 

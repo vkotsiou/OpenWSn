@@ -153,6 +153,22 @@ void openqueue_removeAllOwnedBy(uint8_t owner) {
    ENABLE_INTERRUPTS();
 }
 
+/**
+\brief Count the number of packets in the queue with a specific trackId.
+
+\param id of the trackId.
+\returns the number of packets with trackId
+*/
+uint8_t openqueue_count_trackId(trackId_t id) {
+   uint8_t i;
+   uint8_t resVal = 0;
+
+   for (i=0;i<QUEUELENGTH;i++){
+      if(openqueue_vars.queue[i].l2_trackId == id)
+         resVal++;
+   }
+}
+
 //======= called by RES
 
 OpenQueueEntry_t* openqueue_sixtopGetSentPacket() {

@@ -29,9 +29,14 @@ void otf_notif_removedCell(void) {
 
 //a packet is pushed to the MAC layer -> OTF notification
 void otf_notification_mac_transfer(OpenQueueEntry_t* msg){
-      uint8_t nbCells_curr;
+      uint8_t nbCells_curr, nbCells_req;
 
-      nbCells_curr = schedule_getNbCellsWithTrackId(msg->l2_trackId);
+      nbCells_curr   = schedule_getNbCellsWithTrackId(msg->l2_trackId);
+      nbCells_req    = openqueue_count_trackId(msg->l2_trackId);
+
+      //everything is ok
+      if (nbCells_curr >= nbCells_req)
+         return;
 
       //debug
       openserial_printError(
