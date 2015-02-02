@@ -215,7 +215,8 @@ port_INLINE uint8_t processIE_prependOpcodeIE(
 port_INLINE uint8_t processIE_prependBandwidthIE(
       OpenQueueEntry_t* pkt, 
       uint8_t           slotframeID,
-      uint8_t           numOfLinks
+      uint8_t           numOfLinks,
+      trackId_t         trackId
    ){
    
    uint8_t    len;
@@ -223,7 +224,6 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    len = 0;
    
 
-   trackId_t   trackId = 11;
    openserial_printError(
                       COMPONENT_SIXTOP_RES,
                       ERR_GENERIC,

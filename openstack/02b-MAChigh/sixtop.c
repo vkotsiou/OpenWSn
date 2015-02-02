@@ -235,7 +235,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId
    // create packet
    len  = 0;
    len += processIE_prependSheduleIE(pkt, type, frameID, flag, cellList);
-   len += processIE_prependBandwidthIE(pkt, frameID, numCells);
+   len += processIE_prependBandwidthIE(pkt, frameID, numCells, trackId);
 //   len += processIE_prependTrackIdIE(pkt, trackId);
    len += processIE_prependOpcodeIE(pkt,SIXTOP_SOFT_CELL_REQ);
    processIE_prependMLMEIE(pkt,len);
@@ -1110,7 +1110,7 @@ void sixtop_linkResponse(
    }
 
    //add BandwidthIE
-   len += processIE_prependBandwidthIE(sixtopPkt, frameID, bw);
+   len += processIE_prependBandwidthIE(sixtopPkt, frameID, bw, trackId);
    //add opcodeIE
    len += processIE_prependOpcodeIE(sixtopPkt,SIXTOP_SOFT_CELL_RESPONSE);
    //add IE header 

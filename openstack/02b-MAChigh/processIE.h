@@ -151,7 +151,8 @@ uint8_t          processIE_prependOpcodeIE(
 uint8_t          processIE_prependBandwidthIE(
    OpenQueueEntry_t*    pkt,
    uint8_t              slotframeID,
-   uint8_t              numOfLinks
+   uint8_t              numOfLinks,
+   trackId_t            trackId
 );
 uint8_t          processIE_prependSheduleIE(
    OpenQueueEntry_t*    pkt,
