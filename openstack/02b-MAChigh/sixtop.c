@@ -1291,7 +1291,6 @@ void sixtop_addCellsByState(
                   cellList[i].choffset,
                   &temp_neighbor,
                   trackId
-
                );
                
                break;

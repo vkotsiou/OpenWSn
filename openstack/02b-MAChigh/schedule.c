@@ -261,8 +261,9 @@ owerror_t schedule_addActiveSlot(
    slotContainer->shared                    = shared;
    slotContainer->channelOffset             = channelOffset;
    slotContainer->trackId                   = trackId;
-   memcpy(&slotContainer->neighbor,neighbor,sizeof(open_addr_t));
-   
+   memcpy(&slotContainer->neighbor, neighbor, sizeof(open_addr_t));
+
+
    // insert in circular list
    if (schedule_vars.currentScheduleEntry==NULL) {
       // this is the first active slot added

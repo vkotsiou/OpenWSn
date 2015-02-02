@@ -83,8 +83,8 @@ typedef struct {
    uint8_t         numRx;
    uint8_t         numTx;
    uint8_t         numTxACK;
-   asn_t           lastUsedAsn;
    trackId_t       trackId;
+   asn_t           lastUsedAsn;
    void*           next;
 } scheduleEntry_t;
 
@@ -99,8 +99,8 @@ typedef struct {
    uint8_t         numRx;
    uint8_t         numTx;
    uint8_t         numTxACK;
+   trackId_t       trackId;
    asn_t           lastUsedAsn;
-   trackId_t     trackId;
 } debugScheduleEntry_t;
 END_PACK
 
