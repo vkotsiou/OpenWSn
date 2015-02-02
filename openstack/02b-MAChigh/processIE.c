@@ -224,21 +224,6 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    len = 0;
    
 
-   openserial_printError(
-                      COMPONENT_SIXTOP_RES,
-                      ERR_GENERIC,
-                      (errorparameter_t)41,
-                      (errorparameter_t)trackId
-                   );
-   openserial_printError(
-                      COMPONENT_SIXTOP_RES,
-                      ERR_GENERIC,
-                      (errorparameter_t)42,
-                      (errorparameter_t)slotframeID
-                   );
-
-
-
    //===== trackId
 
    // reserve space
@@ -507,22 +492,6 @@ port_INLINE void processIE_retrieveBandwidthIE(
    // [2B] trackId
    bandwidthInfo->trackId = *((trackId_t*)(pkt->payload)+localptr);
    localptr+= sizeof(trackId_t);
-
-   openserial_printError(
-                        COMPONENT_SIXTOP_RES,
-                        ERR_GENERIC,
-                        (errorparameter_t)43,
-                        (errorparameter_t)bandwidthInfo->trackId
-                     );
-
-   openserial_printError(
-                        COMPONENT_SIXTOP_RES,
-                        ERR_GENERIC,
-                        (errorparameter_t)44,
-                        (errorparameter_t)bandwidthInfo->slotframeID
-                     );
-
-
 
 
    *ptr=localptr; 

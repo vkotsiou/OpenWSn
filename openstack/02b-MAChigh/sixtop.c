@@ -1021,14 +1021,6 @@ void sixtop_notifyReceiveLinkRequest(
                                             schedule_ie->cellList, 
                                             bw) == FALSE){
       scheduleCellSuccess = FALSE;
-      openserial_printError(
-                     COMPONENT_SIXTOP_RES,
-                     ERR_GENERIC,
-                     (errorparameter_t)8,
-                     (errorparameter_t)bw
-                  );
-
-
    } else {
       sixtop_addCellsByState(
          frameID,
@@ -1040,14 +1032,7 @@ void sixtop_notifyReceiveLinkRequest(
          );
       scheduleCellSuccess = TRUE;
 
-      openserial_printError(
-                     COMPONENT_SIXTOP_RES,
-                     ERR_GENERIC,
-                     (errorparameter_t)10,
-                     (errorparameter_t)trackId
-                  );
-
-   }
+    }
   
    //call link response command
    sixtop_linkResponse(scheduleCellSuccess,
@@ -1140,7 +1125,6 @@ void sixtop_notifyReceiveLinkResponse(
    if(bw == 0){
       // link request failed
       // todo- should inform some one
-      //TODO: bug, it was refused !!!!
        openserial_printError(
                     COMPONENT_SIXTOP_RES,
                     ERR_GENERIC,
@@ -1157,9 +1141,7 @@ void sixtop_notifyReceiveLinkResponse(
                                                numOfcells, 
                                                schedule_ie->cellList, 
                                                bw) == FALSE){
-         // link request failed,inform uplayer
-
-         //TODO: bug, it was refused !!!!
+         // TODO- link request failed,inform uplayer
          openserial_printError(
                       COMPONENT_SIXTOP_RES,
                       ERR_GENERIC,
@@ -1383,24 +1365,8 @@ bool sixtop_areAvailableCellsToBeScheduled(
       do {
          if(schedule_isSlotOffsetAvailable(cellList[i].tsNum) == TRUE){
             bw--;
-
-  /*          openserial_printError(
-                      COMPONENT_SIXTOP_RES,
-                      ERR_GENERIC,
-                      (errorparameter_t)12,
-                      (errorparameter_t)i
-                      );
-*/
          } else {
             cellList[i].linkoptions = CELLTYPE_OFF;
-/*
-            openserial_printError(
-                   COMPONENT_SIXTOP_RES,
-                   ERR_GENERIC,
-                   (errorparameter_t)11,
-                   (errorparameter_t)i
-                   );
-*/
          }
          i++;
       }while(i<numOfCells && bw>0);
