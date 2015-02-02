@@ -62,6 +62,7 @@ typedef struct {
 // admin
 void      sixtop_init(void);
 void      sixtop_setKaPeriod(uint16_t kaPeriod);
+six2six_state_t sixtop_getState(void);
 // scheduling
 //void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells);
 //void      sixtop_removeCell(open_addr_t*  neighbor);
@@ -76,6 +77,7 @@ void      task_sixtopNotifReceive(void);
 // debugging
 bool      debugPrint_myDAGrank(void);
 bool      debugPrint_kaPeriod(void);
+
 
 /**
 \}

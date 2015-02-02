@@ -164,9 +164,13 @@ uint8_t openqueue_count_trackId(trackId_t id) {
    uint8_t resVal = 0;
 
    for (i=0;i<QUEUELENGTH;i++){
-      if(openqueue_vars.queue[i].l2_trackId == id)
+      if(
+            openqueue_vars.queue[i].l2_trackId == id
+            && openqueue_vars.queue[i].creator != COMPONENT_NULL
+            )
          resVal++;
    }
+   return(resVal);
 }
 
 //======= called by RES

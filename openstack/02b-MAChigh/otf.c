@@ -40,13 +40,35 @@ void otf_NotifTransmit(OpenQueueEntry_t* msg){
 
       //debug
       openserial_printError(
-         COMPONENT_OTF,
-         ERR_OTF_INSUFFICIENT,
-         (errorparameter_t)msg->l2_trackId,
-         (errorparameter_t)nbCells_curr
-      );
+           COMPONENT_OTF,
+           ERR_OTF_INSUFFICIENT,
+           (errorparameter_t)msg->l2_trackId,
+           (errorparameter_t)nbCells_curr
+        );
+      openserial_printError(
+           COMPONENT_OTF,
+           ERR_OTF_INSUFFICIENT,
+           (errorparameter_t)msg->l2_trackId,
+           (errorparameter_t)nbCells_req
+        );
 
-      sixtop_addCells(&(msg->l2_nextORpreviousHop), nbCells_req - nbCells_curr, msg->l2_trackId);
+
+      //ask 6top only if no other request is on-the-fly
+      if (sixtop_getState() == SIX_IDLE)
+         sixtop_addCells(&(msg->l2_nextORpreviousHop), nbCells_req - nbCells_curr, msg->l2_trackId);
+
+      else{
+         //TODO: when 6top has finished, should ask otf to verify the schedule is sufficient for the other tracks
+
+         openserial_printError(
+              COMPONENT_OTF,
+              ERR_SIXTOP_WRONG_STATE,
+              (errorparameter_t)sixtop_getState(),
+              (errorparameter_t)SIX_IDLE
+           );
+
+      }
+
 }
 
 //=========================== private =========================================

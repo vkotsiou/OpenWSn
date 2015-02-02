@@ -66,6 +66,7 @@ void          sixtop_linkResponse(
    bool                 success,
    open_addr_t*         tempNeighbor,
    uint8_t              bandwidth,
+   trackId_t            trackId,
    schedule_IE_ht*      schedule_ie
 );
 void          sixtop_notifyReceiveLinkResponse(
@@ -96,10 +97,10 @@ bool          sixtop_candidateRemoveCellList(
 void          sixtop_addCellsByState(
    uint8_t              slotframeID,
    uint8_t              numOfLinks,
+   trackId_t            trackId,
    cellInfo_ht*         cellList,
    open_addr_t*         previousHop,
-   uint8_t              state,
-   trackId_t            trackId
+   uint8_t              state
 );
 void          sixtop_removeCellsByState(
    uint8_t              slotframeID,
@@ -148,6 +149,12 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
    } 
 }
 
+
+six2six_state_t sixtop_getState(void){
+   return(sixtop_vars.six2six_state);
+}
+
+
 //======= scheduling
 
 void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId){
@@ -164,10 +171,10 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId
    memset(cellList,0,sizeof(cellList));
    
    // filter parameters
-   if(sixtop_vars.six2six_state!=SIX_IDLE){
+   if(sixtop_vars.six2six_state != SIX_IDLE){
       openserial_printError(
             COMPONENT_SIXTOP_RES,
-            ERR_WRONG_SIXTOP_STATE,
+            ERR_SIXTOP_WRONG_STATE,
             (errorparameter_t)sixtop_vars.six2six_state,
             (errorparameter_t)SIX_IDLE
       );
@@ -192,11 +199,11 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId
    );
    if (outcome == FALSE) {
       openserial_printError(
-            COMPONENT_SIXTOP_RES,
-            ERR_GENERIC,
-            (errorparameter_t)0,
-            (errorparameter_t)0
-            );
+             COMPONENT_SIXTOP_RES,
+             ERR_SIXTOP_WRONG_PARAM,
+             (errorparameter_t)-1,
+             (errorparameter_t)-2
+       );
     return;
    }
    
@@ -227,8 +234,9 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId
    
    // create packet
    len  = 0;
-   len += processIE_prependSheduleIE(pkt,type,frameID,flag,cellList);
-   len += processIE_prependBandwidthIE(pkt,numCells,frameID);
+   len += processIE_prependSheduleIE(pkt, type, frameID, flag, cellList);
+   len += processIE_prependBandwidthIE(pkt, frameID, numCells);
+//   len += processIE_prependTrackIdIE(pkt, trackId);
    len += processIE_prependOpcodeIE(pkt,SIXTOP_SOFT_CELL_REQ);
    processIE_prependMLMEIE(pkt,len);
    
@@ -237,14 +245,6 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId
    
    // send packet
    sixtop_send(pkt);
-   
-
-   openserial_printError(
-      COMPONENT_SIXTOP_RES,
-      ERR_GENERIC,
-      (errorparameter_t)1,
-      (errorparameter_t)1
-   );
 
    // update state
    sixtop_vars.six2six_state = SIX_WAIT_ADDREQUEST_SENDDONE;
@@ -854,12 +854,12 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
 }
 
 port_INLINE bool sixtop_processIEs(OpenQueueEntry_t* pkt, uint16_t * lenIE) {
-   uint8_t ptr;
-   uint8_t temp_8b,gr_elem_id,subid;
-   uint16_t temp_16b,len,sublen;
-   opcode_IE_ht opcode_ie;
-   bandwidth_IE_ht bandwidth_ie;
-   schedule_IE_ht schedule_ie;
+   uint8_t        ptr;
+   uint8_t        temp_8b,gr_elem_id,subid;
+   uint16_t       temp_16b,len,sublen;
+   opcode_IE_ht   opcode_ie;
+   bandwidth_IE_ht   bandwidth_ie;
+   schedule_IE_ht    schedule_ie;
  
    ptr=0; 
    memset(&opcode_ie,0,sizeof(opcode_IE_ht));
@@ -929,12 +929,10 @@ port_INLINE bool sixtop_processIEs(OpenQueueEntry_t* pkt, uint16_t * lenIE) {
               processIE_retrieveOpcodeIE(pkt,&ptr,&opcode_ie);
               break;
               case MLME_IE_SUBID_BANDWIDTH:
-              processIE_retrieveBandwidthIE(pkt,&ptr,&bandwidth_ie);
-              break;
-              case MLME_IE_SUBID_TRACKID:
+              processIE_retrieveBandwidthIE(pkt, &ptr, &bandwidth_ie);
               break;
               case MLME_IE_SUBID_SCHEDULE:
-              processIE_retrieveSheduleIE(pkt,&ptr,&schedule_ie);
+              processIE_retrieveSheduleIE(pkt, &ptr, &schedule_ie);
               break;
           default:
              return FALSE;
@@ -966,49 +964,32 @@ port_INLINE bool sixtop_processIEs(OpenQueueEntry_t* pkt, uint16_t * lenIE) {
 }
 
 void sixtop_notifyReceiveCommand(
-   opcode_IE_ht* opcode_ie, 
-   bandwidth_IE_ht* bandwidth_ie, 
-   schedule_IE_ht* schedule_ie,
-   open_addr_t* addr){
+   opcode_IE_ht*     opcode_ie,
+   bandwidth_IE_ht*  bandwidth_ie,
+   schedule_IE_ht*   schedule_ie,
+   open_addr_t*      addr){
    
    switch(opcode_ie->opcode){
       case SIXTOP_SOFT_CELL_REQ:
          if(sixtop_vars.six2six_state == SIX_IDLE)
          {
-            openserial_printError(
-                 COMPONENT_SIXTOP_RES,
-                 ERR_GENERIC,
-                 (errorparameter_t)2,
-                 (errorparameter_t)2
-              );
-
-
-            sixtop_vars.six2six_state = SIX_ADDREQUEST_RECEIVED;
+             sixtop_vars.six2six_state = SIX_ADDREQUEST_RECEIVED;
             //received uResCommand is reserve link request
-            sixtop_notifyReceiveLinkRequest(bandwidth_ie,schedule_ie,addr);
+            sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
          }
          break;
       case SIXTOP_SOFT_CELL_RESPONSE:
          if(sixtop_vars.six2six_state == SIX_WAIT_ADDRESPONSE){
            sixtop_vars.six2six_state = SIX_ADDRESPONSE_RECEIVED;
            //received uResCommand is reserve link response
-           sixtop_notifyReceiveLinkResponse(bandwidth_ie,schedule_ie,addr);
-
-
-           openserial_printError(
-                COMPONENT_SIXTOP_RES,
-                ERR_GENERIC,
-                (errorparameter_t)3,
-                (errorparameter_t)3
-             );
-
+           sixtop_notifyReceiveLinkResponse(bandwidth_ie, schedule_ie, addr);
          }
          break;
       case SIXTOP_REMOVE_SOFT_CELL_REQUEST:
          if(sixtop_vars.six2six_state == SIX_IDLE){
             sixtop_vars.six2six_state = SIX_REMOVEREQUEST_RECEIVED;
           //received uResComand is remove link request
-             sixtop_notifyReceiveRemoveLinkRequest(schedule_ie,addr);
+             sixtop_notifyReceiveRemoveLinkRequest(schedule_ie, addr);
         }
         break;
       default:
@@ -1018,17 +999,20 @@ void sixtop_notifyReceiveCommand(
 }
 
 void sixtop_notifyReceiveLinkRequest(
-   bandwidth_IE_ht* bandwidth_ie, 
-   schedule_IE_ht* schedule_ie,
-   open_addr_t* addr){
+   bandwidth_IE_ht*  bandwidth_ie,
+   schedule_IE_ht*   schedule_ie,
+   open_addr_t*      addr){
    
-   uint8_t bw,numOfcells,frameID;
-   bool scheduleCellSuccess;
+   uint8_t  bw, numOfcells, frameID;
+   uint16_t trackId;
+   bool     scheduleCellSuccess;
   
-   frameID = schedule_ie->frameID;
-   numOfcells = schedule_ie->numberOfcells;
-   bw = bandwidth_ie->numOfLinks;
+   frameID     = schedule_ie->frameID;
+   numOfcells  = schedule_ie->numberOfcells;
+   bw          = bandwidth_ie->numOfLinks;
+   trackId     = bandwidth_ie->trackId;
    
+
    // need to check whether the links are available to be scheduled.
    if(bw > numOfcells                                                 ||
       schedule_ie->frameID != bandwidth_ie->slotframeID               ||
@@ -1037,29 +1021,48 @@ void sixtop_notifyReceiveLinkRequest(
                                             schedule_ie->cellList, 
                                             bw) == FALSE){
       scheduleCellSuccess = FALSE;
+      openserial_printError(
+                     COMPONENT_SIXTOP_RES,
+                     ERR_GENERIC,
+                     (errorparameter_t)8,
+                     (errorparameter_t)bw
+                  );
+
+
    } else {
       sixtop_addCellsByState(
          frameID,
          bw,
+         trackId,
          schedule_ie->cellList,
          addr,
-         sixtop_vars.six2six_state,
-         TRACK_BESTEFFORT);	//TODO: add an IE in the 6top-request
+         sixtop_vars.six2six_state
+         );
       scheduleCellSuccess = TRUE;
+
+      openserial_printError(
+                     COMPONENT_SIXTOP_RES,
+                     ERR_GENERIC,
+                     (errorparameter_t)10,
+                     (errorparameter_t)trackId
+                  );
+
    }
   
    //call link response command
    sixtop_linkResponse(scheduleCellSuccess,
                        addr,
                        bandwidth_ie->numOfLinks,
+                       bandwidth_ie->trackId,
                        schedule_ie);
 }
 
 void sixtop_linkResponse(
-   bool scheduleCellSuccess, 
-   open_addr_t* tempNeighbor,
-   uint8_t bandwidth, 
-   schedule_IE_ht* schedule_ie){
+   bool              scheduleCellSuccess,
+   open_addr_t*      tempNeighbor,
+   uint8_t           bandwidth,
+   trackId_t         trackId,
+   schedule_IE_ht*   schedule_ie){
    
    OpenQueueEntry_t* sixtopPkt;
    uint8_t len=0;
@@ -1068,10 +1071,11 @@ void sixtop_linkResponse(
    cellInfo_ht* cellList;
     
    // get parameters for scheduleIE
-   type = schedule_ie->type;
-   frameID = schedule_ie->frameID;
-   flag = schedule_ie->flag;
+   type     = schedule_ie->type;
+   frameID  = schedule_ie->frameID;
+   flag     = schedule_ie->flag;
    cellList = schedule_ie->cellList;
+
   
    // get a free packet buffer
    sixtopPkt = openqueue_getFreePacketBuffer(COMPONENT_SIXTOP_RES);
@@ -1104,8 +1108,9 @@ void sixtop_linkResponse(
    } else {
       bw = 0;
    }
+
    //add BandwidthIE
-   len += processIE_prependBandwidthIE(sixtopPkt,bw,frameID);
+   len += processIE_prependBandwidthIE(sixtopPkt, frameID, bw);
    //add opcodeIE
    len += processIE_prependOpcodeIE(sixtopPkt,SIXTOP_SOFT_CELL_RESPONSE);
    //add IE header 
@@ -1120,15 +1125,17 @@ void sixtop_linkResponse(
 }
 
 void sixtop_notifyReceiveLinkResponse(
-   bandwidth_IE_ht* bandwidth_ie, 
-   schedule_IE_ht* schedule_ie,
-   open_addr_t* addr){
+   bandwidth_IE_ht*  bandwidth_ie,
+   schedule_IE_ht*   schedule_ie,
+   open_addr_t*      addr){
    
-   uint8_t bw,numOfcells,frameID;
+   uint8_t     bw, numOfcells, frameID;
+   trackId_t   trackId;
   
-   frameID = schedule_ie->frameID;
-   numOfcells = schedule_ie->numberOfcells;
-   bw = bandwidth_ie->numOfLinks;
+   frameID     = schedule_ie->frameID;
+   numOfcells  = schedule_ie->numberOfcells;
+   bw          = bandwidth_ie->numOfLinks;
+   trackId     = bandwidth_ie->trackId;
   
    if(bw == 0){
       // link request failed
@@ -1162,22 +1169,15 @@ void sixtop_notifyReceiveLinkResponse(
 
 
       } else {
-         openserial_printError(
-               COMPONENT_SIXTOP_RES,
-               ERR_GENERIC,
-               (errorparameter_t)4,
-               (errorparameter_t)bw
-            );
+
          //TODO: the request has been accepted
          //-> MUST verify a slot is correctly allocated in the schedule (in both motes)
-         //-> MUST include the trackid in the request / response 6to6
-
          sixtop_addCellsByState(frameID,
                                 bw,
+                                trackId,
                                 schedule_ie->cellList,
                                 addr,
-                                sixtop_vars.six2six_state,
-                                TRACK_BESTEFFORT); //TDOO: an an IE in the 6top-request
+                                sixtop_vars.six2six_state);
       // link request success,inform uplayer
       }
    }
@@ -1188,19 +1188,19 @@ void sixtop_notifyReceiveLinkResponse(
 }
 
 void sixtop_notifyReceiveRemoveLinkRequest(
-   schedule_IE_ht* schedule_ie,
-   open_addr_t* addr){
+      schedule_IE_ht* schedule_ie,
+      open_addr_t* addr){
    
    uint8_t numOfCells,frameID;
    cellInfo_ht* cellList;
   
-   numOfCells = schedule_ie->numberOfcells;
-   frameID = schedule_ie->frameID;
-   cellList = schedule_ie->cellList;
+   numOfCells  = schedule_ie->numberOfcells;
+   frameID     = schedule_ie->frameID;
+   cellList    = schedule_ie->cellList;
    
    leds_debug_on();
    
-   sixtop_removeCellsByState(frameID,numOfCells,cellList,addr);
+   sixtop_removeCellsByState(frameID, numOfCells, cellList, addr);
    
    // notify OTF
    otf_notif_removedCell();
@@ -1282,10 +1282,10 @@ bool sixtop_candidateRemoveCellList(
 void sixtop_addCellsByState(
       uint8_t      slotframeID,
       uint8_t      numOfLinks,
+      trackId_t    trackId,
       cellInfo_ht* cellList,
       open_addr_t* previousHop,
-      uint8_t      state,
-      trackId_t	   trackId
+      uint8_t      state
    ){
    uint8_t     i;
    uint8_t     j;
@@ -1371,14 +1371,36 @@ bool sixtop_areAvailableCellsToBeScheduled(
   
    if(bw == 0 || bw>SCHEDULEIEMAXNUMCELLS || numOfCells>SCHEDULEIEMAXNUMCELLS){
       // log wrong parameter error TODO
-    
-      available = FALSE;
+      openserial_printError(
+                   COMPONENT_SIXTOP_RES,
+                   ERR_SIXTOP_WRONG_PARAM,
+                   (errorparameter_t)bw,
+                   (errorparameter_t)numOfCells
+                   );
+
+       available = FALSE;
    } else {
       do {
          if(schedule_isSlotOffsetAvailable(cellList[i].tsNum) == TRUE){
             bw--;
+
+  /*          openserial_printError(
+                      COMPONENT_SIXTOP_RES,
+                      ERR_GENERIC,
+                      (errorparameter_t)12,
+                      (errorparameter_t)i
+                      );
+*/
          } else {
             cellList[i].linkoptions = CELLTYPE_OFF;
+/*
+            openserial_printError(
+                   COMPONENT_SIXTOP_RES,
+                   ERR_GENERIC,
+                   (errorparameter_t)11,
+                   (errorparameter_t)i
+                   );
+*/
          }
          i++;
       }while(i<numOfCells && bw>0);

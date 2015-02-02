@@ -6,7 +6,7 @@
 //=========================== define ==========================================
 
 // maximum of cells in a Schedule IE
-#define SCHEDULEIEMAXNUMCELLS 3
+#define SCHEDULEIEMAXNUMCELLS          3
 
 // subIE shift
 #define MLME_IE_SUBID_SHIFT            1
@@ -19,7 +19,6 @@
 #define MLME_IE_SUBID_LINKTYPE         0x40
 #define MLME_IE_SUBID_OPCODE           0x41
 #define MLME_IE_SUBID_BANDWIDTH        0x42
-#define MLME_IE_SUBID_TRACKID          0x43
 #define MLME_IE_SUBID_SCHEDULE         0x44
 
 // ========================== typedef =========================================
@@ -107,7 +106,10 @@ http://tools.ietf.org/html/draft-wang-6tisch-6top-sublayer-01#section-4.1.1.6
 typedef struct{
    uint8_t         slotframeID;
    uint8_t         numOfLinks;
+   trackId_t       trackId;
 } bandwidth_IE_ht;
+
+
 
 /**
 \brief 6top Generic Schedule IE
@@ -148,8 +150,8 @@ uint8_t          processIE_prependOpcodeIE(
 );
 uint8_t          processIE_prependBandwidthIE(
    OpenQueueEntry_t*    pkt,
-   uint8_t              numOfLinks, 
-   uint8_t              slotframeID
+   uint8_t              slotframeID,
+   uint8_t              numOfLinks
 );
 uint8_t          processIE_prependSheduleIE(
    OpenQueueEntry_t*    pkt,

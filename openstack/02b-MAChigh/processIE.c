@@ -214,35 +214,61 @@ port_INLINE uint8_t processIE_prependOpcodeIE(
 
 port_INLINE uint8_t processIE_prependBandwidthIE(
       OpenQueueEntry_t* pkt, 
-      uint8_t           numOfLinks, 
-      uint8_t           slotframeID
+      uint8_t           slotframeID,
+      uint8_t           numOfLinks
    ){
    
    uint8_t    len;
    mlme_IE_ht mlme_subHeader;
-   
    len = 0;
    
-   //===== number of cells
-   
+
+   trackId_t   trackId = 11;
+   openserial_printError(
+                      COMPONENT_SIXTOP_RES,
+                      ERR_GENERIC,
+                      (errorparameter_t)41,
+                      (errorparameter_t)trackId
+                   );
+   openserial_printError(
+                      COMPONENT_SIXTOP_RES,
+                      ERR_GENERIC,
+                      (errorparameter_t)42,
+                      (errorparameter_t)slotframeID
+                   );
+
+
+
+   //===== trackId
+
    // reserve space
-   packetfunctions_reserveHeaderSize(pkt,sizeof(uint8_t));
-   
+   packetfunctions_reserveHeaderSize(pkt, sizeof(trackId_t));
+
+   // write header
+   *((trackId_t*)(pkt->payload)) = trackId;
+
+   len += sizeof(trackId_t);
+
+   //===== number of links
+
+   // reserve space
+   packetfunctions_reserveHeaderSize(pkt, sizeof(uint8_t));
+
    // write header
    *((uint8_t*)(pkt->payload)) = numOfLinks;
-   
+
    len += 1;
-   
-   //===== number of cells
-   
+
+  //===== slotframe ID
+
    // reserve space
-   packetfunctions_reserveHeaderSize(pkt,sizeof(uint8_t));
-   
+   packetfunctions_reserveHeaderSize(pkt, sizeof(uint8_t));
+
    // write header
    *((uint8_t*)(pkt->payload)) = slotframeID;
-   
+
    len += 1;
-   
+
    //===== MLME IE header
    
    // reserve space
@@ -264,6 +290,7 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
   
    return len;
 }
+
 
 port_INLINE uint8_t processIE_prependSheduleIE(
       OpenQueueEntry_t* pkt,
@@ -466,17 +493,38 @@ port_INLINE void processIE_retrieveBandwidthIE(
       bandwidth_IE_ht*  bandwidthInfo
    ){
    uint8_t localptr;
-   
-   localptr=*ptr; 
-   
+
+   localptr=*ptr;
+
    // [1B] slotframeID
    bandwidthInfo->slotframeID = *((uint8_t*)(pkt->payload)+localptr);
    localptr++;
-   
-   // [1B] number of cells
-   bandwidthInfo->numOfLinks = *((uint8_t*)(pkt->payload)+localptr);
+
+   // [1B] number of links
+   bandwidthInfo->numOfLinks  = *((uint8_t*)(pkt->payload)+localptr);
    localptr++;
-   
+
+   // [2B] trackId
+   bandwidthInfo->trackId = *((trackId_t*)(pkt->payload)+localptr);
+   localptr+= sizeof(trackId_t);
+
+   openserial_printError(
+                        COMPONENT_SIXTOP_RES,
+                        ERR_GENERIC,
+                        (errorparameter_t)43,
+                        (errorparameter_t)bandwidthInfo->trackId
+                     );
+
+   openserial_printError(
+                        COMPONENT_SIXTOP_RES,
+                        ERR_GENERIC,
+                        (errorparameter_t)44,
+                        (errorparameter_t)bandwidthInfo->slotframeID
+                     );
+
+
+
+
    *ptr=localptr; 
 }
 

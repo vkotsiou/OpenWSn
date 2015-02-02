@@ -235,7 +235,8 @@ enum {
    //NEW FABRICE
    ERR_OTF_INSUFFICIENT                = 0x3a, // otf does not have enough cells (trackId {0}, nbCells {1})
    ERR_UNKNOWN_NEIGHBOR                = 0x3b, // Unknown neighbor {0}{1} (4 last bytes)
-   ERR_WRONG_SIXTOP_STATE              = 0x3c, // sixtop current state {0} while {1} is expected
+   ERR_SIXTOP_WRONG_PARAM              = 0x3e, // sixtop expects another parameter in its request (bw {0}, nbcells {1})
+   ERR_SIXTOP_WRONG_STATE              = 0x3c, // sixtop current state {0} while {1} is expected
    ERR_GENERIC                         = 0x3d, // generic error {0} {1}
 };
 
@@ -250,7 +251,7 @@ enum{
 typedef uint16_t  errorparameter_t;
 typedef uint16_t  dagrank_t;
 typedef uint8_t   owerror_t;
-typedef uint16_t  trackId_t;
+typedef uint8_t  trackId_t;
 
 
 BEGIN_PACK
