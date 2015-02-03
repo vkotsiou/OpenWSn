@@ -51,7 +51,11 @@ void cexample_init() {
    cexample_vars.desc.componentID          = COMPONENT_CEXAMPLE;
    cexample_vars.desc.callbackRx           = &cexample_receive;
    cexample_vars.desc.callbackSendDone     = &cexample_sendDone;
-   cexample_vars.trackId				   = openrandom_get16b();
+   cexample_vars.trackId				       = openrandom_get16b();
+
+   //TODO: in the future, trackid will be a 64b@ + a local trackID
+   //here, it would be <my@ + trackid> (no mutualization)
+   //if we have mutualization, it would be <@dest + trackid>
 
    
    opencoap_register(&cexample_vars.desc);
@@ -142,7 +146,7 @@ void cexample_task_cb() {
    pkt->l2_trackId                = cexample_vars.trackId;
    pkt->l4_destination_port       = WKP_UDP_COAP;
    pkt->l3_destinationAdd.type    = ADDR_128B;
-   memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_motesEecs,16);
+   memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_unistra,16);
    
    // send
    outcome = opencoap_send(

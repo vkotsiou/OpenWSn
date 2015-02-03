@@ -534,7 +534,7 @@ uint8_t schedule_getNbCellsWithTrackId(trackId_t id){
 \returns The channel offset of the current schedule entry.
 */
 trackId_t schedule_getTrackId() {
-   channelOffset_t returnVal;
+   trackId_t returnVal;
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();

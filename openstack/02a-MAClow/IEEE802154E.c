@@ -82,7 +82,7 @@ void     notif_receive(OpenQueueEntry_t* packetReceived);
 void     resetStats(void);
 void     updateStats(PORT_SIGNED_INT_WIDTH timeCorrection);
 // misc
-uint8_t  calculateFrequency(uint8_t channelOffset);
+uint8_t  calculateFrequency(uint8_t channelOffset, cellType_t cellType);
 void     changeState(ieee154e_state_t newstate);
 void     endSlot(void);
 bool     debugPrint_asn(void);
@@ -920,7 +920,7 @@ port_INLINE void activity_ti2() {
    changeState(S_TXDATAPREPARE);
    
    // calculate the frequency to transmit on
-   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset()); 
+   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
    
    // configure the radio for that frequency
    radio_setFrequency(ieee154e_vars.freq);
@@ -1039,7 +1039,7 @@ port_INLINE void activity_ti6() {
    changeState(S_RXACKPREPARE);
    
    // calculate the frequency to transmit on
-   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset()); 
+   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
    
    // configure the radio for that frequency
    radio_setFrequency(ieee154e_vars.freq);
@@ -1253,7 +1253,7 @@ port_INLINE void activity_ri2() {
    changeState(S_RXDATAPREPARE);
    
    // calculate the frequency to transmit on
-   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset()); 
+   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
    
    // configure the radio for that frequency
    radio_setFrequency(ieee154e_vars.freq);
@@ -1526,7 +1526,7 @@ port_INLINE void activity_ri6() {
    packetfunctions_reserveFooterSize(ieee154e_vars.ackToSend,2);
    
     // calculate the frequency to transmit on
-   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset()); 
+   ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
    
    // configure the radio for that frequency
    radio_setFrequency(ieee154e_vars.freq);
@@ -1931,10 +1931,14 @@ different channel offsets in the same slot.
 
 \returns The calculated frequency channel, an integer between 11 and 26.
 */
-port_INLINE uint8_t calculateFrequency(uint8_t channelOffset) {
+port_INLINE uint8_t calculateFrequency(uint8_t channelOffset, cellType_t cellType) {
    // comment the following line out to disable channel hopping
-   return SYNCHRONIZING_CHANNEL; // single channel
-   //return 11+(ieee154e_vars.asnOffset+channelOffset)%16; //channel hopping
+
+   if (cellType == CELLTYPE_ADV)
+      return SYNCHRONIZING_CHANNEL; // single channel to accelerate the discovery
+   else
+      return SYNCHRONIZING_CHANNEL; // single channel
+   //   return 11+(ieee154e_vars.asnOffset+channelOffset)%16; //channel hopping
 }
 
 /**

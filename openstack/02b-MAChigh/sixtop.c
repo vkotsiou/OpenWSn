@@ -481,6 +481,9 @@ void task_sixtopNotifReceive() {
       msg->l2_joinPriority
    );
    
+   //retrieves the trackid (associated to this cell in the schedule)
+   msg->l2_trackId = schedule_getTrackId();
+
    // reset it to avoid race conditions with this var.
    msg->l2_joinPriorityPresent = FALSE; 
    
