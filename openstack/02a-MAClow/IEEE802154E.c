@@ -1932,13 +1932,25 @@ different channel offsets in the same slot.
 \returns The calculated frequency channel, an integer between 11 and 26.
 */
 port_INLINE uint8_t calculateFrequency(uint8_t channelOffset, cellType_t cellType) {
-   // comment the following line out to disable channel hopping
 
+#if defined(CHANNEL_STATIC_ALWAYS)
+   return SYNCHRONIZING_CHANNEL;
+#endif
+
+#if defined(CHANNEL_STATIC_FOR_DISCOVERY)
+
+   // comment the following line out to disable channel hopping
    if (cellType == CELLTYPE_ADV)
       return SYNCHRONIZING_CHANNEL; // single channel to accelerate the discovery
-   else
-      return SYNCHRONIZING_CHANNEL; // single channel
-   //   return 11+(ieee154e_vars.asnOffset+channelOffset)%16; //channel hopping
+
+#endif
+
+   //default case: !ADVT && !STATIC
+   return 11+(ieee154e_vars.asnOffset+channelOffset)%16; //channel hopping
+
+
+
+
 }
 
 /**

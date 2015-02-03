@@ -791,8 +791,22 @@ port_INLINE void sixtop_sendKA() {
 //======= six2six task
 
 void timer_sixtop_six2six_timeout_fired(void) {
+
+   openserial_printError(
+            COMPONENT_SIXTOP,
+            ERR_UNKNOWN,
+            (errorparameter_t)10,
+            (errorparameter_t)10
+         );
+
+   //remove the packets which caused the timeout (they may not have been transmitted)
+   openqueue_removeAllCreatedBy(COMPONENT_SIXTOP_RES);
+   //TODO: debug the packets destroyed in the queue
+
    // timeout timer fired, reset the state of sixtop to idle
    sixtop_vars.six2six_state = SIX_IDLE;
+
+
 }
 
 void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
@@ -807,6 +821,14 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
    msg->owner = COMPONENT_SIXTOP_RES;
   
    if(error == E_FAIL) {
+      openserial_printError(
+               COMPONENT_SIXTOP,
+               ERR_UNKNOWN,
+               (errorparameter_t)11,
+               (errorparameter_t)error
+            );
+
+
       sixtop_vars.six2six_state = SIX_IDLE;
       openqueue_freePacketBuffer(msg);
       return;

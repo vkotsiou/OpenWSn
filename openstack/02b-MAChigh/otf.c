@@ -31,32 +31,41 @@ void otf_notif_removedCell(void) {
 void otf_NotifTransmit(OpenQueueEntry_t* msg){
       uint8_t nbCells_curr, nbCells_req;
 
+      //trackid 0 -> only periodical
+      if (msg->l2_trackId == TRACK_BESTEFFORT)
+         return;
+
+
+      // requested and current allocations
       nbCells_curr   = schedule_getNbCellsWithTrackId(msg->l2_trackId);
       nbCells_req    = openqueue_count_trackId(msg->l2_trackId);
 
-      //everything is ok
+      //correct allocation
       if (nbCells_curr >= nbCells_req)
          return;
 
-      //debug
-      openserial_printError(
-           COMPONENT_OTF,
-           ERR_OTF_INSUFFICIENT,
-           (errorparameter_t)msg->l2_trackId,
-           (errorparameter_t)nbCells_curr
-        );
-      openserial_printError(
-           COMPONENT_OTF,
-           ERR_OTF_INSUFFICIENT,
-           (errorparameter_t)msg->l2_trackId,
-           (errorparameter_t)nbCells_req
-        );
-
 
       //ask 6top only if no other request is on-the-fly
-      if (sixtop_getState() == SIX_IDLE)
+      if (sixtop_getState() == SIX_IDLE){
+
+         //debug
+         openserial_printError(
+              COMPONENT_OTF,
+              ERR_OTF_INSUFFICIENT,
+              (errorparameter_t)msg->l2_trackId,
+              (errorparameter_t)nbCells_curr
+           );
+         openserial_printError(
+              COMPONENT_OTF,
+              ERR_OTF_INSUFFICIENT,
+              (errorparameter_t)msg->l2_trackId,
+              (errorparameter_t)nbCells_req
+           );
+
+
          sixtop_addCells(&(msg->l2_nextORpreviousHop), nbCells_req - nbCells_curr, msg->l2_trackId);
 
+      }
       else{
          //TODO: when 6top has finished, should ask otf to verify the schedule is sufficient for the other tracks
 
@@ -77,6 +86,15 @@ void otf_addCell_task(void) {
    open_addr_t          neighbor;
    bool                 foundNeighbor;
    
+   openserial_printError(
+             COMPONENT_OTF,
+             ERR_UNKNOWN,
+             (errorparameter_t)1,
+             (errorparameter_t)0
+          );
+
+
+
    // get preferred parent
    foundNeighbor = neighbors_getPreferredParentEui64(&neighbor);
    if (foundNeighbor==FALSE) {

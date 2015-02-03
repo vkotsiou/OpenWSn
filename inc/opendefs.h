@@ -20,6 +20,11 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define OPENWSN_VERSION_MINOR     9
 #define OPENWSN_VERSION_PATCH     0
 
+//use a static channel for debug (in any case / for the ADVT slots / never)
+#define CHANNEL_STATIC_ALWAYS
+//#define CHANNEL_STATIC_FOR_DISCOVERY
+
+
 //to delimit the implementation of draft-thubert-6man-flow-label-for-rpl-03
 #define FLOW_LABEL_RPL_DOMAIN 1
 
@@ -238,6 +243,7 @@ enum {
    ERR_SIXTOP_WRONG_PARAM              = 0x3e, // sixtop expects another parameter in its request (bw {0}, nbcells {1})
    ERR_SIXTOP_WRONG_STATE              = 0x3c, // sixtop current state {0} while {1} is expected
    ERR_GENERIC                         = 0x3d, // generic error {0} {1}
+   ERR_UNKNOWN                         = 0x3e, // unkwnown error, location {0}
 };
 
 
