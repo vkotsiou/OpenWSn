@@ -792,12 +792,9 @@ port_INLINE void sixtop_sendKA() {
 
 void timer_sixtop_six2six_timeout_fired(void) {
 
-   openserial_printError(
-            COMPONENT_SIXTOP,
-            ERR_UNKNOWN,
-            (errorparameter_t)10,
-            (errorparameter_t)10
-         );
+   //everything is ok, we are already back in IDLE mode
+   if (sixtop_vars.six2six_state == SIX_IDLE)
+      return;
 
    //remove the packets which caused the timeout (they may not have been transmitted)
    openqueue_removeAllCreatedBy(COMPONENT_SIXTOP_RES);
@@ -824,7 +821,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
       openserial_printError(
                COMPONENT_SIXTOP,
                ERR_UNKNOWN,
-               (errorparameter_t)11,
+               (errorparameter_t)12,
                (errorparameter_t)error
             );
 
@@ -1001,6 +998,14 @@ void sixtop_notifyReceiveCommand(
              sixtop_vars.six2six_state = SIX_ADDREQUEST_RECEIVED;
             //received uResCommand is reserve link request
             sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
+
+            openserial_printError(
+                      COMPONENT_SIXTOP_RES,
+                      ERR_UNKNOWN,
+                      (errorparameter_t)21,
+                      (errorparameter_t)12
+                   );
+
          }
          break;
       case SIXTOP_SOFT_CELL_RESPONSE:
