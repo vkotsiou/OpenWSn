@@ -10,6 +10,12 @@
 
 #include "opendefs.h"
 
+
+//to possibly allocate soft cells as soon as a packet is enqueued
+#define OTF_AGRESSIVE
+
+
+
 //=========================== define ==========================================
 
 //=========================== typedef =========================================
@@ -30,7 +36,7 @@ void      otf_notif_removedCell(void);
 */
 
 //a packet is pushed to the MAC layer -> OTF notification
-void otf_NotifTransmit(OpenQueueEntry_t* msg);
+void     otf_notif_transmit(OpenQueueEntry_t* msg);
 
 
 typedef struct{

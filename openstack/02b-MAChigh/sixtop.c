@@ -609,7 +609,7 @@ owerror_t sixtop_send_internal(
    msg->owner  = COMPONENT_SIXTOP_TO_IEEE802154E;
 
    //otf notification
-   otf_NotifTransmit(msg);
+   otf_Notif_transmit(msg);
 
    return E_SUCCESS;
 }

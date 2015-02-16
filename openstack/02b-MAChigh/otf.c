@@ -28,8 +28,10 @@ void otf_notif_removedCell(void) {
 }
 
 //a packet is pushed to the MAC layer -> OTF notification
-void otf_NotifTransmit(OpenQueueEntry_t* msg){
+void otf_Notif_transmit(OpenQueueEntry_t* msg){
       uint8_t nbCells_curr, nbCells_req;
+
+#ifdef OTF_AGRESSIVE
 
       //trackid 0 -> only periodical
       if (msg->l2_trackId == TRACK_BESTEFFORT)
@@ -77,7 +79,7 @@ void otf_NotifTransmit(OpenQueueEntry_t* msg){
            );
 
       }
-
+#endif
 }
 
 //=========================== private =========================================
