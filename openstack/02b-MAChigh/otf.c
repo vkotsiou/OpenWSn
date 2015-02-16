@@ -86,14 +86,6 @@ void otf_addCell_task(void) {
    open_addr_t          neighbor;
    bool                 foundNeighbor;
    
-   openserial_printError(
-             COMPONENT_OTF,
-             ERR_UNKNOWN,
-             (errorparameter_t)1,
-             (errorparameter_t)0
-          );
-
-
 
    // get preferred parent
    foundNeighbor = neighbors_getPreferredParentEui64(&neighbor);

@@ -793,8 +793,16 @@ port_INLINE void sixtop_sendKA() {
 void timer_sixtop_six2six_timeout_fired(void) {
 
    //everything is ok, we are already back in IDLE mode
-   if (sixtop_vars.six2six_state == SIX_IDLE)
-      return;
+ //  if (sixtop_vars.six2six_state == SIX_IDLE)
+   //   return;
+
+
+   openserial_printError(
+        COMPONENT_SIXTOP,
+        ERR_GENERIC,
+        (errorparameter_t)SIX_IDLE,
+        (errorparameter_t)sixtop_vars.six2six_state
+     );
 
    //remove the packets which caused the timeout (they may not have been transmitted)
    openqueue_removeAllCreatedBy(COMPONENT_SIXTOP_RES);
@@ -811,7 +819,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
    uint8_t* ptr;
    cellInfo_ht cellList[SCHEDULEIEMAXNUMCELLS];
    
-   memset(cellList,0,SCHEDULEIEMAXNUMCELLS*sizeof(cellInfo_ht));
+   memset(cellList, 0, SCHEDULEIEMAXNUMCELLS*sizeof(cellInfo_ht));
   
    ptr = msg->l2_scheduleIE_cellObjects;
    numOfCells = msg->l2_scheduleIE_numOfCells;
@@ -821,10 +829,9 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
       openserial_printError(
                COMPONENT_SIXTOP,
                ERR_UNKNOWN,
-               (errorparameter_t)12,
-               (errorparameter_t)error
+               (errorparameter_t)123,
+               (errorparameter_t)001
             );
-
 
       sixtop_vars.six2six_state = SIX_IDLE;
       openqueue_freePacketBuffer(msg);
@@ -840,7 +847,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
          sixtop_vars.six2six_state = SIX_IDLE;
          
          // notify OTF
-         otf_notif_addedCell();
+         //otf_notif_addedCell();
          
          break;
       case SIX_WAIT_REMOVEREQUEST_SENDDONE:
@@ -998,14 +1005,6 @@ void sixtop_notifyReceiveCommand(
              sixtop_vars.six2six_state = SIX_ADDREQUEST_RECEIVED;
             //received uResCommand is reserve link request
             sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
-
-            openserial_printError(
-                      COMPONENT_SIXTOP_RES,
-                      ERR_UNKNOWN,
-                      (errorparameter_t)21,
-                      (errorparameter_t)12
-                   );
-
          }
          break;
       case SIXTOP_SOFT_CELL_RESPONSE:

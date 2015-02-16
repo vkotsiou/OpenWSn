@@ -243,7 +243,7 @@ enum {
    ERR_SIXTOP_WRONG_PARAM              = 0x3e, // sixtop expects another parameter in its request (bw {0}, nbcells {1})
    ERR_SIXTOP_WRONG_STATE              = 0x3c, // sixtop current state {0} while {1} is expected
    ERR_GENERIC                         = 0x3d, // generic error {0} {1}
-   ERR_UNKNOWN                         = 0x3e, // unkwnown error, location {0}
+   ERR_UNKNOWN                         = 0x3e, // unknown error, location {0}
 };
 
 
