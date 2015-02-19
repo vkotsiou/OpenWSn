@@ -21,8 +21,8 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define OPENWSN_VERSION_PATCH     0
 
 //use a static channel for debug (in any case / for the ADVT slots / never)
-#define CHANNEL_STATIC_ALWAYS
-//#define CHANNEL_STATIC_FOR_DISCOVERY
+//#define CHANNEL_STATIC_ALWAYS
+#define CHANNEL_STATIC_FOR_DISCOVERY
 
 
 //to delimit the implementation of draft-thubert-6man-flow-label-for-rpl-03

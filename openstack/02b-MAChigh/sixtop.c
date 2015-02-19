@@ -800,7 +800,7 @@ void timer_sixtop_six2six_timeout_fired(void) {
    openserial_printError(
         COMPONENT_SIXTOP,
         ERR_GENERIC,
-        (errorparameter_t)SIX_IDLE,
+        (errorparameter_t)20,
         (errorparameter_t)sixtop_vars.six2six_state
      );
 
