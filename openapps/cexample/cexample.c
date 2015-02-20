@@ -20,9 +20,10 @@
 /// inter-packet period (in ms)
 #define CEXAMPLE_TRACKID	12
 
-#define CEXAMPLEPERIOD  10000
-#define PAYLOADLEN      40
+#define CEXAMPLEPERIOD   10000
+#define PAYLOADLEN       40
 
+const uint8_t cexample_timeout[5] = {0, 0, 0, 0, 0};   //in ASN
 const uint8_t cexample_path0[] = "ex";
 
 //=========================== variables =======================================
@@ -103,7 +104,7 @@ void cexample_task_cb() {
    avg = sum/N_avg;
    
    // create a CoAP RD packet
-   pkt = openqueue_getFreePacketBuffer(COMPONENT_CEXAMPLE);
+   pkt = openqueue_getFreePacketBuffer_with_timeout(COMPONENT_CEXAMPLE, cexample_timeout);
    if (pkt==NULL) {
       openserial_printError(
          COMPONENT_CEXAMPLE,

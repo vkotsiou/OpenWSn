@@ -251,6 +251,9 @@ enum{
 	TRACK_BESTEFFORT                   = 0, // for best effort traffic
 };
 
+enum{
+   NO_TIMEOUT                         = 0, // no timeout is associated to this packet
+};
 //=========================== typedef =========================================
 
 
@@ -281,12 +284,15 @@ typedef struct {                                 // always written big endian, i
 } open_addr_t;
 END_PACK
 
+
+
 typedef struct {
    //admin
    uint8_t       creator;                        // the component which called getFreePacketBuffer()
    uint8_t       owner;                          // the component which currently owns the entry
    uint8_t*      payload;                        // pointer to the start of the payload within 'packet'
    uint8_t       length;                         // length in bytes of the payload
+   uint8_t       timeout[5];                     // at what ASN was the packet will be considered timeouted
    //l4
    uint8_t       l4_protocol;                    // l4 protocol to be used
    bool          l4_protocol_compressed;         // is the l4 protocol header compressed?

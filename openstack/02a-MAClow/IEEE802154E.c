@@ -1942,14 +1942,7 @@ port_INLINE uint8_t calculateFrequency(uint8_t channelOffset, cellType_t cellTyp
    // comment the following line out to disable channel hopping
    if (cellType == CELLTYPE_ADV || cellType == CELLTYPE_TXRX)
      return SYNCHRONIZING_CHANNEL; // single channel to accelerate the discovery
-  /* else
-      openserial_printError(
-             COMPONENT_IEEE802154E,
-             ERR_GENERIC,
-             (errorparameter_t)70,
-             (errorparameter_t)cellType
-          );
-*/
+
 #endif
 
    //default case: !ADVT && !STATIC

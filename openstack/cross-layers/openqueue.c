@@ -24,6 +24,11 @@ void openqueue_init() {
    for (i=0;i<QUEUELENGTH;i++){
       openqueue_reset_entry(&(openqueue_vars.queue[i]));
    }
+
+   //periodic openqueue timeouts
+
+//   ieee154e_asnDiff();
+
 }
 
 /**
@@ -39,13 +44,20 @@ bool debugPrint_queue() {
    uint8_t i;
    for (i=0;i<QUEUELENGTH;i++) {
       output[i].creator = openqueue_vars.queue[i].creator;
-      output[i].owner   = openqueue_vars.queue[i].owner;
-   }
-   openserial_printStatus(STATUS_QUEUE,(uint8_t*)&output,QUEUELENGTH*sizeof(debugOpenQueueEntry_t));
-   return TRUE;
+      output[i].owner = openqueue_vars.queue[i].owner;
+    }
+    openserial_printStatus(STATUS_QUEUE,(uint8_t*)&output,QUEUELENGTH*sizeof(debugOpenQueueEntry_t));
+    return TRUE;
 }
 
+
+
+
+
+
 //======= called by any component
+
+
 
 /**
 \brief Request a new (free) packet buffer.
@@ -77,6 +89,7 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
       if (openqueue_vars.queue[i].owner==COMPONENT_NULL) {
          openqueue_vars.queue[i].creator=creator;
          openqueue_vars.queue[i].owner=COMPONENT_OPENQUEUE;
+         bzero(&(openqueue_vars.queue[i].timeout),sizeof(asn_t)); //by default, no timeout
          ENABLE_INTERRUPTS(); 
          return &openqueue_vars.queue[i];
       }
@@ -84,6 +97,53 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
    ENABLE_INTERRUPTS();
    return NULL;
 }
+
+
+
+
+//======= called by any component
+
+/**
+\brief Request a new (free) packet buffer, specifying a timeout
+
+\note Once a packet has been allocated, it is up to the creator of the packet
+      to free it using the openqueue_freePacketBuffer() function.
+
+\returns A pointer to the queue entry when it could be allocated, or NULL when
+         it could not be allocated (buffer full or not synchronized).
+*/
+OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const uint8_t *timeout) {
+   OpenQueueEntry_t* entry;
+   uint8_t     now[5];
+   uint8_t     res[5];
+   uint8_t     remainder, i;
+
+   entry = openqueue_getFreePacketBuffer(creator);
+
+   //no packet is available
+   if (entry == NULL)
+      return(NULL);
+
+   //computes when this entry will become obsolete
+   ieee154e_getAsn(now);
+   remainder = 0;
+   for(i=0;i<5;i++){
+      res[i] = timeout[i] + now[i];
+      if (res[i] < timeout[i] && res[i] < now[i])
+         remainder = 1;
+      else
+         remainder = 0;
+   }
+
+   //saves the timeout in the new entry
+   for(i=0;i<5;i++)
+      entry->timeout[i] = res[i];
+
+   return(entry);
+}
+
+
+
 
 
 /**
