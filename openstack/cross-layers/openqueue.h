@@ -18,8 +18,10 @@
 //=========================== typedef =========================================
 
 typedef struct {
+   uint8_t  row;
    uint8_t  creator;
    uint8_t  owner;
+   asn_t    timeout;
 } debugOpenQueueEntry_t;
 
 //=========================== module variables ================================

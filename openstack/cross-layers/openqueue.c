@@ -40,13 +40,19 @@ status information about several modules in the OpenWSN stack.
 \returns TRUE if this function printed something, FALSE otherwise.
 */
 bool debugPrint_queue() {
-   debugOpenQueueEntry_t output[QUEUELENGTH];
-   uint8_t i;
-   for (i=0;i<QUEUELENGTH;i++) {
-      output[i].creator = openqueue_vars.queue[i].creator;
-      output[i].owner = openqueue_vars.queue[i].owner;
-    }
-    openserial_printStatus(STATUS_QUEUE,(uint8_t*)&output,QUEUELENGTH*sizeof(debugOpenQueueEntry_t));
+   debugOpenQueueEntry_t output;
+   openqueue_vars.debugPrintRow         = (openqueue_vars.debugPrintRow+1)%MAXACTIVESLOTS;
+
+   output.row     = openqueue_vars.debugPrintRow;
+   output.creator = openqueue_vars.queue[openqueue_vars.debugPrintRow].creator;
+   output.owner   = openqueue_vars.queue[openqueue_vars.debugPrintRow].owner;
+
+   //ASN to push
+
+   openserial_printStatus(
+         STATUS_QUEUE,
+         (uint8_t*)&output,
+         sizeof(debugOpenQueueEntry_t));
     return TRUE;
 }
 
