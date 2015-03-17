@@ -41,11 +41,13 @@ status information about several modules in the OpenWSN stack.
 */
 bool debugPrint_queue() {
    debugOpenQueueEntry_t output;
-   openqueue_vars.debugPrintRow         = (openqueue_vars.debugPrintRow+1)%MAXACTIVESLOTS;
+   openqueue_vars.debugPrintRow         = (openqueue_vars.debugPrintRow+1)%QUEUELENGTH;
 
    output.row     = openqueue_vars.debugPrintRow;
    output.creator = openqueue_vars.queue[openqueue_vars.debugPrintRow].creator;
    output.owner   = openqueue_vars.queue[openqueue_vars.debugPrintRow].owner;
+   memcpy(&(output.timeout), &(openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout), sizeof(asn_t));
+
 
    //ASN to push
 
@@ -134,7 +136,7 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
    ieee154e_getAsn(now);
    remainder = 0;
    for(i=0;i<5;i++){
-      res[i] = timeout[i] + now[i];
+      res[i] = timeout[i] + now[i] + remainder;
       if (res[i] < timeout[i] && res[i] < now[i])
          remainder = 1;
       else
