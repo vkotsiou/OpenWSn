@@ -617,7 +617,7 @@ owerror_t sixtop_send_internal(
 // timer interrupt callbacks
 
 void sixtop_maintenance_timer_cb() {
-   scheduler_push_task(timer_sixtop_management_fired,TASKPRIO_SIXTOP);
+   scheduler_push_task(timer_sixtop_management_fired, TASKPRIO_SIXTOP);
 }
 
 void sixtop_timeout_timer_cb() {
@@ -792,16 +792,13 @@ port_INLINE void sixtop_sendKA() {
 
 void timer_sixtop_six2six_timeout_fired(void) {
 
-   //everything is ok, we are already back in IDLE mode
- //  if (sixtop_vars.six2six_state == SIX_IDLE)
-   //   return;
-
-
-   openserial_printError(
+   //if we are already in idle mode, this means we are just boostraping!
+   if (sixtop_vars.six2six_state != SIX_IDLE)
+    openserial_printError(
         COMPONENT_SIXTOP,
-        ERR_GENERIC,
-        (errorparameter_t)20,
-        (errorparameter_t)sixtop_vars.six2six_state
+        ERR_SIXTOP_TIMEOUT,
+        (errorparameter_t)sixtop_vars.six2six_state,
+        (errorparameter_t)0
      );
 
    //remove the packets which caused the timeout (they may not have been transmitted)

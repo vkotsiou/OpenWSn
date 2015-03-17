@@ -23,7 +23,7 @@
 #define CEXAMPLEPERIOD   10000
 #define PAYLOADLEN       40
 
-const uint8_t cexample_timeout[5] = {0, 0, 0, 0, 0};   //in ASN
+const timeout_t cexample_timeout = {0, 0, 0, 0, 0};   //in ASN
 const uint8_t cexample_path0[] = "ex";
 
 //=========================== variables =======================================

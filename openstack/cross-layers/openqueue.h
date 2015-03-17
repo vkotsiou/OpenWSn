@@ -8,6 +8,8 @@
 \{
 */
 
+
+#include "opentimers.h"
 #include "opendefs.h"
 #include "IEEE802154.h"
 
@@ -17,18 +19,22 @@
 
 //=========================== typedef =========================================
 
+
 typedef struct {
-   uint8_t  row;
-   uint8_t  creator;
-   uint8_t  owner;
-   asn_t    timeout;
+   uint8_t     row;
+   uint8_t     creator;
+   uint8_t     owner;
+   asn_t       timeout;    //timeout MUST be transmitted in ASN format to openvizualizer
 } debugOpenQueueEntry_t;
+
 
 //=========================== module variables ================================
 
 typedef struct {
-   OpenQueueEntry_t queue[QUEUELENGTH];
-   uint8_t          debugPrintRow;
+   OpenQueueEntry_t  queue[QUEUELENGTH];
+   uint8_t           debugPrintRow;
+   opentimer_id_t    timeoutTimerId;    // to remove timeouted packets
+   bool              timeoutScheduled;  // is a verification already scheduled?
 } openqueue_vars_t;
 
 //=========================== prototypes ======================================
@@ -38,7 +44,7 @@ void               openqueue_init(void);
 bool               debugPrint_queue(void);
 // called by any component
 OpenQueueEntry_t*  openqueue_getFreePacketBuffer(uint8_t creator);
-OpenQueueEntry_t*  openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const uint8_t *timeout);
+OpenQueueEntry_t*  openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const timeout_t timeout);
 owerror_t          openqueue_freePacketBuffer(OpenQueueEntry_t* pkt);
 void               openqueue_removeAllCreatedBy(uint8_t creator);
 void               openqueue_removeAllOwnedBy(uint8_t owner);

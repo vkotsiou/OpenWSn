@@ -242,8 +242,9 @@ enum {
    ERR_UNKNOWN_NEIGHBOR                = 0x3b, // Unknown neighbor {0}{1} (4 last bytes)
    ERR_SIXTOP_WRONG_PARAM              = 0x3e, // sixtop expects another parameter in its request (bw {0}, nbcells {1})
    ERR_SIXTOP_WRONG_STATE              = 0x3c, // sixtop current state {0} while {1} is expected
-   ERR_GENERIC                         = 0x3d, // generic error {0} {1}
-   ERR_UNKNOWN                         = 0x3e, // unknown error, location {0}
+   ERR_SIXTOP_TIMEOUT                  = 0x3d, // a timeout has been fired. We have to flush 6top packets (we have the state {0})
+   ERR_GENERIC                         = 0x3e, // generic error {0} {1}
+   ERR_UNKNOWN                         = 0x40, // unknown error, location {0}
 };
 
 
@@ -261,6 +262,13 @@ typedef uint16_t  errorparameter_t;
 typedef uint16_t  dagrank_t;
 typedef uint8_t   owerror_t;
 typedef uint8_t   trackId_t;
+
+//ASN notes in an array of bytes
+BEGIN_PACK
+typedef struct{
+   uint8_t byte[5];
+}timeout_t;
+END_PACK
 
 
 BEGIN_PACK
@@ -292,7 +300,7 @@ typedef struct {
    uint8_t       owner;                          // the component which currently owns the entry
    uint8_t*      payload;                        // pointer to the start of the payload within 'packet'
    uint8_t       length;                         // length in bytes of the payload
-   uint8_t       timeout[5];                     // at what ASN was the packet will be considered timeouted
+   timeout_t     timeout;                        // at what ASN was the packet will be considered timeouted
    //l4
    uint8_t       l4_protocol;                    // l4 protocol to be used
    bool          l4_protocol_compressed;         // is the l4 protocol header compressed?

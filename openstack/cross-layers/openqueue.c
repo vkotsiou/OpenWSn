@@ -11,6 +11,7 @@ openqueue_vars_t openqueue_vars;
 //=========================== prototypes ======================================
 
 void openqueue_reset_entry(OpenQueueEntry_t* entry);
+//void openqueue_timeout_flush(void);
 
 //=========================== public ==========================================
 
@@ -24,10 +25,7 @@ void openqueue_init() {
    for (i=0;i<QUEUELENGTH;i++){
       openqueue_reset_entry(&(openqueue_vars.queue[i]));
    }
-
-   //periodic openqueue timeouts
-
-//   ieee154e_asnDiff();
+   openqueue_vars.timeoutScheduled = FALSE;
 
 }
 
@@ -46,21 +44,125 @@ bool debugPrint_queue() {
    output.row     = openqueue_vars.debugPrintRow;
    output.creator = openqueue_vars.queue[openqueue_vars.debugPrintRow].creator;
    output.owner   = openqueue_vars.queue[openqueue_vars.debugPrintRow].owner;
-   memcpy(&(output.timeout), &(openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout), sizeof(asn_t));
+
+ //  memcpy(&(output.timeout), &(openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout), sizeof(asn_t));
 
 
-   //ASN to push
+   //ASN to push (in ASN format)
+   output.timeout.byte4 = openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[4];
+   output.timeout.bytes0and1 =
+         openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[0] +
+         openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[1] * 256;
+   output.timeout.bytes2and3 =
+         openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[2] +
+         openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[3] *256;
+
 
    openserial_printStatus(
          STATUS_QUEUE,
          (uint8_t*)&output,
          sizeof(debugOpenQueueEntry_t));
-    return TRUE;
+   return TRUE;
+}
+
+//is a >= b
+bool openqueue_timeout_is_greater(timeout_t a, timeout_t b){
+   uint8_t  i;
+
+   //for each byte (byte 4 is the biggest)
+   for(i=4; i<=0; i--)
+      if (a.byte[i] > b.byte[i])
+         return(TRUE);
+      else if (a.byte[i] < b.byte[i])
+         return(FALSE);
+
+   //equal case
+   return(TRUE);
+}
+
+//this represents an invalid timeout
+bool openqueue_timeout_is_zero(timeout_t value){
+   uint8_t  i;
+
+   for (i=0; i<5; i++)
+      if (value.byte[i] != 0)
+      return FALSE;
+
+   return(TRUE);
+}
+
+//returns a - b (or 0 if a <= b)
+uint64_t openqueue_timeout_diff(timeout_t a, timeout_t b){
+   uint8_t  i;
+   bool     greater = FALSE;
+   uint64_t diff = 0;
+
+   for(i=sizeof(timeout_t)-1; i>=0; i--){
+
+      //returns 0 if a <= b
+      if (!greater && a.byte[i] < b.byte[i])
+         return(0);
+      else if (a.byte[i] > b.byte[i])
+         greater = TRUE;
+
+      //else, computes the difference
+      diff = diff * 256 + a.byte[i] - b.byte[i];
+
+   }
+   return(diff);
 }
 
 
+//remove the packets which are timeouted in the queue
+void openqueue_timeout_flush(void){
+   uint8_t     i;
+   timeout_t   now;
+   uint64_t    diff_oldest, tmp;
+
+   //initialization
+   ieee154e_getAsn(now.byte);
+   //bzero(oldest.byte, sizeof(timeout_t));
+   diff_oldest = 0;
 
 
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+   for (i=0;i<QUEUELENGTH;i++) {
+
+      //this timeout must not be considered
+      if(openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout))
+      {}
+
+      //this timeout has elapsed
+      else if (openqueue_timeout_is_greater(
+            now,
+            openqueue_vars.queue[i].timeout)) {
+         openqueue_reset_entry(&(openqueue_vars.queue[i]));
+      }
+
+      //entry is in the future, and we must remember the oldest one
+      else if (tmp = openqueue_timeout_diff(now, openqueue_vars.queue[i].timeout) < diff_oldest)
+         diff_oldest = tmp;
+         /*(openqueue_timeout_is_greater(
+            oldest,
+            openqueue_vars.queue[i].timeout))
+         memcpy(&oldest, &(openqueue_vars.queue[i].timeout), 5);
+         */
+
+   }
+   //next verification
+   if (diff_oldest != 0)
+      openqueue_vars.timeoutTimerId = opentimers_start(
+            diff_oldest * TsSlotDuration,
+            TIMER_ONESHOT,
+            TIME_MS,
+            openqueue_timeout_flush
+      );
+   else
+      openqueue_vars.timeoutScheduled = FALSE;
+
+    ENABLE_INTERRUPTS();
+}
 
 
 //======= called by any component
@@ -97,7 +199,7 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
       if (openqueue_vars.queue[i].owner==COMPONENT_NULL) {
          openqueue_vars.queue[i].creator=creator;
          openqueue_vars.queue[i].owner=COMPONENT_OPENQUEUE;
-         bzero(&(openqueue_vars.queue[i].timeout),sizeof(asn_t)); //by default, no timeout
+         bzero(&(openqueue_vars.queue[i].timeout),sizeof(timeout_t)); //by default, no timeout
          ENABLE_INTERRUPTS(); 
          return &openqueue_vars.queue[i];
       }
@@ -120,11 +222,12 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
 \returns A pointer to the queue entry when it could be allocated, or NULL when
          it could not be allocated (buffer full or not synchronized).
 */
-OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const uint8_t *timeout) {
+OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const timeout_t timeout) {
    OpenQueueEntry_t* entry;
-   uint8_t     now[5];
-   uint8_t     res[5];
-   uint8_t     remainder, i;
+   timeout_t     now;
+   timeout_t     res;
+   uint8_t       remainder, i;
+   uint64_t       diff;
 
    entry = openqueue_getFreePacketBuffer(creator);
 
@@ -133,11 +236,11 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
       return(NULL);
 
    //computes when this entry will become obsolete
-   ieee154e_getAsn(now);
+   ieee154e_getAsn(now.byte);
    remainder = 0;
-   for(i=0;i<5;i++){
-      res[i] = timeout[i] + now[i] + remainder;
-      if (res[i] < timeout[i] && res[i] < now[i])
+   for(i=0; i<sizeof(timeout_t); i++){
+      res.byte[i] = timeout.byte[i] + now.byte[i] + remainder;
+      if (res.byte[i] < timeout.byte[i] && res.byte[i] < now.byte[i])
          remainder = 1;
       else
          remainder = 0;
@@ -145,7 +248,22 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
 
    //saves the timeout in the new entry
    for(i=0;i<5;i++)
-      entry->timeout[i] = res[i];
+      entry->timeout.byte[i] = res.byte[i];
+
+
+   if (openqueue_vars.timeoutScheduled)
+      return(entry);
+
+   //verification schedule
+   diff = openqueue_timeout_diff(now, openqueue_vars.queue[i].timeout);
+   openqueue_vars.timeoutTimerId = opentimers_start(
+         diff * TsSlotDuration,
+         TIMER_ONESHOT,
+         TIME_MS,
+         openqueue_timeout_flush
+   );
+   openqueue_vars.timeoutScheduled = TRUE;
+
 
    return(entry);
 }
