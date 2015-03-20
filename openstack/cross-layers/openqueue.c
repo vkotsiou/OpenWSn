@@ -3,6 +3,9 @@
 #include "openserial.h"
 #include "packetfunctions.h"
 #include "IEEE802154E.h"
+#include "scheduler.h"
+#include "opentimers.h"
+
 
 //=========================== variables =======================================
 
@@ -11,7 +14,11 @@ openqueue_vars_t openqueue_vars;
 //=========================== prototypes ======================================
 
 void openqueue_reset_entry(OpenQueueEntry_t* entry);
-//void openqueue_timeout_flush(void);
+
+//to remove timeouts in the queue
+void openqueue_timeout_timer_cb(void);
+void openqueue_timeout_timer_fired(void);
+
 
 //=========================== public ==========================================
 
@@ -45,9 +52,6 @@ bool debugPrint_queue() {
    output.creator = openqueue_vars.queue[openqueue_vars.debugPrintRow].creator;
    output.owner   = openqueue_vars.queue[openqueue_vars.debugPrintRow].owner;
 
- //  memcpy(&(output.timeout), &(openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout), sizeof(asn_t));
-
-
    //ASN to push (in ASN format)
    output.timeout.byte4 = openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[4];
    output.timeout.bytes0and1 =
@@ -65,12 +69,13 @@ bool debugPrint_queue() {
    return TRUE;
 }
 
+
 //is a >= b
 bool openqueue_timeout_is_greater(timeout_t a, timeout_t b){
    uint8_t  i;
 
    //for each byte (byte 4 is the biggest)
-   for(i=4; i<=0; i--)
+   for(i=sizeof(timeout_t)-1; i>=0 && i<=sizeof(timeout_t)-1; i--)
       if (a.byte[i] > b.byte[i])
          return(TRUE);
       else if (a.byte[i] < b.byte[i])
@@ -93,35 +98,42 @@ bool openqueue_timeout_is_zero(timeout_t value){
 
 //returns a - b (or 0 if a <= b)
 uint64_t openqueue_timeout_diff(timeout_t a, timeout_t b){
-   uint8_t  i;
+   uint8_t  i, max;
    bool     greater = FALSE;
    uint64_t diff = 0;
 
-   for(i=sizeof(timeout_t)-1; i>=0; i--){
+   max = sizeof(timeout_t) - 1;
+   for(i=0 ; i<=max ; i++){
 
       //returns 0 if a <= b
-      if (!greater && a.byte[i] < b.byte[i])
+      if (!greater && a.byte[max-i] < b.byte[max-i])
          return(0);
-      else if (a.byte[i] > b.byte[i])
+
+      // a > b and we have the first different byte
+      else if (a.byte[max-i] > b.byte[max-i])
          greater = TRUE;
 
       //else, computes the difference
-      diff = diff * 256 + a.byte[i] - b.byte[i];
-
+      diff = diff * 256 + (a.byte[max-i] - b.byte[max-i]);
    }
+
    return(diff);
 }
 
 
+//timer for timeouts in openqueue
+void openqueue_timeout_timer_cb(){
+    scheduler_push_task(openqueue_timeout_timer_fired, TASKPRIO_NONE);
+}
+
 //remove the packets which are timeouted in the queue
-void openqueue_timeout_flush(void){
+void openqueue_timeout_timer_fired(void){
    uint8_t     i;
    timeout_t   now;
    uint64_t    diff_oldest, tmp;
 
    //initialization
    ieee154e_getAsn(now.byte);
-   //bzero(oldest.byte, sizeof(timeout_t));
    diff_oldest = 0;
 
 
@@ -129,40 +141,48 @@ void openqueue_timeout_flush(void){
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++) {
 
-      //this timeout must not be considered
-      if(openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout))
+      //this timeout must not be considered (no timeout or no packet)
+      if(   openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout)
+            ||
+            (openqueue_vars.queue[i].owner == COMPONENT_NULL)
+      )
       {}
 
       //this timeout has elapsed
       else if (openqueue_timeout_is_greater(
             now,
             openqueue_vars.queue[i].timeout)) {
+
+         openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
+                               (errorparameter_t)openqueue_vars.queue[i].creator,
+                               (errorparameter_t)openqueue_vars.queue[i].owner);
+
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
+
       }
 
       //entry is in the future, and we must remember the oldest one
       else if (tmp = openqueue_timeout_diff(now, openqueue_vars.queue[i].timeout) < diff_oldest)
          diff_oldest = tmp;
-         /*(openqueue_timeout_is_greater(
-            oldest,
-            openqueue_vars.queue[i].timeout))
-         memcpy(&oldest, &(openqueue_vars.queue[i].timeout), 5);
-         */
 
    }
    //next verification
    if (diff_oldest != 0)
       openqueue_vars.timeoutTimerId = opentimers_start(
-            diff_oldest * TsSlotDuration,
+            diff_oldest * TsSlotDuration * 1000,   //Tslot in us
             TIMER_ONESHOT,
             TIME_MS,
-            openqueue_timeout_flush
+            openqueue_timeout_timer_cb
       );
+
    else
       openqueue_vars.timeoutScheduled = FALSE;
 
+
     ENABLE_INTERRUPTS();
 }
+
+
 
 
 //======= called by any component
@@ -199,8 +219,8 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
       if (openqueue_vars.queue[i].owner==COMPONENT_NULL) {
          openqueue_vars.queue[i].creator=creator;
          openqueue_vars.queue[i].owner=COMPONENT_OPENQUEUE;
-         bzero(&(openqueue_vars.queue[i].timeout),sizeof(timeout_t)); //by default, no timeout
-         ENABLE_INTERRUPTS(); 
+         bzero(openqueue_vars.queue[i].timeout.byte, sizeof(timeout_t));
+         ENABLE_INTERRUPTS();
          return &openqueue_vars.queue[i];
       }
    }
@@ -210,11 +230,10 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
 
 
 
-
 //======= called by any component
 
 /**
-\brief Request a new (free) packet buffer, specifying a timeout
+\brief Request a new (free) packet buffer, specifying a timeout (in ms)
 
 \note Once a packet has been allocated, it is up to the creator of the packet
       to free it using the openqueue_freePacketBuffer() function.
@@ -222,50 +241,70 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
 \returns A pointer to the queue entry when it could be allocated, or NULL when
          it could not be allocated (buffer full or not synchronized).
 */
-OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const timeout_t timeout) {
+OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const uint16_t duration_ms) {
    OpenQueueEntry_t* entry;
    timeout_t     now;
-   timeout_t     res;
    uint8_t       remainder, i;
-   uint64_t       diff;
+   uint64_t      diff;
+   timeout_t     duration_asn;
 
+   // a new entry in the queue
    entry = openqueue_getFreePacketBuffer(creator);
 
+
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+
    //no packet is available
-   if (entry == NULL)
+   if (entry == NULL){
+      ENABLE_INTERRUPTS();
       return(NULL);
+   }
+
+   //*1000 because TsSlotDuration is in us
+   //+1 to upper ceil the nb. of slots
+   diff = ((uint64_t)1000 * duration_ms) / TsSlotDuration + 1;
+
+
+   //offset in ASN format
+   bzero(duration_asn.byte, sizeof(timeout_t));
+   for(i=sizeof(timeout_t)-1; i>=0  && i<=sizeof(timeout_t)-1; i--){
+      duration_asn.byte[i] = diff >> (8*i);
+      diff -= (uint64_t)duration_asn.byte[4] << (8*i);
+   }
 
    //computes when this entry will become obsolete
    ieee154e_getAsn(now.byte);
    remainder = 0;
    for(i=0; i<sizeof(timeout_t); i++){
-      res.byte[i] = timeout.byte[i] + now.byte[i] + remainder;
-      if (res.byte[i] < timeout.byte[i] && res.byte[i] < now.byte[i])
+      entry->timeout.byte[i] = duration_asn.byte[i] + now.byte[i] + remainder;
+      if (entry->timeout.byte[i] < duration_asn.byte[i] && entry->timeout.byte[i] < now.byte[i])
          remainder = 1;
       else
          remainder = 0;
    }
 
-   //saves the timeout in the new entry
-   for(i=0;i<5;i++)
-      entry->timeout.byte[i] = res.byte[i];
-
-
-   if (openqueue_vars.timeoutScheduled)
+   //a verification is already scheduled -> no need to schedule a new one
+   if (openqueue_vars.timeoutScheduled){
+      ENABLE_INTERRUPTS();
       return(entry);
+   }
+
 
    //verification schedule
    diff = openqueue_timeout_diff(now, openqueue_vars.queue[i].timeout);
    openqueue_vars.timeoutTimerId = opentimers_start(
-         diff * TsSlotDuration,
+         1000,
          TIMER_ONESHOT,
          TIME_MS,
-         openqueue_timeout_flush
+         openqueue_timeout_timer_cb
    );
    openqueue_vars.timeoutScheduled = TRUE;
 
 
+   ENABLE_INTERRUPTS();
    return(entry);
+
 }
 
 
@@ -275,9 +314,9 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
 /**
 \brief Free a previously-allocated packet buffer.
 
-\param pkt A pointer to the previsouly-allocated packet buffer.
+\param pkt A pointer to the previously-allocated packet buffer.
 
-\returns E_SUCCESS when the freeing was succeful.
+\returns E_SUCCESS when the freeing was successful.
 \returns E_FAIL when the module could not find the specified packet buffer.
 */
 owerror_t openqueue_freePacketBuffer(OpenQueueEntry_t* pkt) {
