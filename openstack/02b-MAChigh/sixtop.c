@@ -609,7 +609,7 @@ owerror_t sixtop_send_internal(
    msg->owner  = COMPONENT_SIXTOP_TO_IEEE802154E;
 
    //otf notification
-   otf_Notif_transmit(msg);
+   otf_notif_transmit(msg);
 
    return E_SUCCESS;
 }
@@ -839,12 +839,10 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
       case SIX_WAIT_ADDREQUEST_SENDDONE:
          sixtop_vars.six2six_state = SIX_WAIT_ADDRESPONSE;
          break;
+         
       case SIX_WAIT_ADDRESPONSE_SENDDONE:
-         
          sixtop_vars.six2six_state = SIX_IDLE;
-         
-         // notify OTF
-         //otf_notif_addedCell();
+         otf_notif_addedCell();
          
          break;
       case SIX_WAIT_REMOVEREQUEST_SENDDONE:

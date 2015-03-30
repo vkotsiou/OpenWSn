@@ -427,7 +427,7 @@ port_INLINE void activity_synchronize_newSlot() {
    // increment ASN (used only to schedule serial activity)
    incrementAsnOffset();
    
-   // to be able to receive and transmist serial even when not synchronized
+   // to be able to receive and transmit serial even when not synchronized
    // take turns every 8 slots sending and receiving
    if        ((ieee154e_vars.asn.bytes0and1&0x000f)==0x0000) {
       openserial_stop();
@@ -813,6 +813,14 @@ port_INLINE void activity_ti1ORri1() {
       return;
    }
    
+   //otf to update the schedule
+   switch(cellType){
+      case CELLTYPE_ADV:
+      case CELLTYPE_TX:
+      case CELLTYPE_TXRX:
+          otf_update_schedule();
+   }
+
    // check the schedule to see what type of slot this is
    cellType = schedule_getType();
    switch (cellType) {

@@ -27,11 +27,17 @@ void otf_notif_removedCell(void) {
    scheduler_push_task(otf_removeCell_task,TASKPRIO_OTF);
 }
 
+//to update the schedule (for on the fly re-scheduling)
+void otf_update_schedule(void){
+
+}
+
+
 //a packet is pushed to the MAC layer -> OTF notification
-void otf_Notif_transmit(OpenQueueEntry_t* msg){
-      uint8_t nbCells_curr, nbCells_req;
+void otf_notif_transmit(OpenQueueEntry_t* msg){
 
 #ifdef OTF_AGRESSIVE
+   uint8_t nbCells_curr, nbCells_req;
 
       //trackid 0 -> only periodical
       if (msg->l2_trackId == TRACK_BESTEFFORT)
@@ -51,12 +57,6 @@ void otf_Notif_transmit(OpenQueueEntry_t* msg){
       if (sixtop_getState() == SIX_IDLE){
 
          //debug
-        /* openserial_printError(
-              COMPONENT_OTF,
-              ERR_OTF_INSUFFICIENT,
-              (errorparameter_t)msg->l2_trackId,
-              (errorparameter_t)nbCells_curr
-           );*/
          openserial_printError(
               COMPONENT_OTF,
               ERR_OTF_INSUFFICIENT,
@@ -87,7 +87,6 @@ void otf_Notif_transmit(OpenQueueEntry_t* msg){
 void otf_addCell_task(void) {
    open_addr_t          neighbor;
    bool                 foundNeighbor;
-   
 
    // get preferred parent
    foundNeighbor = neighbors_getPreferredParentEui64(&neighbor);

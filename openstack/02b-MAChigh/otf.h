@@ -26,7 +26,8 @@
 
 // admin
 void      otf_init(void);
-// notification from sixtop
+
+// notification from sixtop (interest?)
 void      otf_notif_addedCell(void);
 void      otf_notif_removedCell(void);
 
@@ -34,6 +35,8 @@ void      otf_notif_removedCell(void);
 \}
 \}
 */
+//to update the schedule (for on the fly re-scheduling)
+void otf_update_schedule(void);
 
 //a packet is pushed to the MAC layer -> OTF notification
 void     otf_notif_transmit(OpenQueueEntry_t* msg);

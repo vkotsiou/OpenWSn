@@ -155,9 +155,6 @@ void openqueue_timeout_schedule_verification(void){
 
    //next verification (1000 to convert us in ms)
    if (diff_oldest != 0){
-      if (openqueue_vars.verif_scheduled)
-         opentimers_stop(openqueue_vars.timeoutTimerId);
-
       openqueue_vars.verif_scheduled = TRUE;
       openqueue_vars.timeoutTimerId = opentimers_start(
             diff_oldest * TsSlotDuration * PORT_TICS_PER_MS / 1000,
@@ -166,8 +163,11 @@ void openqueue_timeout_schedule_verification(void){
             openqueue_timeout_timer_cb
       );
    }
-   else
+   //no verification is required
+   else if (openqueue_vars.verif_scheduled){
+      opentimers_stop(openqueue_vars.timeoutTimerId);
       openqueue_vars.verif_scheduled = FALSE;
+   }
 
 }
 
