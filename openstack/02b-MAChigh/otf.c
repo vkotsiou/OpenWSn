@@ -51,12 +51,12 @@ void otf_Notif_transmit(OpenQueueEntry_t* msg){
       if (sixtop_getState() == SIX_IDLE){
 
          //debug
-         openserial_printError(
+        /* openserial_printError(
               COMPONENT_OTF,
               ERR_OTF_INSUFFICIENT,
               (errorparameter_t)msg->l2_trackId,
               (errorparameter_t)nbCells_curr
-           );
+           );*/
          openserial_printError(
               COMPONENT_OTF,
               ERR_OTF_INSUFFICIENT,

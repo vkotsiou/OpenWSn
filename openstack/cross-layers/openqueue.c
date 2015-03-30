@@ -32,8 +32,7 @@ void openqueue_init() {
    for (i=0;i<QUEUELENGTH;i++){
       openqueue_reset_entry(&(openqueue_vars.queue[i]));
    }
-   openqueue_vars.timeoutScheduled = FALSE;
-
+   openqueue_vars.verif_scheduled = FALSE;
 }
 
 /**
@@ -96,25 +95,25 @@ bool openqueue_timeout_is_zero(timeout_t value){
    return(TRUE);
 }
 
-//returns a - b (or 0 if a <= b)
+//returns a - b (or 0 if b > a)
 uint64_t openqueue_timeout_diff(timeout_t a, timeout_t b){
    uint8_t  i, max;
    bool     greater = FALSE;
    uint64_t diff = 0;
 
    max = sizeof(timeout_t) - 1;
-   for(i=0 ; i<=max ; i++){
+   for(i=max ; i>=0 && i<=max ; i--){
 
-      //returns 0 if a <= b
-      if (!greater && a.byte[max-i] < b.byte[max-i])
+      //returns 0 if a < b
+      if (!greater && a.byte[i] < b.byte[i])
          return(0);
 
-      // a > b and we have the first different byte
-      else if (a.byte[max-i] > b.byte[max-i])
+      // we have the first different byte (a > b)
+      else if (a.byte[i] > b.byte[i])
          greater = TRUE;
 
-      //else, computes the difference
-      diff = diff * 256 + (a.byte[max-i] - b.byte[max-i]);
+      //computes the difference
+      diff = diff * 256 + (a.byte[i] - b.byte[i]);
    }
 
    return(diff);
@@ -126,8 +125,9 @@ void openqueue_timeout_timer_cb(){
     scheduler_push_task(openqueue_timeout_timer_fired, TASKPRIO_NONE);
 }
 
-//remove the packets which are timeouted in the queue
-void openqueue_timeout_timer_fired(void){
+
+//schedules the next verification to remove timeouted entries in openqueue
+void openqueue_timeout_schedule_verification(void){
    uint8_t     i;
    timeout_t   now;
    uint64_t    diff_oldest, tmp;
@@ -136,50 +136,69 @@ void openqueue_timeout_timer_fired(void){
    ieee154e_getAsn(now.byte);
    diff_oldest = 0;
 
+   for (i=0;i<QUEUELENGTH;i++) {
+
+
+      //this timeout must not be considered (no timeout or no packet)
+      if (!openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout)
+            &&
+            (openqueue_vars.queue[i].owner != COMPONENT_NULL)
+            ){
+
+         //entry is in the future, and we must remember the oldest one
+         tmp = openqueue_timeout_diff(openqueue_vars.queue[i].timeout, now);
+         if ((tmp < diff_oldest) || (diff_oldest == 0))
+            diff_oldest = tmp;
+      }
+    }
+
+
+   //next verification (1000 to convert us in ms)
+   if (diff_oldest != 0){
+      if (openqueue_vars.verif_scheduled)
+         opentimers_stop(openqueue_vars.timeoutTimerId);
+
+      openqueue_vars.verif_scheduled = TRUE;
+      openqueue_vars.timeoutTimerId = opentimers_start(
+            diff_oldest * TsSlotDuration * PORT_TICS_PER_MS / 1000,
+            TIMER_ONESHOT,
+            TIME_MS,
+            openqueue_timeout_timer_cb
+      );
+   }
+   else
+      openqueue_vars.verif_scheduled = FALSE;
+
+}
+
+//remove the packets which are timeouted in the queue
+void openqueue_timeout_timer_fired(void){
+   uint8_t     i;
+   timeout_t   now;
+
+   //initialization
+   ieee154e_getAsn(now.byte);
+
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++) {
 
-      //this timeout must not be considered (no timeout or no packet)
-      if(   openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout)
-            ||
-            (openqueue_vars.queue[i].owner == COMPONENT_NULL)
-      )
-      {}
+      if (openqueue_vars.queue[i].owner != COMPONENT_NULL)
+         if (!openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout))
+            if (openqueue_timeout_is_greater(now, openqueue_vars.queue[i].timeout)){
 
-      //this timeout has elapsed
-      else if (openqueue_timeout_is_greater(
-            now,
-            openqueue_vars.queue[i].timeout)) {
-
-         openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
+               openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
                                (errorparameter_t)openqueue_vars.queue[i].creator,
                                (errorparameter_t)openqueue_vars.queue[i].owner);
 
-         openqueue_reset_entry(&(openqueue_vars.queue[i]));
-
-      }
-
-      //entry is in the future, and we must remember the oldest one
-      else if (tmp = openqueue_timeout_diff(now, openqueue_vars.queue[i].timeout) < diff_oldest)
-         diff_oldest = tmp;
-
+               openqueue_reset_entry(&(openqueue_vars.queue[i]));
+            }
    }
-   //next verification
-   if (diff_oldest != 0)
-      openqueue_vars.timeoutTimerId = opentimers_start(
-            diff_oldest * TsSlotDuration * 1000,   //Tslot in us
-            TIMER_ONESHOT,
-            TIME_MS,
-            openqueue_timeout_timer_cb
-      );
 
-   else
-      openqueue_vars.timeoutScheduled = FALSE;
-
-
-    ENABLE_INTERRUPTS();
+   //schedule the next verification
+   openqueue_timeout_schedule_verification();
+   ENABLE_INTERRUPTS();
 }
 
 
@@ -261,19 +280,19 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
       return(NULL);
    }
 
-   //*1000 because TsSlotDuration is in us
+   //*1000 since ms have to be converted in us
    //+1 to upper ceil the nb. of slots
-   diff = ((uint64_t)1000 * duration_ms) / TsSlotDuration + 1;
-
+   diff = ((uint64_t) duration_ms) / (TsSlotDuration * PORT_TICS_PER_MS / 1000) + 1;
 
    //offset in ASN format
    bzero(duration_asn.byte, sizeof(timeout_t));
    for(i=sizeof(timeout_t)-1; i>=0  && i<=sizeof(timeout_t)-1; i--){
-      duration_asn.byte[i] = diff >> (8*i);
+      duration_asn.byte[i] = (uint8_t)(diff >> (8*i));
       diff -= (uint64_t)duration_asn.byte[4] << (8*i);
    }
 
-   //computes when this entry will become obsolete
+
+   //translates the duration into an ASN
    ieee154e_getAsn(now.byte);
    remainder = 0;
    for(i=0; i<sizeof(timeout_t); i++){
@@ -284,27 +303,11 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
          remainder = 0;
    }
 
-   //a verification is already scheduled -> no need to schedule a new one
-   if (openqueue_vars.timeoutScheduled){
-      ENABLE_INTERRUPTS();
-      return(entry);
-   }
 
-
-   //verification schedule
-   diff = openqueue_timeout_diff(now, openqueue_vars.queue[i].timeout);
-   openqueue_vars.timeoutTimerId = opentimers_start(
-         1000,
-         TIMER_ONESHOT,
-         TIME_MS,
-         openqueue_timeout_timer_cb
-   );
-   openqueue_vars.timeoutScheduled = TRUE;
-
-
+   //schedule the next verification and terminates
+   openqueue_timeout_schedule_verification();
    ENABLE_INTERRUPTS();
    return(entry);
-
 }
 
 
@@ -501,4 +504,6 @@ void openqueue_reset_entry(OpenQueueEntry_t* entry) {
    entry->l2_retriesLeft               = 0;
    entry->l2_IEListPresent             = 0;
    entry->l2_trackId                   = TRACK_BESTEFFORT;
+
+   bzero(entry->timeout.byte, sizeof(timeout_t));
 }

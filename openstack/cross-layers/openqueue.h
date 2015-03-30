@@ -33,8 +33,8 @@ typedef struct {
 typedef struct {
    OpenQueueEntry_t  queue[QUEUELENGTH];
    uint8_t           debugPrintRow;
-   opentimer_id_t    timeoutTimerId;    // to remove timeouted packets
-   bool              timeoutScheduled;  // is a verification already scheduled?
+   opentimer_id_t    timeoutTimerId;   // to remove timeouted packets
+   bool              verif_scheduled;  // the verification for timeouts has been already scheduled
 } openqueue_vars_t;
 
 //=========================== prototypes ======================================
