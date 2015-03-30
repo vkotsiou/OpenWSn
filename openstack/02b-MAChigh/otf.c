@@ -16,15 +16,19 @@ otf_vars_t  otf_vars;
 //=========================== public ==========================================
 
 void otf_init(void) {
-//   otf_vars. = ;
 }
 
+
+/****
+ * Nothing to do when sixtop has removed / added some cells
+ * we (or our neighbor) already asked for that
+ */
 void otf_notif_addedCell(void) {
-   scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);
+ //  scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);
 }
 
 void otf_notif_removedCell(void) {
-   scheduler_push_task(otf_removeCell_task,TASKPRIO_OTF);
+//   scheduler_push_task(otf_removeCell_task,TASKPRIO_OTF);
 }
 
 //to update the schedule (for on the fly re-scheduling)
