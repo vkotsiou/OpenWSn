@@ -393,7 +393,7 @@ uint8_t openqueue_count_trackId(trackId_t id) {
 
    for (i=0;i<QUEUELENGTH;i++){
       if(
-            openqueue_vars.queue[i].l2_trackId == id
+            sixtop_track_equal(openqueue_vars.queue[i].l2_trackId, id)
             && openqueue_vars.queue[i].creator != COMPONENT_NULL
             )
          resVal++;
@@ -503,7 +503,8 @@ void openqueue_reset_entry(OpenQueueEntry_t* entry) {
    entry->l2_frameType                 = IEEE154_TYPE_UNDEFINED;
    entry->l2_retriesLeft               = 0;
    entry->l2_IEListPresent             = 0;
-   entry->l2_trackId                   = TRACK_BESTEFFORT;
+   entry->l2_trackId.owner             = TRACK_BESTEFFORT;
+   entry->l2_trackId.instance          = TRACK_BESTEFFORT;
 
    bzero(entry->timeout.byte, sizeof(timeout_t));
 }

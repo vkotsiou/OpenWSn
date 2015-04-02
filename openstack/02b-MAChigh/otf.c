@@ -44,7 +44,7 @@ void otf_notif_transmit(OpenQueueEntry_t* msg){
    uint8_t nbCells_curr, nbCells_req;
 
       //trackid 0 -> only periodical
-      if (msg->l2_trackId == TRACK_BESTEFFORT)
+      if (msg->l2_trackId.owner == TRACK_BESTEFFORT && msg->l2_trackId.instance == TRACK_BESTEFFORT)
          return;
 
 
@@ -64,7 +64,7 @@ void otf_notif_transmit(OpenQueueEntry_t* msg){
          openserial_printError(
               COMPONENT_OTF,
               ERR_OTF_INSUFFICIENT,
-              (errorparameter_t)msg->l2_trackId,
+              (errorparameter_t)(uint16_t)(msg->l2_trackId.instance),
               (errorparameter_t)nbCells_req
            );
 
@@ -91,34 +91,42 @@ void otf_notif_transmit(OpenQueueEntry_t* msg){
 void otf_addCell_task(void) {
    open_addr_t          neighbor;
    bool                 foundNeighbor;
+   trackId_t            trackId;
+
+   trackId.owner        = TRACK_BESTEFFORT;
+   trackId.instance     = TRACK_BESTEFFORT;
 
    // get preferred parent
    foundNeighbor = neighbors_getPreferredParentEui64(&neighbor);
    if (foundNeighbor==FALSE) {
       return;
    }
-   
+
    // call sixtop
    sixtop_addCells(
       &neighbor,
       1,
-      TRACK_BESTEFFORT
+      trackId
    );
 }
 
 void otf_removeCell_task(void) {
    open_addr_t          neighbor;
    bool                 foundNeighbor;
-   
+   trackId_t            trackId;
+
+   trackId.owner        = TRACK_BESTEFFORT;
+   trackId.instance     = TRACK_BESTEFFORT;
+
    // get preferred parent
    foundNeighbor = neighbors_getPreferredParentEui64(&neighbor);
    if (foundNeighbor==FALSE) {
       return;
    }
-   
+
    // call sixtop
    sixtop_removeCell(
       &neighbor,
-      TRACK_BESTEFFORT
+      trackId
    );
 }

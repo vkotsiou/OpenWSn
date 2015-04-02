@@ -261,7 +261,10 @@ enum{
 typedef uint16_t  errorparameter_t;
 typedef uint16_t  dagrank_t;
 typedef uint8_t   owerror_t;
-typedef uint8_t   trackId_t;
+typedef struct{
+   uint64_t owner;
+   uint16_t instance;
+}trackId_t;
 
 //ASN notes in an array of bytes
 BEGIN_PACK

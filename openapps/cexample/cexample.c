@@ -43,6 +43,7 @@ void    cexample_sendDone(OpenQueueEntry_t* msg,
 //=========================== public ==========================================
 
 void cexample_init() {
+   uint8_t i;
    
    // prepare the resource descriptor for the /ex path
    cexample_vars.desc.path0len             = sizeof(cexample_path0)-1;
@@ -52,12 +53,10 @@ void cexample_init() {
    cexample_vars.desc.componentID          = COMPONENT_CEXAMPLE;
    cexample_vars.desc.callbackRx           = &cexample_receive;
    cexample_vars.desc.callbackSendDone     = &cexample_sendDone;
-   cexample_vars.trackId				       = openrandom_get16b();
 
-   //TODO: in the future, trackid will be a 64b@ + a local trackID
-   //here, it would be <my@ + trackid> (no mutualization)
-   //if we have mutualization, it would be <@dest + trackid>
-
+   //I am the owner of this trackId
+   cexample_vars.trackId.owner             = idmanager_getMyID(ADDR_64B);
+   cexample_vars.trackId.instance          = (uint16_t)2; //openrandom_get16b();
    
    opencoap_register(&cexample_vars.desc);
    cexample_vars.timerId    = opentimers_start(CEXAMPLEPERIOD,

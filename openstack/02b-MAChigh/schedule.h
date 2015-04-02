@@ -99,7 +99,8 @@ typedef struct {
    uint8_t         numRx;
    uint8_t         numTx;
    uint8_t         numTxACK;
-   trackId_t       trackId;
+   uint16_t        trackInstance;
+   open_addr_t     trackOwner;
    asn_t           lastUsedAsn;
 } debugScheduleEntry_t;
 END_PACK

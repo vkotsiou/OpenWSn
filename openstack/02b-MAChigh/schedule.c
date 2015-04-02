@@ -26,6 +26,10 @@ void schedule_init() {
    uint8_t         i;
    slotOffset_t    running_slotOffset;
    open_addr_t     temp_neighbor;
+   trackId_t       trackId;
+
+   trackId.owner        = TRACK_BESTEFFORT;
+   trackId.instance     = TRACK_BESTEFFORT;
 
    // reset local variables
    memset(&schedule_vars,0,sizeof(schedule_vars_t));
@@ -49,7 +53,7 @@ void schedule_init() {
          FALSE,                   // shared?
          0,                       // channel offset
          &temp_neighbor,          // neighbor
-         TRACK_BESTEFFORT		  //for best effort traffic
+         trackId       		       //for best effort track
       );
       running_slotOffset++;
    } 
@@ -64,7 +68,7 @@ void schedule_init() {
          TRUE,                    // shared?
          0,                       // channel offset
          &temp_neighbor,          // neighbor
-         TRACK_BESTEFFORT		  //for best effort traffic
+         trackId          		    //for best effort traffic
      );
       running_slotOffset++;
    }
@@ -77,7 +81,7 @@ void schedule_init() {
       FALSE,                      // shared?
       0,                          // channel offset
       &temp_neighbor,             // neighbor
-      TRACK_BESTEFFORT  		  //for best effort traffic
+      trackId  		             //for best effort traffic
    );
    running_slotOffset++;
 }
@@ -116,8 +120,13 @@ bool debugPrint_schedule() {
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTx;
    temp.numTxACK                       = \
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTxACK;
-   temp.trackId                       = \
-      schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].trackId;
+   temp.trackInstance                  = \
+      (uint64_t)schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].trackId.instance;
+   memcpy(
+         &temp.trackOwner,
+         &schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].trackId.owner,
+         sizeof(open_addr_t)
+      );
    memcpy(
       &temp.lastUsedAsn,
       &schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].lastUsedAsn,
@@ -515,7 +524,7 @@ uint8_t schedule_getNbCellsWithTrackId(trackId_t id){
 
    //count the nb of usable cells (in tx) for this trackId
    for (i=0;i<MAXACTIVESLOTS;i++) {
-      if ((schedule_vars.scheduleBuf[i].trackId == id) &&
+      if (sixtop_track_equal(schedule_vars.scheduleBuf[i].trackId, id) &&
             (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
                   ||
             schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX)

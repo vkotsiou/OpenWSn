@@ -1027,9 +1027,9 @@ void sixtop_notifyReceiveLinkRequest(
    schedule_IE_ht*   schedule_ie,
    open_addr_t*      addr){
    
-   uint8_t  bw, numOfcells, frameID;
-   uint16_t trackId;
-   bool     scheduleCellSuccess;
+   uint8_t     bw, numOfcells, frameID;
+   trackId_t   trackId;
+   bool        scheduleCellSuccess;
   
    frameID     = schedule_ie->frameID;
    numOfcells  = schedule_ie->numberOfcells;
@@ -1056,6 +1056,13 @@ void sixtop_notifyReceiveLinkRequest(
          );
       scheduleCellSuccess = TRUE;
 
+    /*  openserial_printError(
+              COMPONENT_OTF,
+              ERR_OTF_INSUFFICIENT,
+              (errorparameter_t)(uint16_t)(bandwidth_ie->trackId),
+              (errorparameter_t)bandwidth_ie->numOfLinks
+           );
+*/
     }
   
    //call link response command
@@ -1146,6 +1153,8 @@ void sixtop_notifyReceiveLinkResponse(
    bw          = bandwidth_ie->numOfLinks;
    trackId     = bandwidth_ie->trackId;
   
+
+
    if(bw == 0){
       // link request failed
       // todo- should inform some one
@@ -1217,6 +1226,16 @@ void sixtop_notifyReceiveRemoveLinkRequest(
 }
 
 //======= helper functions
+
+//are these trackid equal?
+bool sixtop_track_equal(trackId_t track1, trackId_t track2){
+   return (track1.owner == track2.owner && track1.instance == track2.instance);
+}
+
+//is this the best effort track?
+bool sixtop_track_is_besteffort(trackId_t track){
+   return (track.owner == TRACK_BESTEFFORT && track.instance == TRACK_BESTEFFORT);
+}
 
 bool sixtop_candidateAddCellList(
       uint8_t*     type,

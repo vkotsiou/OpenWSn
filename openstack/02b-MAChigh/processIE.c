@@ -222,7 +222,6 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    uint8_t    len;
    mlme_IE_ht mlme_subHeader;
    len = 0;
-   
 
    //===== trackId
 
@@ -230,8 +229,7 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    packetfunctions_reserveHeaderSize(pkt, sizeof(trackId_t));
 
    // write header
-   *((trackId_t*)(pkt->payload)) = trackId;
-
+   memcpy(pkt->payload, &trackId, sizeof(trackId_t));
    len += sizeof(trackId_t);
 
    //===== number of links
@@ -489,10 +487,9 @@ port_INLINE void processIE_retrieveBandwidthIE(
    bandwidthInfo->numOfLinks  = *((uint8_t*)(pkt->payload)+localptr);
    localptr++;
 
-   // [2B] trackId
-   bandwidthInfo->trackId = *((trackId_t*)(pkt->payload)+localptr);
+   // [6B] trackId
+   memcpy(&bandwidthInfo->trackId, (pkt->payload)+localptr, sizeof(trackId_t));
    localptr+= sizeof(trackId_t);
-
 
    *ptr=localptr; 
 }
