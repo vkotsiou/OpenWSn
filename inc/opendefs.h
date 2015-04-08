@@ -261,10 +261,6 @@ enum{
 typedef uint16_t  errorparameter_t;
 typedef uint16_t  dagrank_t;
 typedef uint8_t   owerror_t;
-typedef struct{
-   uint64_t owner;
-   uint16_t instance;
-}trackId_t;
 
 //ASN notes in an array of bytes
 BEGIN_PACK
@@ -295,6 +291,13 @@ typedef struct {                                 // always written big endian, i
 } open_addr_t;
 END_PACK
 
+
+BEGIN_PACK
+typedef struct{
+   uint64_t owner;
+   uint16_t    instance;
+} track_t;
+END_PACK
 
 
 typedef struct {
@@ -330,7 +333,7 @@ typedef struct {
    uint8_t       l2_joinPriority;                // the join priority received in EB
    bool          l2_IEListPresent;               //did have IE field?
    bool          l2_joinPriorityPresent;
-   trackId_t     l2_trackId;					       //the trackid associated with this packet
+   track_t       l2_track; 					       //the track associated with this packet
    //l1 (drivers)
    uint8_t       l1_txPower;                     // power for packet to Tx at
    int8_t        l1_rssi;                        // RSSI of received packet

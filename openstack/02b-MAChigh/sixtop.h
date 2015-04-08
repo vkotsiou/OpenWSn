@@ -65,12 +65,12 @@ typedef struct {
 void      sixtop_init(void);
 void      sixtop_setKaPeriod(uint16_t kaPeriod);
 six2six_state_t sixtop_getState(void);
-//trackid helpers for the best effort track
-bool      sixtop_track_equal(trackId_t track1, trackId_t track2);
-bool      sixtop_track_is_besteffort(trackId_t track);
-// scheduling with trackId
-void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId);
-void      sixtop_removeCell(open_addr_t*  neighbor, trackId_t trackId);
+//track helpers for the best effort track
+bool      sixtop_track_equal(track_t track1, track_t track2);
+bool      sixtop_track_is_besteffort(track_t track);
+// scheduling with track
+void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track);
+void      sixtop_removeCell(open_addr_t*  neighbor, track_t track);
 // from upper layer
 owerror_t sixtop_send(OpenQueueEntry_t *msg);
 // from lower layer

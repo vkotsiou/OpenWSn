@@ -106,7 +106,7 @@ http://tools.ietf.org/html/draft-wang-6tisch-6top-sublayer-01#section-4.1.1.6
 typedef struct{
    uint8_t         slotframeID;
    uint8_t         numOfLinks;
-   trackId_t       trackId;
+   track_t         track;
 } bandwidth_IE_ht;
 
 
@@ -152,7 +152,7 @@ uint8_t          processIE_prependBandwidthIE(
    OpenQueueEntry_t*    pkt,
    uint8_t              slotframeID,
    uint8_t              numOfLinks,
-   trackId_t            trackId
+   track_t              track
 );
 uint8_t          processIE_prependSheduleIE(
    OpenQueueEntry_t*    pkt,

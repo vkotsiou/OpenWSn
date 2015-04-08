@@ -83,7 +83,7 @@ typedef struct {
    uint8_t         numRx;
    uint8_t         numTx;
    uint8_t         numTxACK;
-   trackId_t       trackId;
+   track_t         track;
    asn_t           lastUsedAsn;
    void*           next;
 } scheduleEntry_t;
@@ -139,7 +139,7 @@ owerror_t          schedule_addActiveSlot(
    bool                 shared,
    uint8_t              channelOffset,
    open_addr_t*         neighbor,
-   trackId_t			   trackId
+   track_t			      track
 );
 
 void               schedule_getSlotInfo(
@@ -159,10 +159,10 @@ void               schedule_syncSlotOffset(slotOffset_t targetSlotOffset);
 void               schedule_advanceSlot(void);
 slotOffset_t       schedule_getNextActiveSlotOffset(void);
 frameLength_t      schedule_getFrameLength(void);
-uint8_t            schedule_getNbCellsWithTrackId(trackId_t id);
+uint8_t            schedule_getNbCellsWithTrackId(track_t track);
 cellType_t         schedule_getType(void);
 void               schedule_getNeighbor(open_addr_t* addrToWrite);
-trackId_t          schedule_getTrackId(void);
+track_t            schedule_getTrack(void);
 channelOffset_t    schedule_getChannelOffset(void);
 bool               schedule_getOkToSend(void);
 void               schedule_resetBackoff(void);

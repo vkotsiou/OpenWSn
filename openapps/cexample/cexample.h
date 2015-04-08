@@ -17,7 +17,7 @@
 typedef struct {
    coap_resource_desc_t desc;
    opentimer_id_t       timerId;
-   trackId_t            trackId;
+   track_t              track;
 } cexample_vars_t;
 
 //=========================== variables =======================================

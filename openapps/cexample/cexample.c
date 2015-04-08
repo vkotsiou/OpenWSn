@@ -18,8 +18,6 @@
 //=========================== defines =========================================
 
 /// inter-packet period (in ms)
-#define CEXAMPLE_TRACKID	12
-
 #define CEXAMPLEPERIOD   10000
 #define PAYLOADLEN       40
 
@@ -54,9 +52,9 @@ void cexample_init() {
    cexample_vars.desc.callbackRx           = &cexample_receive;
    cexample_vars.desc.callbackSendDone     = &cexample_sendDone;
 
-   //I am the owner of this trackId
-   cexample_vars.trackId.owner             = idmanager_getMyID(ADDR_64B);
-   cexample_vars.trackId.instance          = (uint16_t)2; //openrandom_get16b();
+   //I am the owner of this track
+   cexample_vars.track.owner               = idmanager_getMyID(ADDR_64B);
+   cexample_vars.track.instance            = (uint16_t)2; //openrandom_get16b();
    
    opencoap_register(&cexample_vars.desc);
    cexample_vars.timerId    = opentimers_start(CEXAMPLEPERIOD,
@@ -143,7 +141,7 @@ void cexample_task_cb() {
    
 
    // metadata
-   pkt->l2_trackId                = cexample_vars.trackId;
+   pkt->l2_track                  = cexample_vars.track;
    pkt->l4_destination_port       = WKP_UDP_COAP;
    pkt->l3_destinationAdd.type    = ADDR_128B;
    memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_unistra,16);

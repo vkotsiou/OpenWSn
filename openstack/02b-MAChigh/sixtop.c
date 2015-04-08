@@ -66,7 +66,7 @@ void          sixtop_linkResponse(
    bool                 success,
    open_addr_t*         tempNeighbor,
    uint8_t              bandwidth,
-   trackId_t            trackId,
+   track_t              track,
    schedule_IE_ht*      schedule_ie
 );
 void          sixtop_notifyReceiveLinkResponse(
@@ -97,7 +97,7 @@ bool          sixtop_candidateRemoveCellList(
 void          sixtop_addCellsByState(
    uint8_t              slotframeID,
    uint8_t              numOfLinks,
-   trackId_t            trackId,
+   track_t              track,
    cellInfo_ht*         cellList,
    open_addr_t*         previousHop,
    uint8_t              state
@@ -157,7 +157,7 @@ six2six_state_t sixtop_getState(void){
 
 //======= scheduling
 
-void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId){
+void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    OpenQueueEntry_t* pkt;
    uint8_t           len;
    uint8_t           type;
@@ -235,8 +235,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId
    // create packet
    len  = 0;
    len += processIE_prependSheduleIE(pkt, type, frameID, flag, cellList);
-   len += processIE_prependBandwidthIE(pkt, frameID, numCells, trackId);
-//   len += processIE_prependTrackIdIE(pkt, trackId);
+   len += processIE_prependBandwidthIE(pkt, frameID, numCells, track);
    len += processIE_prependOpcodeIE(pkt,SIXTOP_SOFT_CELL_REQ);
    processIE_prependMLMEIE(pkt,len);
    
@@ -258,7 +257,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, trackId_t trackId
    opentimers_restart(sixtop_vars.timeoutTimerId);
 }
 
-void sixtop_removeCell(open_addr_t* neighbor, trackId_t trackId){
+void sixtop_removeCell(open_addr_t* neighbor, track_t track){
    OpenQueueEntry_t* pkt;
    bool              outcome;
    uint8_t           len;
@@ -481,8 +480,8 @@ void task_sixtopNotifReceive() {
       msg->l2_joinPriority
    );
    
-   //retrieves the trackid (associated to this cell in the schedule)
-   msg->l2_trackId = schedule_getTrackId();
+   //retrieves the track (associated to this cell in the schedule)
+   msg->l2_track = schedule_getTrack();
 
    // reset it to avoid race conditions with this var.
    msg->l2_joinPriorityPresent = FALSE; 
@@ -1028,13 +1027,13 @@ void sixtop_notifyReceiveLinkRequest(
    open_addr_t*      addr){
    
    uint8_t     bw, numOfcells, frameID;
-   trackId_t   trackId;
+   track_t     track;
    bool        scheduleCellSuccess;
   
    frameID     = schedule_ie->frameID;
    numOfcells  = schedule_ie->numberOfcells;
    bw          = bandwidth_ie->numOfLinks;
-   trackId     = bandwidth_ie->trackId;
+   track       = bandwidth_ie->track;
    
 
    // need to check whether the links are available to be scheduled.
@@ -1049,7 +1048,7 @@ void sixtop_notifyReceiveLinkRequest(
       sixtop_addCellsByState(
          frameID,
          bw,
-         trackId,
+         track,
          schedule_ie->cellList,
          addr,
          sixtop_vars.six2six_state
@@ -1059,7 +1058,7 @@ void sixtop_notifyReceiveLinkRequest(
     /*  openserial_printError(
               COMPONENT_OTF,
               ERR_OTF_INSUFFICIENT,
-              (errorparameter_t)(uint16_t)(bandwidth_ie->trackId),
+              (errorparameter_t)(uint16_t)(bandwidth_ie->track.instance),
               (errorparameter_t)bandwidth_ie->numOfLinks
            );
 */
@@ -1069,7 +1068,7 @@ void sixtop_notifyReceiveLinkRequest(
    sixtop_linkResponse(scheduleCellSuccess,
                        addr,
                        bandwidth_ie->numOfLinks,
-                       bandwidth_ie->trackId,
+                       bandwidth_ie->track,
                        schedule_ie);
 }
 
@@ -1077,7 +1076,7 @@ void sixtop_linkResponse(
    bool              scheduleCellSuccess,
    open_addr_t*      tempNeighbor,
    uint8_t           bandwidth,
-   trackId_t         trackId,
+   track_t           track,
    schedule_IE_ht*   schedule_ie){
    
    OpenQueueEntry_t* sixtopPkt;
@@ -1126,7 +1125,7 @@ void sixtop_linkResponse(
    }
 
    //add BandwidthIE
-   len += processIE_prependBandwidthIE(sixtopPkt, frameID, bw, trackId);
+   len += processIE_prependBandwidthIE(sixtopPkt, frameID, bw, track);
    //add opcodeIE
    len += processIE_prependOpcodeIE(sixtopPkt,SIXTOP_SOFT_CELL_RESPONSE);
    //add IE header 
@@ -1146,12 +1145,12 @@ void sixtop_notifyReceiveLinkResponse(
    open_addr_t*      addr){
    
    uint8_t     bw, numOfcells, frameID;
-   trackId_t   trackId;
+   track_t     track;
   
    frameID     = schedule_ie->frameID;
    numOfcells  = schedule_ie->numberOfcells;
    bw          = bandwidth_ie->numOfLinks;
-   trackId     = bandwidth_ie->trackId;
+   track       = bandwidth_ie->track;
   
 
 
@@ -1189,7 +1188,7 @@ void sixtop_notifyReceiveLinkResponse(
          //-> MUST verify a slot is correctly allocated in the schedule (in both motes)
          sixtop_addCellsByState(frameID,
                                 bw,
-                                trackId,
+                                track,
                                 schedule_ie->cellList,
                                 addr,
                                 sixtop_vars.six2six_state);
@@ -1227,13 +1226,13 @@ void sixtop_notifyReceiveRemoveLinkRequest(
 
 //======= helper functions
 
-//are these trackid equal?
-bool sixtop_track_equal(trackId_t track1, trackId_t track2){
+//are these track equal?
+bool sixtop_track_equal(track_t track1, track_t track2){
    return (track1.owner == track2.owner && track1.instance == track2.instance);
 }
 
 //is this the best effort track?
-bool sixtop_track_is_besteffort(trackId_t track){
+bool sixtop_track_is_besteffort(track_t track){
    return (track.owner == TRACK_BESTEFFORT && track.instance == TRACK_BESTEFFORT);
 }
 
@@ -1307,7 +1306,7 @@ bool sixtop_candidateRemoveCellList(
 void sixtop_addCellsByState(
       uint8_t      slotframeID,
       uint8_t      numOfLinks,
-      trackId_t    trackId,
+      track_t      track,
       cellInfo_ht* cellList,
       open_addr_t* previousHop,
       uint8_t      state
@@ -1333,7 +1332,7 @@ void sixtop_addCellsByState(
                   FALSE,
                   cellList[i].choffset,
                   &temp_neighbor,
-                  trackId
+                  track
                );
                
                break;
@@ -1346,7 +1345,7 @@ void sixtop_addCellsByState(
                   FALSE,
                   cellList[i].choffset,
                   &temp_neighbor,
-                  trackId
+                  track
                );
                break;
             default:

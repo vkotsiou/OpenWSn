@@ -70,10 +70,10 @@ owerror_t c6t_receive(
    owerror_t            outcome;
    open_addr_t          neighbor;
    bool                 foundNeighbor;
-   trackId_t            trackId;
+   track_t              track;
 
-   trackId.owner     = TRACK_BESTEFFORT;
-   trackId.instance  = TRACK_BESTEFFORT;
+   track.owner     = TRACK_BESTEFFORT;
+   track.instance  = TRACK_BESTEFFORT;
 
    switch (coap_header->Code) {
       
@@ -96,7 +96,7 @@ owerror_t c6t_receive(
          sixtop_addCells(
             &neighbor,
             1,
-            trackId
+            track
          );
          
          // set the CoAP header
@@ -123,7 +123,7 @@ owerror_t c6t_receive(
          // call sixtop
          sixtop_removeCell(
             &neighbor,
-            trackId
+            track
          );
          
          // set the CoAP header

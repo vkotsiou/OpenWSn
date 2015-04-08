@@ -216,21 +216,21 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
       OpenQueueEntry_t* pkt, 
       uint8_t           slotframeID,
       uint8_t           numOfLinks,
-      trackId_t         trackId
+      track_t           track
    ){
    
    uint8_t    len;
    mlme_IE_ht mlme_subHeader;
    len = 0;
 
-   //===== trackId
+   //===== track
 
    // reserve space
-   packetfunctions_reserveHeaderSize(pkt, sizeof(trackId_t));
+   packetfunctions_reserveHeaderSize(pkt, sizeof(track_t));
 
    // write header
-   memcpy(pkt->payload, &trackId, sizeof(trackId_t));
-   len += sizeof(trackId_t);
+   memcpy(pkt->payload, &track, sizeof(track_t));
+   len += sizeof(track_t);
 
    //===== number of links
 
@@ -487,9 +487,9 @@ port_INLINE void processIE_retrieveBandwidthIE(
    bandwidthInfo->numOfLinks  = *((uint8_t*)(pkt->payload)+localptr);
    localptr++;
 
-   // [6B] trackId
-   memcpy(&bandwidthInfo->trackId, (pkt->payload)+localptr, sizeof(trackId_t));
-   localptr+= sizeof(trackId_t);
+   // [6B] track
+   memcpy(&bandwidthInfo->track, (pkt->payload)+localptr, sizeof(track_t));
+   localptr+= sizeof(track_t);
 
    *ptr=localptr; 
 }

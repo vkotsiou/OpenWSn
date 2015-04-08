@@ -48,7 +48,7 @@ OpenQueueEntry_t*  openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, c
 owerror_t          openqueue_freePacketBuffer(OpenQueueEntry_t* pkt);
 void               openqueue_removeAllCreatedBy(uint8_t creator);
 void               openqueue_removeAllOwnedBy(uint8_t owner);
-uint8_t            openqueue_count_trackId(trackId_t id);
+uint8_t            openqueue_count_track(track_t track);
 // called by res
 OpenQueueEntry_t*  openqueue_sixtopGetSentPacket(void);
 OpenQueueEntry_t*  openqueue_sixtopGetReceivedPacket(void);

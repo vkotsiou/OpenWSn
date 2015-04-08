@@ -26,10 +26,10 @@ void schedule_init() {
    uint8_t         i;
    slotOffset_t    running_slotOffset;
    open_addr_t     temp_neighbor;
-   trackId_t       trackId;
+   track_t         track;
 
-   trackId.owner        = TRACK_BESTEFFORT;
-   trackId.instance     = TRACK_BESTEFFORT;
+   track.owner        = TRACK_BESTEFFORT;
+   track.instance     = TRACK_BESTEFFORT;
 
    // reset local variables
    memset(&schedule_vars,0,sizeof(schedule_vars_t));
@@ -53,7 +53,7 @@ void schedule_init() {
          FALSE,                   // shared?
          0,                       // channel offset
          &temp_neighbor,          // neighbor
-         trackId       		       //for best effort track
+         track       		       //for best effort track
       );
       running_slotOffset++;
    } 
@@ -68,7 +68,7 @@ void schedule_init() {
          TRUE,                    // shared?
          0,                       // channel offset
          &temp_neighbor,          // neighbor
-         trackId          		    //for best effort traffic
+         track          		    //for best effort traffic
      );
       running_slotOffset++;
    }
@@ -81,7 +81,7 @@ void schedule_init() {
       FALSE,                      // shared?
       0,                          // channel offset
       &temp_neighbor,             // neighbor
-      trackId  		             //for best effort traffic
+      track    		             //for best effort traffic
    );
    running_slotOffset++;
 }
@@ -121,10 +121,10 @@ bool debugPrint_schedule() {
    temp.numTxACK                       = \
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTxACK;
    temp.trackInstance                  = \
-      (uint64_t)schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].trackId.instance;
+      (uint64_t)schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].track.instance;
    memcpy(
          &temp.trackOwner,
-         &schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].trackId.owner,
+         &schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].track.owner,
          sizeof(open_addr_t)
       );
    memcpy(
@@ -235,7 +235,7 @@ owerror_t schedule_addActiveSlot(
       bool            shared,
       channelOffset_t channelOffset,
       open_addr_t*    neighbor,
-      trackId_t       trackId
+      track_t         track
    ) {
    scheduleEntry_t* slotContainer;
    scheduleEntry_t* previousSlotWalker;
@@ -269,7 +269,7 @@ owerror_t schedule_addActiveSlot(
    slotContainer->type                      = type;
    slotContainer->shared                    = shared;
    slotContainer->channelOffset             = channelOffset;
-   slotContainer->trackId                   = trackId;
+   slotContainer->track                     = track;
    memcpy(&slotContainer->neighbor, neighbor, sizeof(open_addr_t));
 
 
@@ -511,20 +511,20 @@ void schedule_getNeighbor(open_addr_t* addrToWrite) {
 }
 
 /**
-\brief Get the number of cells with a particular trackId in the schedule
+\brief Get the number of cells with a particular track in the schedule
 
-\returns The number of cells with this trackId
+\returns The number of cells with this track
 */
-uint8_t schedule_getNbCellsWithTrackId(trackId_t id){
+uint8_t schedule_getNbCellsWithTrack(track_t track){
    uint8_t  returnVal = 0;
    uint8_t  i;
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
 
-   //count the nb of usable cells (in tx) for this trackId
+   //count the nb of usable cells (in tx) for this track
    for (i=0;i<MAXACTIVESLOTS;i++) {
-      if (sixtop_track_equal(schedule_vars.scheduleBuf[i].trackId, id) &&
+      if (sixtop_track_equal(schedule_vars.scheduleBuf[i].track, track) &&
             (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
                   ||
             schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX)
@@ -538,17 +538,17 @@ uint8_t schedule_getNbCellsWithTrackId(trackId_t id){
 }
 
 /**
-\brief Get the trackid of the current schedule entry.
+\brief Get the track of the current schedule entry.
 
 \returns The channel offset of the current schedule entry.
 */
-trackId_t schedule_getTrackId() {
-   trackId_t returnVal;
+track_t schedule_getTrack() {
+   track_t returnVal;
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
 
-   returnVal = schedule_vars.currentScheduleEntry->trackId;
+   returnVal = schedule_vars.currentScheduleEntry->track;
 
    ENABLE_INTERRUPTS();
 
