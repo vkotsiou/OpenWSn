@@ -52,8 +52,8 @@ void cexample_init() {
    cexample_vars.desc.callbackRx           = &cexample_receive;
    cexample_vars.desc.callbackSendDone     = &cexample_sendDone;
 
-   //I am the owner of this track
-   cexample_vars.track.owner               = idmanager_getMyID(ADDR_64B);
+   //I am the owner of this track (8 bytes address)
+   memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
    cexample_vars.track.instance            = (uint16_t)2; //openrandom_get16b();
    
    opencoap_register(&cexample_vars.desc);

@@ -28,7 +28,7 @@ void schedule_init() {
    open_addr_t     temp_neighbor;
    track_t         track;
 
-   track.owner        = TRACK_BESTEFFORT;
+   track.owner.type   = ADDR_NONE;
    track.instance     = TRACK_BESTEFFORT;
 
    // reset local variables
@@ -542,17 +542,13 @@ uint8_t schedule_getNbCellsWithTrack(track_t track){
 
 \returns The channel offset of the current schedule entry.
 */
-track_t schedule_getTrack() {
+void schedule_getTrack(track_t *track) {
    track_t returnVal;
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
-
-   returnVal = schedule_vars.currentScheduleEntry->track;
-
+   memcpy(track, &(schedule_vars.currentScheduleEntry->track), sizeof(track_t));
    ENABLE_INTERRUPTS();
-
-   return returnVal;
 }
 
 /**

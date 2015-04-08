@@ -72,8 +72,8 @@ owerror_t c6t_receive(
    bool                 foundNeighbor;
    track_t              track;
 
-   track.owner     = TRACK_BESTEFFORT;
-   track.instance  = TRACK_BESTEFFORT;
+   track.owner.type     = ADDR_NONE;
+   track.instance       = TRACK_BESTEFFORT;
 
    switch (coap_header->Code) {
       

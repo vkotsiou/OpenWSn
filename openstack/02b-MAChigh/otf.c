@@ -43,10 +43,21 @@ void otf_notif_transmit(OpenQueueEntry_t* msg){
 #ifdef OTF_AGRESSIVE
    uint8_t nbCells_curr, nbCells_req;
 
-      //track 0 -> only periodical
-      if (msg->l2_track.owner == TRACK_BESTEFFORT && msg->l2_track.instance == TRACK_BESTEFFORT)
-         return;
 
+      //error
+      if (msg->l2_track.instance == TRACK_BESTEFFORT && msg->l2_track.owner.type != ADDR_NONE){
+         openserial_printError(
+                      COMPONENT_OTF,
+                      ERR_BAD_TRACKID,
+                      (errorparameter_t)(uint16_t)(msg->l2_track.owner.type),
+                      (errorparameter_t)msg->l2_track.owner.addr_64b
+                   );
+      }
+
+
+      // track 0 -> only periodical
+      if (msg->l2_track.instance == TRACK_BESTEFFORT)
+         return;
 
       // requested and current allocations
       nbCells_curr   = schedule_getNbCellsWithTrack(msg->l2_track);
@@ -93,7 +104,7 @@ void otf_addCell_task(void) {
    bool                 foundNeighbor;
    track_t              track;
 
-   track.owner        = TRACK_BESTEFFORT;
+   track.owner.type   = ADDR_NONE;
    track.instance     = TRACK_BESTEFFORT;
 
    // get preferred parent
@@ -115,7 +126,7 @@ void otf_removeCell_task(void) {
    bool                 foundNeighbor;
    track_t              track;
 
-   track.owner        = TRACK_BESTEFFORT;
+   track.owner.type   = ADDR_NONE;        //no owner for the best effort track
    track.instance     = TRACK_BESTEFFORT;
 
    // get preferred parent

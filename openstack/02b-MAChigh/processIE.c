@@ -225,12 +225,15 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
 
    //===== track
 
-   // reserve space
-   packetfunctions_reserveHeaderSize(pkt, sizeof(track_t));
+   // owner address (64 bits = 8 bytes)
+   packetfunctions_reserveHeaderSize(pkt, 8);
+   memcpy(pkt->payload, &(track.owner.addr_64b), 8);
+   len += 8;
 
-   // write header
-   memcpy(pkt->payload, &track, sizeof(track_t));
-   len += sizeof(track_t);
+   // instance
+   packetfunctions_reserveHeaderSize(pkt, sizeof(uint16_t));
+   memcpy(pkt->payload, &(track.instance), sizeof(uint16_t));
+   len += sizeof(uint16_t);
 
    //===== number of links
 
@@ -487,9 +490,14 @@ port_INLINE void processIE_retrieveBandwidthIE(
    bandwidthInfo->numOfLinks  = *((uint8_t*)(pkt->payload)+localptr);
    localptr++;
 
-   // [6B] track
-   memcpy(&bandwidthInfo->track, (pkt->payload)+localptr, sizeof(track_t));
-   localptr+= sizeof(track_t);
+   // [2B] track instance
+   memcpy(&(bandwidthInfo->track.instance), (pkt->payload)+localptr, sizeof(uint16_t));
+   localptr += sizeof(uint16_t);
+
+   // [8B] track owner
+   memcpy(&(bandwidthInfo->track.owner.addr_64b), (pkt->payload)+localptr, 8);
+   bandwidthInfo->track.owner.type = ADDR_64B;
+   localptr += 8;
 
    *ptr=localptr; 
 }

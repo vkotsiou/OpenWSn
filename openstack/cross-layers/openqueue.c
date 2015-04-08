@@ -435,15 +435,26 @@ OpenQueueEntry_t* openqueue_sixtopGetReceivedPacket() {
 
 //======= called by IEEE80215E
 
-OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor) {
+OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *track) {
    uint8_t i;
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
-   if (toNeighbor->type==ADDR_64B) {
-      // a neighbor is specified, look for a packet unicast to that neigbhbor
+   if (toNeighbor->type == ADDR_64B) {
+      // a neighbor is specified, look for a packet unicast to that neighbor
       for (i=0;i<QUEUELENGTH;i++) {
          if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
-            packetfunctions_sameAddress(toNeighbor,&openqueue_vars.queue[i].l2_nextORpreviousHop)) {
+            packetfunctions_sameAddress(toNeighbor, &openqueue_vars.queue[i].l2_nextORpreviousHop) &&
+            openqueue_vars.queue[i].l2_track.instance == track->instance){
+            //packetfunctions_sameAddress(toNeighbor, &(track->owner))) {
+
+            //debug
+            openserial_printError(
+                 COMPONENT_OTF,
+                 ERR_GENERIC,
+                 (errorparameter_t)openqueue_vars.queue[i].l2_track.instance,
+                 (errorparameter_t)packetfunctions_sameAddress(toNeighbor, &(track->owner))
+              );
+
             ENABLE_INTERRUPTS();
             return &openqueue_vars.queue[i];
          }
@@ -451,9 +462,11 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor) {
    } else if (toNeighbor->type==ADDR_ANYCAST) {
       // anycast case: look for a packet which is either not created by RES
       // or an KA (created by RES, but not broadcast)
+      // and MUST be a best effort packet (else, should use a specific track)
       for (i=0;i<QUEUELENGTH;i++) {
-         if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
-             ( openqueue_vars.queue[i].creator!=COMPONENT_SIXTOP ||
+         if ((openqueue_vars.queue[i].l2_track.instance == TRACK_BESTEFFORT) &&
+             (openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E) &&
+             (openqueue_vars.queue[i].creator != COMPONENT_SIXTOP ||
                 (
                    openqueue_vars.queue[i].creator==COMPONENT_SIXTOP &&
                    packetfunctions_isBroadcastMulticast(&(openqueue_vars.queue[i].l2_nextORpreviousHop))==FALSE
@@ -503,7 +516,7 @@ void openqueue_reset_entry(OpenQueueEntry_t* entry) {
    entry->l2_frameType                 = IEEE154_TYPE_UNDEFINED;
    entry->l2_retriesLeft               = 0;
    entry->l2_IEListPresent             = 0;
-   entry->l2_track.owner               = TRACK_BESTEFFORT;
+   entry->l2_track.owner.type          = ADDR_NONE;
    entry->l2_track.instance            = TRACK_BESTEFFORT;
 
    bzero(entry->timeout.byte, sizeof(timeout_t));

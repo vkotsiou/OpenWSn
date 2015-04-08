@@ -481,7 +481,7 @@ void task_sixtopNotifReceive() {
    );
    
    //retrieves the track (associated to this cell in the schedule)
-   msg->l2_track = schedule_getTrack();
+   schedule_getTrack(&(msg->l2_track));
 
    // reset it to avoid race conditions with this var.
    msg->l2_joinPriorityPresent = FALSE; 
@@ -1228,12 +1228,25 @@ void sixtop_notifyReceiveRemoveLinkRequest(
 
 //are these track equal?
 bool sixtop_track_equal(track_t track1, track_t track2){
-   return (track1.owner == track2.owner && track1.instance == track2.instance);
+   return (packetfunctions_sameAddress(&(track1.owner), &(track2.owner))
+         && track1.instance == track2.instance);
 }
 
 //is this the best effort track?
 bool sixtop_track_is_besteffort(track_t track){
-   return (track.owner == TRACK_BESTEFFORT && track.instance == TRACK_BESTEFFORT);
+
+   //error
+     if (track.instance == TRACK_BESTEFFORT && track.owner.type != ADDR_NONE){
+        openserial_printError(
+                     COMPONENT_OTF,
+                     ERR_BAD_TRACKID,
+                     (errorparameter_t)(uint16_t)(track.owner.type),
+                     (errorparameter_t)track.owner.addr_64b
+                  );
+     }
+
+
+   return (track.instance == TRACK_BESTEFFORT);
 }
 
 bool sixtop_candidateAddCellList(
