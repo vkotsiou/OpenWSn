@@ -436,7 +436,9 @@ OpenQueueEntry_t* openqueue_sixtopGetReceivedPacket() {
 //======= called by IEEE80215E
 
 OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *track) {
-   uint8_t i;
+   uint8_t  i;
+   uint8_t  j;
+
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    if (toNeighbor->type == ADDR_64B) {
@@ -444,16 +446,10 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
       for (i=0;i<QUEUELENGTH;i++) {
          if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
             packetfunctions_sameAddress(toNeighbor, &openqueue_vars.queue[i].l2_nextORpreviousHop) &&
-            openqueue_vars.queue[i].l2_track.instance == track->instance){
-            //packetfunctions_sameAddress(toNeighbor, &(track->owner))) {
+            (openqueue_vars.queue[i].l2_track.instance == track->instance) &&
+            (packetfunctions_sameAddress(&(openqueue_vars.queue[i].l2_track.owner), &(track->owner)))
+            ) {
 
-            //debug
-            openserial_printError(
-                 COMPONENT_OTF,
-                 ERR_GENERIC,
-                 (errorparameter_t)openqueue_vars.queue[i].l2_track.instance,
-                 (errorparameter_t)packetfunctions_sameAddress(toNeighbor, &(track->owner))
-              );
 
             ENABLE_INTERRUPTS();
             return &openqueue_vars.queue[i];
