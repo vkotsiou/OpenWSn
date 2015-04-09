@@ -237,7 +237,7 @@ enum {
    ERR_BUSY_RECEIVING                  = 0x38, // busy receiving when stop of serial activity, buffer input length {1} (code location {0})
    ERR_WRONG_CRC_INPUT                 = 0x39, // wrong CRC in input Buffer (input length {0})
    //NEW FABRICE
-   ERR_OTF_INSUFFICIENT                = 0x3a, // otf does not have enough cells (trackId {0}, nbCells to add {1})
+   ERR_OTF_INSUFFICIENT                = 0x3a, // otf does not have enough cells (trackInstance {0}, nbCells to add {1})
    ERR_UNKNOWN_NEIGHBOR                = 0x3b, // Unknown neighbor {0}{1} (4 last bytes)
    ERR_SIXTOP_WRONG_PARAM              = 0x3e, // sixtop expects another parameter in its request (bw {0}, nbcells {1})
    ERR_SIXTOP_WRONG_STATE              = 0x3c, // sixtop current state {0} while {1} is expected

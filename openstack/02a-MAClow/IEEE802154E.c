@@ -826,7 +826,7 @@ port_INLINE void activity_ti1ORri1() {
    cellType = schedule_getType();
    switch (cellType) {
       case CELLTYPE_ADV:
-         // stop using serial
+        // stop using serial
          openserial_stop();
          // look for an ADV packet in the queue
          ieee154e_vars.dataToSend = openqueue_macGetAdvPacket();
@@ -853,10 +853,21 @@ port_INLINE void activity_ti1ORri1() {
             radiotimer_schedule(DURATION_tt1);
          }
          break;
-      case CELLTYPE_TXRX:
       case CELLTYPE_TX:
+  /*       openserial_printError(
+                                 COMPONENT_IEEE802154E,
+                                 ERR_GENERIC,
+                                 (errorparameter_t)15,
+                                 (errorparameter_t)ieee154e_vars.asnOffset
+                              );
+    */
+         case CELLTYPE_TXRX:
+
+
+
          // stop using serial
          openserial_stop();
+
          // check whether we can send
          if (schedule_getOkToSend()) {
             schedule_getNeighbor(&neighbor);
@@ -883,6 +894,14 @@ port_INLINE void activity_ti1ORri1() {
             break;
          }
       case CELLTYPE_RX:
+
+     /*    openserial_printError(
+                                 COMPONENT_IEEE802154E,
+                                 ERR_GENERIC,
+                                 (errorparameter_t)16,
+                                 (errorparameter_t)ieee154e_vars.asnOffset
+                              );
+*/
          // stop using serial
          openserial_stop();
          // change state
@@ -932,6 +951,25 @@ port_INLINE void activity_ti2() {
    // calculate the frequency to transmit on
    ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
    
+   //debug
+/*   if (schedule_getType() == CELLTYPE_TX){
+      openserial_printError(
+                  COMPONENT_IEEE802154E,
+                  ERR_GENERIC,
+                  (errorparameter_t)ieee154e_vars.freq,
+                  (errorparameter_t)(uint16_t)11+(ieee154e_vars.asnOffset+schedule_getChannelOffset())%16
+               );
+      openserial_printError(
+                  COMPONENT_IEEE802154E,
+                  ERR_GENERIC,
+                  (errorparameter_t)schedule_getChannelOffset(),
+                  (errorparameter_t)ieee154e_vars.asnOffset
+               );
+
+
+   }
+*/
+
    // configure the radio for that frequency
    radio_setFrequency(ieee154e_vars.freq);
    
@@ -1265,6 +1303,23 @@ port_INLINE void activity_ri2() {
    // calculate the frequency to transmit on
    ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
    
+   //debug
+   /*if (schedule_getType() == CELLTYPE_RX){
+            openserial_printError(
+                  COMPONENT_IEEE802154E,
+                 ERR_GENERIC,
+                 (errorparameter_t)ieee154e_vars.freq,
+                 (errorparameter_t)11+(ieee154e_vars.asnOffset+schedule_getChannelOffset())%16
+              );
+            openserial_printError(
+                          COMPONENT_IEEE802154E,
+                          ERR_GENERIC,
+                          (errorparameter_t)schedule_getChannelOffset(),
+                          (errorparameter_t)ieee154e_vars.asnOffset
+                       );
+
+   }*/
+
    // configure the radio for that frequency
    radio_setFrequency(ieee154e_vars.freq);
    
@@ -1716,7 +1771,10 @@ port_INLINE void incrementAsnOffset() {
    }
    // increment the offsets
    ieee154e_vars.slotOffset  = (ieee154e_vars.slotOffset+1)%schedule_getFrameLength();
-   ieee154e_vars.asnOffset   = (ieee154e_vars.asnOffset+1)%16;
+   //ieee154e_vars.asnOffset   = (ieee154e_vars.asnOffset+1)%16;
+
+   ieee154e_vars.asnOffset = (uint16_t)((ieee154e_vars.asn.bytes0and1 + 65356*ieee154e_vars.asn.bytes2and3 + 4294967296*ieee154e_vars.asn.byte4) % 16);
+
 }
 
 //from upper layer that want to send the ASN to compute timing or latency
@@ -1752,11 +1810,17 @@ port_INLINE void asnStoreFromAdv(uint8_t* asn) {
    schedule_syncSlotOffset(ieee154e_vars.slotOffset);
    ieee154e_vars.nextActiveSlotOffset = schedule_getNextActiveSlotOffset();
    
-   /* 
-   infer the asnOffset based on the fact that
-   ieee154e_vars.freq = 11 + (asnOffset + channelOffset)%16 
-   */
-   ieee154e_vars.asnOffset = ieee154e_vars.freq - 11 - schedule_getChannelOffset();
+   /*
+    * the asnOffset if the ASN modulo the number of channels (16)
+    */
+   ieee154e_vars.asnOffset = (uint16_t)((asn[0] + 256*asn[1] + 65356*asn[2] + 16777216*asn[3] + 4294967296*asn[4]) % 16);
+
+  /*
+    infer the asnOffset based on the fact that
+    ieee154e_vars.freq = 11 + (asnOffset + channelOffset)%16
+    */
+
+  //ieee154e_vars.asnOffset = ieee154e_vars.freq - 11 - schedule_getChannelOffset();
 }
 
 //======= synchronization
@@ -1949,9 +2013,9 @@ port_INLINE uint8_t calculateFrequency(uint8_t channelOffset, cellType_t cellTyp
 
 #if defined(CHANNEL_STATIC_FOR_DISCOVERY)
 
-   // comment the following line out to disable channel hopping
+   // single channel to accelerate the discovery
    if (cellType == CELLTYPE_ADV || cellType == CELLTYPE_TXRX)
-     return SYNCHRONIZING_CHANNEL; // single channel to accelerate the discovery
+     return SYNCHRONIZING_CHANNEL;
 
 #endif
 
