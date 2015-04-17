@@ -18,8 +18,9 @@
 //=========================== defines =========================================
 
 /// inter-packet period (in ms)
-#define CEXAMPLEPERIOD   10000
-#define PAYLOADLEN       40
+#define  CEXAMPLEPERIOD    10000
+#define  PAYLOADLEN        40
+#define  TRACK_INSTANCE    2
 
 const uint16_t cexample_timeout = 5000; //in ms {0, 0, 0, 0, 0};   //in ASN
 const uint8_t cexample_path0[] = "ex";
@@ -54,7 +55,7 @@ void cexample_init() {
 
    //I am the owner of this track (8 bytes address)
    memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
-   cexample_vars.track.instance            = (uint16_t)2; //openrandom_get16b();
+   cexample_vars.track.instance            = (uint16_t)TRACK_INSTANCE;
    
    opencoap_register(&cexample_vars.desc);
    cexample_vars.timerId    = opentimers_start(CEXAMPLEPERIOD,
@@ -85,6 +86,8 @@ void cexample_task_cb() {
    uint16_t             sum         = 0;
    uint16_t             avg         = 0;
    uint8_t              N_avg       = 10;
+   evtPktGen_t          dataGen;
+
    
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) return;
@@ -121,6 +124,7 @@ void cexample_task_cb() {
    for (i=0;i<PAYLOADLEN;i++) {
       pkt->payload[i]             = i;
    }
+   //seqnum are the first two bytes
    avg = openrandom_get16b();
    pkt->payload[0]                = (avg>>8)&0xff;
    pkt->payload[1]                = (avg>>0)&0xff;
@@ -160,6 +164,11 @@ void cexample_task_cb() {
       openqueue_freePacketBuffer(pkt);
    }
    
+   //stat
+   dataGen.seqnum = pkt->payload[0] + (pkt->payload[0]<<8) ;
+   memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
+   openserial_printStat(COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
+
    return;
 }
 

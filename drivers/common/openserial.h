@@ -48,6 +48,7 @@ enum {
 #define SERFRAME_MOTE2PC_ERROR              ((uint8_t)'E')
 #define SERFRAME_MOTE2PC_CRITICAL           ((uint8_t)'C')
 #define SERFRAME_MOTE2PC_REQUEST            ((uint8_t)'R')
+#define SERFRAME_MOTE2PC_STAT               ((uint8_t)'T')
 
 // frames sent PC->mote
 #define SERFRAME_PC2MOTE_SETROOT            ((uint8_t)'R')
@@ -55,6 +56,18 @@ enum {
 #define SERFRAME_PC2MOTE_TRIGGERSERIALECHO  ((uint8_t)'S')
 
 //=========================== typedef =========================================
+
+
+BEGIN_PACK
+typedef struct{
+   uint16_t    seqnum;
+   track_t     track;
+} evtPktGen_t;
+END_PACK
+
+
+
+
 
 //=========================== module variables ================================
 
@@ -82,6 +95,7 @@ typedef struct {
 //=========================== prototypes ======================================
 
 void    openserial_init(void);
+owerror_t openserial_printStat(uint8_t calling_component, uint8_t *buffer, uint8_t length);
 owerror_t openserial_printStatus(uint8_t statusElement, uint8_t* buffer, uint8_t length);
 owerror_t openserial_printInfo(uint8_t calling_component, uint8_t error_code,
                               errorparameter_t arg1,
