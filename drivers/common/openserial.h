@@ -55,6 +55,10 @@ enum {
 #define SERFRAME_PC2MOTE_DATA               ((uint8_t)'D')
 #define SERFRAME_PC2MOTE_TRIGGERSERIALECHO  ((uint8_t)'S')
 
+
+enum{
+   SERTYPE_DATA_GENERATION    = 0x01
+};
 //=========================== typedef =========================================
 
 
@@ -95,7 +99,7 @@ typedef struct {
 //=========================== prototypes ======================================
 
 void    openserial_init(void);
-owerror_t openserial_printStat(uint8_t calling_component, uint8_t *buffer, uint8_t length);
+owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length);
 owerror_t openserial_printStatus(uint8_t statusElement, uint8_t* buffer, uint8_t length);
 owerror_t openserial_printInfo(uint8_t calling_component, uint8_t error_code,
                               errorparameter_t arg1,

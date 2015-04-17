@@ -167,7 +167,7 @@ void cexample_task_cb() {
    //stat
    dataGen.seqnum = pkt->payload[0] + (pkt->payload[0]<<8) ;
    memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
-   openserial_printStat(COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
+   openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
 
    return;
 }

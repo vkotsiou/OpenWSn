@@ -99,7 +99,7 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
 }
 
 
-owerror_t openserial_printStat(uint8_t calling_component, uint8_t *buffer, uint8_t length) {
+owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length) {
    uint8_t    i;
    uint8_t  asn[5];
    INTERRUPT_DECLARATION();
@@ -119,6 +119,7 @@ owerror_t openserial_printStat(uint8_t calling_component, uint8_t *buffer, uint8
    outputHdlcWrite(asn[2]);
    outputHdlcWrite(asn[3]);
    outputHdlcWrite(asn[4]);
+   outputHdlcWrite(type);
    for (i=0;i<length;i++){
        outputHdlcWrite(buffer[i]);
    }
