@@ -984,6 +984,14 @@ port_INLINE void activity_ti2() {
    // arm tt2
    radiotimer_schedule(DURATION_tt2);
    
+   //stat
+   evtPktTx_t evt;
+   evt.length  = ieee154e_vars.dataToSend->length;
+   evt.txPower = ieee154e_vars.dataToSend->l1_txPower;
+   memcpy(&(evt.l2Dest), &(ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b[0]), 8);
+   memcpy(&(evt.track), &(ieee154e_vars.dataToSend->l2_track), sizeof(ieee154e_vars.dataToSend->l2_track));
+   openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+
    // change state
    changeState(S_TXDATAREADY);
 }
@@ -1005,8 +1013,10 @@ port_INLINE void activity_ti3() {
    // arm tt3
    radiotimer_schedule(DURATION_tt3);
    
+
    // give the 'go' to transmit
    radio_txNow();
+
 }
 
 port_INLINE void activity_tie2() {

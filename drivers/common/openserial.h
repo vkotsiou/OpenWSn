@@ -57,7 +57,9 @@ enum {
 
 
 enum{
-   SERTYPE_DATA_GENERATION    = 0x01
+   SERTYPE_DATA_GENERATION    = 0x01,
+   SERTYPE_PKT_TX             = 0x02,
+   SERTYPE_PKT_RX             = 0x03
 };
 //=========================== typedef =========================================
 
@@ -69,7 +71,21 @@ typedef struct{
 } evtPktGen_t;
 END_PACK
 
+BEGIN_PACK
+typedef struct{
+   track_t     track;
+   uint8_t     length;
+   uint8_t     txPower;
+   uint8_t     l2Dest[8];
+} evtPktTx_t;
+END_PACK
 
+BEGIN_PACK
+typedef struct{
+   uint8_t     length;
+//missing: rssi;
+} evtPktRx_t;
+END_PACK
 
 
 
