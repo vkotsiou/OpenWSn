@@ -18,6 +18,7 @@
 //#define   RPL_OF0
 
 #define MAXNUMNEIGHBORS           15
+#define MAXNUMPARENTS           	3
 #define MAXPREFERENCE             2
 #define BADNEIGHBORMAXRSSI        -80 //dBm
 #define GOODNEIGHBORMINRSSI       -90 //dBm
@@ -76,6 +77,7 @@ END_PACK
    
 typedef struct {
    neighborRow_t        neighbors[MAXNUMNEIGHBORS];
+	 uint8_t							parents[MAXNUMPARENTS];
    dagrank_t            myDAGrank;
    uint8_t              debugRow;
    icmpv6rpl_dio_ht*    dio; //keep it global to be able to debug correctly.

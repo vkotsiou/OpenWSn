@@ -475,7 +475,13 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
       }
    } 
    // update my routing information
-   neighbors_updateMyDAGrankAndNeighborPreference(); 
+   neighbors_updateMyDAGrankAndNeighborPreference();
+
+	// stats
+   uint8_t SERTYPE_DIO = 6;
+   uint8_t txAttCounter = neighbors_vars.dio->txAttCounter;
+   openserial_printStat(SERTYPE_DIO, COMPONENT_NEIGHBORS, (uint8_t*)&txAttCounter, 
+		sizeof(txAttCounter)); 
 }
 
 //===== write addresses
