@@ -177,6 +177,7 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
                             (errorparameter_t)0,
                             (errorparameter_t)0);
    }
+<<<<<<< HEAD
    
    // The DIO / DAO was pushed to the MAC layer
    if (msg == icmpv6rpl_vars.lastDIO_tx){
@@ -206,6 +207,9 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
    }
 
 
+=======
+  
+>>>>>>> Adding txAttCounter in DIO messages
    // free packet
    openqueue_freePacketBuffer(msg);
 }
@@ -415,6 +419,7 @@ void sendDIO() {
    //===== DIO payload
    // note: DIO is already mostly populated
    icmpv6rpl_vars.dio.rank                  = neighbors_getMyDAGrank();
+   icmpv6rpl_vars.dio.txAttCounter    = sixtop_getTxAttCounter();
    packetfunctions_reserveHeaderSize(msg,sizeof(icmpv6rpl_dio_ht));
    memcpy(
       ((icmpv6rpl_dio_ht*)(msg->payload)),
@@ -445,6 +450,12 @@ void sendDIO() {
 #endif
 
    }
+
+	 // stats
+	 uint8_t SERTYPE_DIO = 6;
+	 uint8_t txAttCounter = sixtop_getTxAttCounter();
+	 openserial_printStat(SERTYPE_DIO, COMPONENT_ICMPv6RPL, (uint8_t*)&txAttCounter, sizeof(txAttCounter));
+ 
 }
 
 //===== DAO-related

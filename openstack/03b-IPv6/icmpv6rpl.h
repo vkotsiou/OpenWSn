@@ -91,6 +91,8 @@ typedef struct {
    uint8_t         flags;
    uint8_t         reserved;
    uint8_t         DODAGID[16];    
+	 uint8_t				 txAttCounter;    	/* Number of Tx attempt for paquets received during
+                                      the last slot frame*/
 } icmpv6rpl_dio_ht;
 END_PACK
 
