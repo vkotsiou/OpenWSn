@@ -986,10 +986,11 @@ port_INLINE void activity_ti2() {
    
    //stat
    evtPktTx_t evt;
-   evt.length  = ieee154e_vars.dataToSend->length;
-   evt.txPower = ieee154e_vars.dataToSend->l1_txPower;
+   evt.length           = ieee154e_vars.dataToSend->length;
+   evt.txPower          = ieee154e_vars.dataToSend->l1_txPower;
+   evt.track_instance   = ieee154e_vars.dataToSend->l2_track.instance;
    memcpy(&(evt.l2Dest), &(ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b[0]), 8);
-   memcpy(&(evt.track), &(ieee154e_vars.dataToSend->l2_track), sizeof(ieee154e_vars.dataToSend->l2_track));
+   memcpy(evt.track_owner, ieee154e_vars.dataToSend->l2_track.owner.addr_64b, 8);
    openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
 
    // change state

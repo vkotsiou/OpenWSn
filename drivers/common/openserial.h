@@ -67,13 +67,15 @@ enum{
 BEGIN_PACK
 typedef struct{
    uint16_t    seqnum;
-   track_t     track;
+   uint16_t    track_instance;
+   uint8_t     track_owner[8];
 } evtPktGen_t;
 END_PACK
 
 BEGIN_PACK
 typedef struct{
-   track_t     track;
+   uint16_t    track_instance;
+   uint8_t     track_owner[8];
    uint8_t     length;
    uint8_t     txPower;
    uint8_t     l2Dest[8];

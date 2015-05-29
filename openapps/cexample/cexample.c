@@ -52,11 +52,12 @@ void cexample_init() {
    cexample_vars.desc.componentID          = COMPONENT_CEXAMPLE;
    cexample_vars.desc.callbackRx           = &cexample_receive;
    cexample_vars.desc.callbackSendDone     = &cexample_sendDone;
+   cexample_vars.seqnum                    = openrandom_get16b();
 
    //I am the owner of this track (8 bytes address)
    memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
    cexample_vars.track.instance            = (uint16_t)TRACK_INSTANCE;
-   
+
    opencoap_register(&cexample_vars.desc);
    cexample_vars.timerId    = opentimers_start(CEXAMPLEPERIOD,
                                                 TIMER_PERIODIC,TIME_MS,
@@ -80,14 +81,8 @@ void cexample_timer_cb(){
 void cexample_task_cb() {
    OpenQueueEntry_t*    pkt;
    owerror_t            outcome;
-   uint8_t              i;
-   
-   uint16_t             x_int       = 0;
-   uint16_t             sum         = 0;
-   uint16_t             avg         = 0;
-   uint8_t              N_avg       = 10;
    evtPktGen_t          dataGen;
-
+   uint8_t              i;
    
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) return;
@@ -97,11 +92,6 @@ void cexample_task_cb() {
       opentimers_stop(cexample_vars.timerId);
       return;
    }
-   
-   for (i = 0; i < N_avg; i++) {
-      sum += x_int;
-   }
-   avg = sum/N_avg;
    
    // create a CoAP RD packet
    pkt = openqueue_getFreePacketBuffer_with_timeout(COMPONENT_CEXAMPLE, cexample_timeout);
@@ -119,15 +109,18 @@ void cexample_task_cb() {
    pkt->creator                   = COMPONENT_CEXAMPLE;
    pkt->owner                     = COMPONENT_CEXAMPLE;
 
-   // CoAP payload
+   // CoAP payload - seqnum are the first two bytes
    packetfunctions_reserveHeaderSize(pkt,PAYLOADLEN);
-   for (i=0;i<PAYLOADLEN;i++) {
-      pkt->payload[i]             = i;
-   }
-   //seqnum are the first two bytes
-   avg = openrandom_get16b();
-   pkt->payload[0]                = (avg>>8)&0xff;
-   pkt->payload[1]                = (avg>>0)&0xff;
+   pkt->payload[0]                = (cexample_vars.seqnum>>8)&0xff;
+   pkt->payload[1]                = (cexample_vars.seqnum>>0)&0xff;
+   (cexample_vars.seqnum)++;
+
+   //garbage for the remaining bytes
+   for (i=2;i<PAYLOADLEN;i++) {
+       pkt->payload[i]             = i;
+    }
+
+   //coap packet
    packetfunctions_reserveHeaderSize(pkt,1);
    pkt->payload[0] = COAP_PAYLOAD_MARKER;
    
@@ -138,8 +131,8 @@ void cexample_task_cb() {
    pkt->payload[1]                = COAP_MEDTYPE_APPOCTETSTREAM;
 
    // location-path option
-   packetfunctions_reserveHeaderSize(pkt,sizeof(cexample_path0)-1);
-   memcpy(&pkt->payload[0],cexample_path0,sizeof(cexample_path0)-1);
+   packetfunctions_reserveHeaderSize(pkt, sizeof(cexample_path0)-1);
+   memcpy(&pkt->payload[0],cexample_path0, sizeof(cexample_path0)-1);
    packetfunctions_reserveHeaderSize(pkt,1);
    pkt->payload[0]                = ((COAP_OPTION_NUM_URIPATH) << 4) | (sizeof(cexample_path0)-1);
    
@@ -148,7 +141,7 @@ void cexample_task_cb() {
    pkt->l2_track                  = cexample_vars.track;
    pkt->l4_destination_port       = WKP_UDP_COAP;
    pkt->l3_destinationAdd.type    = ADDR_128B;
-   memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_unistra,16);
+   memcpy(&pkt->l3_destinationAdd.addr_128b[0], &ipAddr_unistra, 16);
    
    // send
    outcome = opencoap_send(
@@ -165,8 +158,11 @@ void cexample_task_cb() {
    }
    
    //stat
-   dataGen.seqnum = pkt->payload[0] + (pkt->payload[1]<<8) ;
-   memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
+   dataGen.seqnum          = cexample_vars.seqnum-1 ;
+   dataGen.track_instance  = cexample_vars.track.instance;
+   memcpy(dataGen.track_owner, cexample_vars.track.owner.addr_64b, 8);
+
+   //memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
    openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
 
    return;
