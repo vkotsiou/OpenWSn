@@ -155,6 +155,9 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 
 
+uint8_t sixtop_getTxAttCounter(void){
+   return(sixtop_vars.txAttCounter);
+}
 
 //======= scheduling
 
@@ -572,6 +575,18 @@ void task_sixtopNotifReceive() {
    }
 
 
+		// update the counters
+		// -- we use only 1B for currentSlotFrame because we only care about differencing slotframe
+		uint8_t currentSlotFrame = (uint8_t)(msg->l2_asn.bytes0and1 
+										+ 65356*msg->l2_asn.bytes2and3 
+										+ 4294967296*msg->l2_asn.byte4)
+										/ SUPERFRAME_LENGTH;
+		if ( sixtop_vars.currentSlotFrame == currentSlotFrame )
+			sixtop_vars.txAttCounter+= msg->l2_numTxAttempts;
+		else { 
+			sixtop_vars.currentSlotFrame = currentSlotFrame;
+			sixtop_vars.txAttCounter = msg->l2_numTxAttempts; // restart counter
+		}
 }
 
 //======= debugging
