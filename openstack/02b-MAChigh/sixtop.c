@@ -436,6 +436,8 @@ void task_sixtopNotifSendDone() {
    }
 }
 
+
+
 void task_sixtopNotifReceive() {
    OpenQueueEntry_t* msg;
    uint16_t          lenIE;
@@ -471,7 +473,7 @@ void task_sixtopNotifReceive() {
    // toss the header IEs
    packetfunctions_tossHeader(msg,lenIE);
    
-   // update neighbor statistics
+    // update neighbor statistics
    neighbors_indicateRx(
       &(msg->l2_nextORpreviousHop),
       msg->l1_rssi,
@@ -481,8 +483,8 @@ void task_sixtopNotifReceive() {
    );
    
    // reset it to avoid race conditions with this var.
-   msg->l2_joinPriorityPresent = FALSE; 
-   
+   msg->l2_joinPriorityPresent = FALSE;
+
    // send the packet up the stack, if it qualifies
    switch (msg->l2_frameType) {
       case IEEE154_TYPE_BEACON:
@@ -509,6 +511,8 @@ void task_sixtopNotifReceive() {
          );
          break;
    }
+
+
 }
 
 //======= debugging

@@ -99,6 +99,65 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
 }
 
 
+//push an event to track received frames
+void openserial_statRx(OpenQueueEntry_t* msg){
+
+   //stat for reception
+   #ifdef STATSERIAL
+
+      evtPktRx_t evt;
+      evt.length           = msg->length;
+      evt.rssi             = msg->l1_rssi;
+      evt.lqi              = msg->l1_lqi;
+      evt.crc              = msg->l1_crc;
+      evt.track_instance   = msg->l2_track.instance;
+      evt.frame_type       = msg->l2_frameType;
+      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
+      memcpy(evt.l2Src, msg->l2_nextORpreviousHop.addr_64b, 8);
+
+      openserial_printStat(SERTYPE_PKT_RX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+  #endif
+
+}
+
+//push an event to track transmitted frames
+void openserial_statTx(OpenQueueEntry_t* msg){
+
+   #ifdef STATSERIAL
+      evtPktTx_t evt;
+      evt.length           = msg->length;
+      evt.txPower          = msg->l1_txPower;
+      evt.track_instance   = msg->l2_track.instance;
+      evt.numTxAttempts    = msg->l2_numTxAttempts;
+      evt.l4_protocol      = msg->l4_protocol;
+      evt.frame_type       = msg->l2_frameType;
+      evt.l4_sourcePortORicmpv6Type = msg->l4_sourcePortORicmpv6Type;
+      evt.l4_destination_port       = msg->l4_destination_port;
+
+      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
+      memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
+
+     openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   #endif
+}
+
+//push an event to track generated frames
+void openserial_statGen(uint16_t seqnum, track_t track){
+   #ifdef STATSERIAL
+      evtPktGen_t          dataGen;
+
+      //info
+      dataGen.seqnum          = seqnum ;
+      dataGen.track_instance  = track.instance;
+      memcpy(dataGen.track_owner, track.owner.addr_64b, 8);
+
+      //memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
+      openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
+   #endif
+
+}
+
+
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length) {
    uint8_t    i;
    uint8_t  asn[5];

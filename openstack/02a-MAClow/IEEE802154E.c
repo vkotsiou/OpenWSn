@@ -985,23 +985,8 @@ port_INLINE void activity_ti2() {
    radiotimer_schedule(DURATION_tt2);
    
 
-   //info through the serial line when a frame is received
-#ifdef STATSERIAL
-   ieee802154_header_iht ieee802514_header;
-   ieee802154_retrieveHeader(ieee154e_vars.dataToSend, &ieee802514_header);
-
-   evtPktTx_t evt;
-   evt.length           = ieee154e_vars.dataToSend->length;
-   evt.txPower          = ieee154e_vars.dataToSend->l1_txPower;
-   evt.track_instance   = ieee154e_vars.dataToSend->l2_track.instance;
-   evt.numTxAttempts    = ieee154e_vars.dataToSend->l2_numTxAttempts;
-   evt.l4_protocol      = ieee154e_vars.dataToSend->l4_protocol;
-
-   memcpy(evt.track_owner, ieee154e_vars.dataToSend->l2_track.owner.addr_64b, 8);
-   memcpy(evt.l2Dest,      ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b, 8);
-
-     openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
-#endif
+   //info through the serial line when a frame is transmitted
+   openserial_statTx(ieee154e_vars.dataToSend);
 
    // change state
    changeState(S_TXDATAREADY);
@@ -1980,21 +1965,8 @@ void notif_receive(OpenQueueEntry_t* packetReceived) {
    //retrieves the track (associated to this cell in the schedule)
    schedule_getTrack(&(packetReceived->l2_track));
 
-   //stat for reception
-#ifdef STATSERIAL
-
-   evtPktRx_t evt;
-   evt.length           = packetReceived->length;
-   evt.rssi             = packetReceived->l1_rssi;
-   evt.lqi              = packetReceived->l1_lqi;
-   evt.crc              = packetReceived->l1_crc;
-   evt.track_instance   = packetReceived->l2_track.instance;
-   memcpy(evt.track_owner, packetReceived->l2_track.owner.addr_64b, 8);
-   memcpy(evt.l2Src, packetReceived->l2_nextORpreviousHop.addr_64b, 8);
-
-
-   openserial_printStat(SERTYPE_PKT_RX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
-#endif
+   //packet received (serial line)
+   openserial_statRx(packetReceived);
 
    // post RES's Receive task
    scheduler_push_task(task_sixtopNotifReceive,TASKPRIO_SIXTOP_NOTIF_RX);
