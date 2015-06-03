@@ -480,9 +480,6 @@ void task_sixtopNotifReceive() {
       msg->l2_joinPriority
    );
    
-   //retrieves the track (associated to this cell in the schedule)
-   schedule_getTrack(&(msg->l2_track));
-
    // reset it to avoid race conditions with this var.
    msg->l2_joinPriorityPresent = FALSE; 
    

@@ -984,14 +984,24 @@ port_INLINE void activity_ti2() {
    // arm tt2
    radiotimer_schedule(DURATION_tt2);
    
-   //stat
+
+   //info through the serial line when a frame is received
+#ifdef STATSERIAL
+   ieee802154_header_iht ieee802514_header;
+   ieee802154_retrieveHeader(ieee154e_vars.dataToSend, &ieee802514_header);
+
    evtPktTx_t evt;
    evt.length           = ieee154e_vars.dataToSend->length;
    evt.txPower          = ieee154e_vars.dataToSend->l1_txPower;
    evt.track_instance   = ieee154e_vars.dataToSend->l2_track.instance;
-   memcpy(&(evt.l2Dest), &(ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b[0]), 8);
+   evt.numTxAttempts    = ieee154e_vars.dataToSend->l2_numTxAttempts;
+   evt.l4_protocol      = ieee154e_vars.dataToSend->l4_protocol;
+
    memcpy(evt.track_owner, ieee154e_vars.dataToSend->l2_track.owner.addr_64b, 8);
-   openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   memcpy(evt.l2Dest,      ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b, 8);
+
+     openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+#endif
 
    // change state
    changeState(S_TXDATAREADY);
@@ -1966,6 +1976,25 @@ void notif_receive(OpenQueueEntry_t* packetReceived) {
    // associate this packet with the virtual component
    // COMPONENT_IEEE802154E_TO_SIXTOP so sixtop can knows it's for it
    packetReceived->owner          = COMPONENT_IEEE802154E_TO_SIXTOP;
+
+   //retrieves the track (associated to this cell in the schedule)
+   schedule_getTrack(&(packetReceived->l2_track));
+
+   //stat for reception
+#ifdef STATSERIAL
+
+   evtPktRx_t evt;
+   evt.length           = packetReceived->length;
+   evt.rssi             = packetReceived->l1_rssi;
+   evt.lqi              = packetReceived->l1_lqi;
+   evt.crc              = packetReceived->l1_crc;
+   evt.track_instance   = packetReceived->l2_track.instance;
+   memcpy(evt.track_owner, packetReceived->l2_track.owner.addr_64b, 8);
+   memcpy(evt.l2Src, packetReceived->l2_nextORpreviousHop.addr_64b, 8);
+
+
+   openserial_printStat(SERTYPE_PKT_RX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+#endif
 
    // post RES's Receive task
    scheduler_push_task(task_sixtopNotifReceive,TASKPRIO_SIXTOP_NOTIF_RX);

@@ -7,6 +7,9 @@
 #ifndef __OPENDEFS_H
 #define __OPENDEFS_H
 
+
+
+
 // general
 #include <stdint.h>               // needed for uin8_t, uint16_t
 #include "toolchain_defs.h"
@@ -23,6 +26,8 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 //#define CHANNEL_STATIC_ALWAYS
 #define CHANNEL_STATIC_FOR_DISCOVERY
 
+//push statistics to the serial when an event occurs (tx, rx, etc.)
+#define STATSERIAL 1
 
 //to delimit the implementation of draft-thubert-6man-flow-label-for-rpl-03
 #define FLOW_LABEL_RPL_DOMAIN 1

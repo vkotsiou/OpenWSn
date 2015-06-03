@@ -81,7 +81,6 @@ void cexample_timer_cb(){
 void cexample_task_cb() {
    OpenQueueEntry_t*    pkt;
    owerror_t            outcome;
-   evtPktGen_t          dataGen;
    uint8_t              i;
    
    // don't run if not synch
@@ -157,13 +156,17 @@ void cexample_task_cb() {
       openqueue_freePacketBuffer(pkt);
    }
    
-   //stat
+#ifdef STATSERIAL
+   evtPktGen_t          dataGen;
+
+   //info
    dataGen.seqnum          = cexample_vars.seqnum-1 ;
    dataGen.track_instance  = cexample_vars.track.instance;
    memcpy(dataGen.track_owner, cexample_vars.track.owner.addr_64b, 8);
 
    //memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
    openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
+#endif
 
    return;
 }

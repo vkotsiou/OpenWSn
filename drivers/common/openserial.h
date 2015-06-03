@@ -66,9 +66,9 @@ enum{
 
 BEGIN_PACK
 typedef struct{
-   uint16_t    seqnum;
    uint16_t    track_instance;
    uint8_t     track_owner[8];
+   uint16_t    seqnum;
 } evtPktGen_t;
 END_PACK
 
@@ -77,15 +77,24 @@ typedef struct{
    uint16_t    track_instance;
    uint8_t     track_owner[8];
    uint8_t     length;
-   uint8_t     txPower;
    uint8_t     l2Dest[8];
+   uint8_t     txPower;
+   uint8_t     numTxAttempts;
+   uint8_t     l4_protocol;
+   uint16_t    l4_sourcePortORicmpv6Type;
+   uint16_t    l4_destination_port;
 } evtPktTx_t;
 END_PACK
 
 BEGIN_PACK
 typedef struct{
+   uint16_t    track_instance;
+   uint8_t     track_owner[8];
    uint8_t     length;
-//missing: rssi;
+   uint8_t     l2Src[8];
+   uint8_t     rssi;
+   uint8_t     lqi;
+   uint8_t     crc;
 } evtPktRx_t;
 END_PACK
 
