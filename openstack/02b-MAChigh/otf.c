@@ -19,9 +19,9 @@ void otf_init(void) {
 }
 
 
-/****
+/****otf_notif_addedCell
  * Nothing to do when sixtop has removed / added some cells
- * we (or our neighbor) already asked for that
+ * i.e. We DON'T reserve a track for the whole path toward the sink. It is reserved hop-by-hop
  */
 void otf_notif_addedCell(void) {
  //  scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);

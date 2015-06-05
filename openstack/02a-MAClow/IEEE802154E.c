@@ -582,6 +582,9 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
                             (errorparameter_t)ieee154e_vars.slotOffset,
                             (errorparameter_t)0);
       
+      //packet received (serial line)
+      openserial_statRx(ieee154e_vars.dataReceived);
+
       // send received ADV up the stack so RES can update statistics (synchronizing)
       notif_receive(ieee154e_vars.dataReceived);
       
@@ -1504,15 +1507,19 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
          break;
       }
       
+      //packet received (serial line)
+      openserial_statRx(ieee154e_vars.dataReceived);
+
       // check if ack requested
       if (ieee802514_header.ackRequested==1) {
          // arm rt5
          radiotimer_schedule(DURATION_rt5);
-      } else {
+       } else {
          // synchronize to the received packet iif I'm not a DAGroot and this is my preferred parent
          if (idmanager_getIsDAGroot()==FALSE && neighbors_isPreferredParent(&(ieee154e_vars.dataReceived->l2_nextORpreviousHop))) {
             synchronizePacket(ieee154e_vars.syncCapturedTime);
          }
+
          // indicate reception to upper layer (no ACK asked)
          notif_receive(ieee154e_vars.dataReceived);
          // reset local variable
@@ -1550,6 +1557,10 @@ port_INLINE void activity_ri6() {
       openserial_printError(COMPONENT_IEEE802154E,ERR_NO_FREE_PACKET_BUFFER,
                             (errorparameter_t)0,
                             (errorparameter_t)0);
+
+      //packet received (serial line)
+      openserial_statAckTx();
+
       // indicate we received a packet anyway (we don't want to loose any)
       notif_receive(ieee154e_vars.dataReceived);
       // free local variable
@@ -1692,7 +1703,10 @@ port_INLINE void activity_ri9(PORT_RADIOTIMER_WIDTH capturedTime) {
    if (idmanager_getIsDAGroot()==FALSE && neighbors_isPreferredParent(&(ieee154e_vars.dataReceived->l2_nextORpreviousHop))) {
       synchronizePacket(ieee154e_vars.syncCapturedTime);
    }
-   
+
+   //packet received (serial line)
+   openserial_statAckRx();
+
    // inform upper layer of reception (after ACK sent)
    notif_receive(ieee154e_vars.dataReceived);
    
@@ -1956,17 +1970,16 @@ void notif_sendDone(OpenQueueEntry_t* packetSent, owerror_t error) {
 void notif_receive(OpenQueueEntry_t* packetReceived) {
    // record the current ASN
    memcpy(&packetReceived->l2_asn, &ieee154e_vars.asn, sizeof(asn_t));
+
    // indicate reception to the schedule, to keep statistics
    schedule_indicateRx(&packetReceived->l2_asn);
+
    // associate this packet with the virtual component
    // COMPONENT_IEEE802154E_TO_SIXTOP so sixtop can knows it's for it
    packetReceived->owner          = COMPONENT_IEEE802154E_TO_SIXTOP;
 
    //retrieves the track (associated to this cell in the schedule)
    schedule_getTrack(&(packetReceived->l2_track));
-
-   //packet received (serial line)
-   openserial_statRx(packetReceived);
 
    // post RES's Receive task
    scheduler_push_task(task_sixtopNotifReceive,TASKPRIO_SIXTOP_NOTIF_RX);
@@ -2152,6 +2165,9 @@ void endSlot() {
    
    // clean up dataReceived
    if (ieee154e_vars.dataReceived!=NULL) {
+      //packet received (serial line)
+      openserial_statRx(ieee154e_vars.dataReceived);
+
       // assume something went wrong. If everything went well, dataReceived
       // would have been set to NULL in ri9.
       // indicate  "received packet" to upper layer since we don't want to loose packets

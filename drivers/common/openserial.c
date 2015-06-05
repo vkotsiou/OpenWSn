@@ -98,6 +98,21 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
    return E_SUCCESS;
 }
 
+//a ack was txed
+void openserial_statAckTx(OpenQueueEntry_t* msg){
+   //stat for reception
+    #ifdef STATSERIAL
+
+   #endif
+}
+
+//a ack was received
+void openserial_statAckRx(OpenQueueEntry_t* msg){
+   //stat for reception
+    #ifdef STATSERIAL
+
+   #endif
+}
 
 //push an event to track received frames
 void openserial_statRx(OpenQueueEntry_t* msg){
