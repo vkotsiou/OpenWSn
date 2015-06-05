@@ -67,8 +67,7 @@ typedef struct {
    six2six_state_t      six2six_state;
    uint8_t              commandID;
 	 uint8_t							currentSlotFrame;				 // The current slotframe number
-	 uint8_t							txAttCounter;			 			 /* Number of Tx attempt for paquets received during
-																								 the last slot frame */
+	 uint8_t							btneckCounter;           // counter used to identify bottleneck
 } sixtop_vars_t;
 
 //=========================== prototypes ======================================
@@ -86,7 +85,7 @@ void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t trac
 void      sixtop_removeCell(open_addr_t*  neighbor);
 // from upper layer
 owerror_t sixtop_send(OpenQueueEntry_t *msg);
-uint8_t		sixtop_getTxAttCounter(void);
+uint8_t 	sixtop_getBtneckCounter(void);
 // from lower layer
 void      task_sixtopNotifSendDone(void);
 void      task_sixtopNotifReceive(void);

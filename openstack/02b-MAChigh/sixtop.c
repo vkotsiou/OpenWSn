@@ -155,8 +155,8 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 
 
-uint8_t sixtop_getTxAttCounter(void){
-   return(sixtop_vars.txAttCounter);
+uint8_t sixtop_getBtneckCounter(){
+   return(sixtop_vars.btneckCounter);
 }
 
 //======= scheduling
@@ -582,10 +582,10 @@ void task_sixtopNotifReceive() {
 										+ 4294967296*msg->l2_asn.byte4)
 										/ SUPERFRAME_LENGTH;
 		if ( sixtop_vars.currentSlotFrame == currentSlotFrame )
-			sixtop_vars.txAttCounter+= msg->l2_numTxAttempts;
+			sixtop_vars.btneckCounter+= msg->l2_numTxAttempts;
 		else { 
 			sixtop_vars.currentSlotFrame = currentSlotFrame;
-			sixtop_vars.txAttCounter = msg->l2_numTxAttempts; // restart counter
+			sixtop_vars.btneckCounter = msg->l2_numTxAttempts; // restart counter
 		}
 }
 
