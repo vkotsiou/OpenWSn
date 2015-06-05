@@ -56,6 +56,7 @@
 // max number of parents and children to send in DAO
 //section 8.2.1 pag 67 RFC6550 -- using a subset
 #define MAX_TARGET_PARENTS        0x01
+#define MAX_NUM_BTNECKS						0x03 // maximum number of advertized bottlenecks
 
 enum{
   OPTION_ROUTE_INFORMATION_TYPE   = 0x03,
@@ -91,8 +92,7 @@ typedef struct {
    uint8_t         flags;
    uint8_t         reserved;
    uint8_t         DODAGID[16];    
-	 uint8_t				 txAttCounter;    	/* Number of Tx attempt for paquets received during
-                                      the last slot frame*/
+	 btneck_t				 btnecks[MAX_NUM_BTNECKS]; // maximum number of advertized bottlenecks tracks
 } icmpv6rpl_dio_ht;
 END_PACK
 

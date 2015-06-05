@@ -418,15 +418,15 @@ void sendDIO() {
    
    //===== DIO payload
    // note: DIO is already mostly populated
-   icmpv6rpl_vars.dio.rank                  = neighbors_getMyDAGrank();
-   icmpv6rpl_vars.dio.txAttCounter    = sixtop_getTxAttCounter();
+   icmpv6rpl_vars.dio.rank            = neighbors_getMyDAGrank();
+   neighbors_getAdvBtnecks(&icmpv6rpl_vars.dio.btnecks); // populate DIO with advertised bottleneck
    packetfunctions_reserveHeaderSize(msg,sizeof(icmpv6rpl_dio_ht));
    memcpy(
       ((icmpv6rpl_dio_ht*)(msg->payload)),
       &(icmpv6rpl_vars.dio),
       sizeof(icmpv6rpl_dio_ht)
    );
-   
+
    //===== ICMPv6 header
    packetfunctions_reserveHeaderSize(msg,sizeof(ICMPv6_ht));
    ((ICMPv6_ht*)(msg->payload))->type       = msg->l4_sourcePortORicmpv6Type;
@@ -452,9 +452,9 @@ void sendDIO() {
    }
 
 	 // stats
-	 uint8_t SERTYPE_DIO = 6;
-	 uint8_t txAttCounter = sixtop_getTxAttCounter();
-	 openserial_printStat(SERTYPE_DIO, COMPONENT_ICMPv6RPL, (uint8_t*)&txAttCounter, sizeof(txAttCounter));
+	 //uint8_t SERTYPE_DIO = 6;
+	 //uint8_t txAttCounter = sixtop_getTxAttCounter();
+	 //openserial_printStat(SERTYPE_DIO, COMPONENT_ICMPv6RPL, (uint8_t*)&txAttCounter, sizeof(txAttCounter));
  
 }
 
