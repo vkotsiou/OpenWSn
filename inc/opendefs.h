@@ -334,6 +334,13 @@ typedef struct{
 } track_t;
 END_PACK
 
+BEGIN_PACK
+typedef struct{
+   open_addr_t btneck_addr;											// the address of the bottleneck
+   uint8_t		 btneck_counter;									// the metric use to compute the bottleneck
+	 uint16_t		 btneck_etx; 											// the ETX of the Path to the bottleneck
+} btneck_t;
+END_PACK
 
 typedef struct {
    //admin
