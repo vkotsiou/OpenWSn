@@ -42,6 +42,7 @@ BEGIN_PACK
 typedef struct {
    bool             used;
    uint8_t          parentPreference;
+	 bool							inParentSet;
    bool             stableNeighbor;
    uint8_t          switchStabilityCounter;
    open_addr_t      addr_64b;
@@ -77,7 +78,8 @@ END_PACK
    
 typedef struct {
    neighborRow_t        neighbors[MAXNUMNEIGHBORS];
-	 uint8_t							parents[MAXNUMPARENTS];
+	 bool                 amIBottleneck;
+	 btneck_t             btnecks[MAX_NUM_BTNECKS];
    dagrank_t            myDAGrank;
    uint8_t              debugRow;
    icmpv6rpl_dio_ht*    dio; //keep it global to be able to debug correctly.
@@ -92,6 +94,8 @@ dagrank_t     neighbors_getMyDAGrank(void);
 uint8_t       neighbors_getNumNeighbors(void);
 bool          neighbors_getPreferredParentEui64(open_addr_t* addressToWrite);
 open_addr_t*  neighbors_getKANeighbor(uint16_t kaPeriod);
+void          neighbors_getNeighborID(open_addr_t addr_64b);
+void          neighbors_getAdvBtnecks(btneck_t* btnecks);
 
 // interrogators
 bool          neighbors_isStableNeighbor(open_addr_t* address);
@@ -121,6 +125,7 @@ void          neighbors_getNeighbor(open_addr_t* address,uint8_t addr_type,uint8
 neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address);
 // managing routing info
 void          neighbors_updateMyDAGrankAndNeighborPreference(void);
+void          neighbors_updateMyBottlenecksSet(open_addr_t* addr_64b);
 // maintenance
 void          neighbors_removeOld(void);
 // debug
