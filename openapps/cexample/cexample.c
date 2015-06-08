@@ -17,10 +17,11 @@
 
 //=========================== defines =========================================
 
-/// inter-packet period (in ms)
-#define  CEXAMPLEPERIOD    10000
-#define  PAYLOADLEN        40
-#define  TRACK_INSTANCE    2
+/// info for traffic generation
+#define  PAYLOADLEN           40
+#define  TRACK_INSTANCE       2
+#define  CEXAMPLE_STARTTIME   10000
+#define  CEXAMPLE_PERIOD      4000
 
 const uint16_t cexample_timeout = 5000; //in ms {0, 0, 0, 0, 0};   //in ASN
 const uint8_t cexample_path0[] = "ex";
@@ -34,15 +35,14 @@ cexample_vars_t cexample_vars;
 owerror_t cexample_receive(OpenQueueEntry_t* msg,
                     coap_header_iht*  coap_header,
                     coap_option_iht*  coap_options);
+void    cexample_start(void);
 void    cexample_timer_cb(void);
 void    cexample_task_cb(void);
-void    cexample_sendDone(OpenQueueEntry_t* msg,
-                       owerror_t error);
+void    cexample_sendDone(OpenQueueEntry_t* msg, owerror_t error);
 
 //=========================== public ==========================================
 
 void cexample_init() {
-   uint8_t i;
    
    // prepare the resource descriptor for the /ex path
    cexample_vars.desc.path0len             = sizeof(cexample_path0)-1;
@@ -59,10 +59,39 @@ void cexample_init() {
    cexample_vars.track.instance            = (uint16_t)TRACK_INSTANCE;
 
    opencoap_register(&cexample_vars.desc);
-   cexample_vars.timerId    = opentimers_start(CEXAMPLEPERIOD,
-                                                TIMER_PERIODIC,TIME_MS,
-                                                cexample_timer_cb);
+
+   //starts generating packets only after a random time after begin synchronized
+   uint16_t starttime = openrandom_get16b() % CEXAMPLE_STARTTIME;
+   cexample_vars.timerId    = opentimers_start(
+         starttime,
+         TIMER_ONESHOT,TIME_MS,
+         cexample_start);
 }
+
+
+//start generating packets
+void cexample_start(){
+
+   //defer the packet generation (avoids a synchronization when all the nodes are turned on simultaneously
+   if (ieee154e_isSynch() == FALSE){
+      uint16_t starttime = openrandom_get16b() % CEXAMPLE_STARTTIME;
+
+      cexample_vars.timerId    = opentimers_start(
+            starttime,
+            TIMER_ONESHOT, TIME_MS,
+            cexample_start);
+   }
+
+   //starts generating periodical packets
+   else
+      cexample_vars.timerId    = opentimers_start(
+            CEXAMPLE_PERIOD,
+            TIMER_PERIODIC,TIME_MS,
+            cexample_timer_cb);
+}
+
+
+
 
 //=========================== private =========================================
 

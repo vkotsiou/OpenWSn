@@ -543,8 +543,6 @@ uint8_t schedule_getNbCellsWithTrack(track_t track){
 \returns The channel offset of the current schedule entry.
 */
 void schedule_getTrack(track_t *track) {
-   track_t returnVal;
-
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    memcpy(track, &(schedule_vars.currentScheduleEntry->track), sizeof(track_t));

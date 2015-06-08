@@ -5,7 +5,7 @@
 #include "IEEE802154E.h"
 #include "scheduler.h"
 #include "opentimers.h"
-
+#include "sixtop.h"
 
 //=========================== variables =======================================
 
@@ -189,8 +189,8 @@ void openqueue_timeout_timer_fired(void){
             if (openqueue_timeout_is_greater(now, openqueue_vars.queue[i].timeout)){
 
                openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
-                               (errorparameter_t)openqueue_vars.queue[i].creator,
-                               (errorparameter_t)openqueue_vars.queue[i].owner);
+                     (errorparameter_t)openqueue_vars.queue[i].owner,
+                     (errorparameter_t)openqueue_vars.queue[i].creator);
 
                openqueue_reset_entry(&(openqueue_vars.queue[i]));
             }
@@ -437,7 +437,6 @@ OpenQueueEntry_t* openqueue_sixtopGetReceivedPacket() {
 
 OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *track) {
    uint8_t  i;
-   uint8_t  j;
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
@@ -493,6 +492,13 @@ OpenQueueEntry_t* openqueue_macGetAdvPacket() {
    ENABLE_INTERRUPTS();
    return NULL;
 }
+
+//returns the pos^th packet of the queue (called by OTF to walk enough resource is allocated for the present queue)
+OpenQueueEntry_t* openqueue_getPacket(uint8_t pos) {
+   return (&(openqueue_vars.queue[pos]));
+}
+
+
 
 //=========================== private =========================================
 

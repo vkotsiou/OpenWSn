@@ -368,7 +368,7 @@ owerror_t forwarding_send_internal_RoutingTable(
       );
       return E_FAIL;
    }
-   
+
    // send to next lower layer
    return iphc_sendFromForwarding(
       msg,

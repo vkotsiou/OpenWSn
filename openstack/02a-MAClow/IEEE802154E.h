@@ -25,7 +25,7 @@
 #define ADVTIMEOUT                  30 // in seconds: sending ADV every 30 seconds
 #define MAXKAPERIOD               2000 // in slots: @15ms per slot -> ~30 seconds. Max value used by adaptive synchronization.
 #define DESYNCTIMEOUT             2333 // in slots: @15ms per slot -> ~35 seconds. A larger DESYNCTIMEOUT is needed if using a larger KATIMEOUT.
-#define LIMITLARGETIMECORRECTION     5 // threshold number of ticks to declare a timeCorrection "large"
+#define LIMITLARGETIMECORRECTION     15 // threshold number of ticks to declare a timeCorrection "large"
 #define LENGTH_IEEE154_MAX         128 // max length of a valid radio packet  
 #define DUTY_CYCLE_WINDOW_LIMIT    (0xFFFFFFFF>>1) // limit of the dutycycle window
 

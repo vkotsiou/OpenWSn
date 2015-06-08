@@ -99,7 +99,7 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
 }
 
 //a ack was txed
-void openserial_statAckTx(OpenQueueEntry_t* msg){
+void openserial_statAckTx(){
    //stat for reception
     #ifdef STATSERIAL
 
@@ -107,7 +107,7 @@ void openserial_statAckTx(OpenQueueEntry_t* msg){
 }
 
 //a ack was received
-void openserial_statAckRx(OpenQueueEntry_t* msg){
+void openserial_statAckRx(){
    //stat for reception
     #ifdef STATSERIAL
 

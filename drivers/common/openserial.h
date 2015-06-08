@@ -126,6 +126,14 @@ typedef struct {
 } openserial_vars_t;
 
 //=========================== prototypes ======================================
+//statistics
+void  openserial_statAckTx(void);
+void  openserial_statAckRx(void);
+void  openserial_statRx(OpenQueueEntry_t* msg);
+void  openserial_statTx(OpenQueueEntry_t* msg);
+void  openserial_statGen(uint16_t seqnum, track_t track);
+
+
 
 void    openserial_init(void);
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length);

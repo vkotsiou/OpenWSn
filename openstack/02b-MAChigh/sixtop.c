@@ -1242,7 +1242,7 @@ bool sixtop_track_is_besteffort(track_t track){
                      COMPONENT_OTF,
                      ERR_BAD_TRACKID,
                      (errorparameter_t)(uint16_t)(track.owner.type),
-                     (errorparameter_t)track.owner.addr_64b
+                     (errorparameter_t)track.owner.addr_64b[7]
                   );
      }
 

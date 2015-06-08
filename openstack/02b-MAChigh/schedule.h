@@ -162,6 +162,7 @@ frameLength_t      schedule_getFrameLength(void);
 uint8_t            schedule_getNbCellsWithTrackId(track_t track);
 cellType_t         schedule_getType(void);
 void               schedule_getNeighbor(open_addr_t* addrToWrite);
+uint8_t            schedule_getNbCellsWithTrack(track_t track);
 void               schedule_getTrack(track_t *track);
 channelOffset_t    schedule_getChannelOffset(void);
 bool               schedule_getOkToSend(void);
