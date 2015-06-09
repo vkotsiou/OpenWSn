@@ -9,6 +9,8 @@
 
 #include "opendefs.h"
 
+#include "schedule.h"
+
 /**
 \addtogroup drivers
 \{
@@ -59,10 +61,37 @@ enum {
 enum{
    SERTYPE_DATA_GENERATION    = 0x01,
    SERTYPE_PKT_TX             = 0x02,
-   SERTYPE_PKT_RX             = 0x03
+   SERTYPE_PKT_RX             = 0x03,
+   SERTYPE_CELL_ADD           = 0x04,
+   SERTYPE_CELL_REMOVE        = 0x05,
+   SERTYPE_ACK_TX             = 0x06,
+   SERTYPE_ACK_RX             = 0x07
 };
 //=========================== typedef =========================================
 
+BEGIN_PACK
+typedef struct{
+   uint16_t    track_instance;
+   uint8_t     track_owner[8];
+   uint8_t     slotOffset;
+   uint8_t     type;
+   uint8_t     shared;
+   uint8_t     channelOffset;
+   uint8_t     neighbor[8];
+} evtCellAdd_t;
+END_PACK
+
+BEGIN_PACK
+typedef struct{
+   uint16_t    track_instance;
+   uint8_t     track_owner[8];
+   uint8_t     slotOffset;
+   uint8_t     type;
+   uint8_t     shared;
+   uint8_t     channelOffset;
+   uint8_t     neighbor[8];
+} evtCellRem_t;
+END_PACK
 
 BEGIN_PACK
 typedef struct{
@@ -126,7 +155,9 @@ typedef struct {
 } openserial_vars_t;
 
 //=========================== prototypes ======================================
-//statistics
+//statistics to openvisualizer
+void  openserial_celladd(scheduleEntry_t* slotContainer);
+void  openserial_cellremove(scheduleEntry_t* slotContainer);
 void  openserial_statAckTx(void);
 void  openserial_statAckRx(void);
 void  openserial_statRx(OpenQueueEntry_t* msg);

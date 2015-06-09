@@ -98,9 +98,43 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
    return E_SUCCESS;
 }
 
+//a cell was inserted in the schedule
+void openserial_celladd(scheduleEntry_t* slotContainer){
+   #ifdef STATSERIAL
+
+   evtCellAdd_t evt;
+   evt.track_instance   = slotContainer->track.instance;
+   memcpy(evt.track_owner, slotContainer->track.owner.addr_64b, 8);
+   evt.slotOffset      = slotContainer->slotOffset;
+   evt.type            = slotContainer->type;
+   evt.shared          = slotContainer->shared;
+   evt.channelOffset   = slotContainer->channelOffset;
+   memcpy(evt.neighbor,      slotContainer->neighbor.addr_64b, 8);
+   openserial_printStat(SERTYPE_CELL_ADD, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   #endif
+}
+
+//a cell was removed in the schedule
+void openserial_cellremove(scheduleEntry_t* slotContainer){
+   #ifdef STATSERIAL
+
+   evtCellRem_t evt;
+   evt.track_instance   = slotContainer->track.instance;
+   memcpy(evt.track_owner, slotContainer->track.owner.addr_64b, 8);
+   evt.slotOffset      = slotContainer->slotOffset;
+   evt.type            = slotContainer->type;
+   evt.shared          = slotContainer->shared;
+   evt.channelOffset   = slotContainer->channelOffset;
+   memcpy(evt.neighbor,      slotContainer->neighbor.addr_64b, 8);
+   openserial_printStat(SERTYPE_CELL_REMOVE, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+
+   #endif
+}
+
+
 //a ack was txed
 void openserial_statAckTx(){
-   //stat for reception
+
     #ifdef STATSERIAL
 
    #endif
@@ -108,7 +142,7 @@ void openserial_statAckTx(){
 
 //a ack was received
 void openserial_statAckRx(){
-   //stat for reception
+
     #ifdef STATSERIAL
 
    #endif

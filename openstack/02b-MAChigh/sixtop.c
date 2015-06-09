@@ -808,6 +808,8 @@ void timer_sixtop_six2six_timeout_fired(void) {
    // timeout timer fired, reset the state of sixtop to idle
    sixtop_vars.six2six_state = SIX_IDLE;
 
+   //OTF callback
+   otf_update_schedule();
 
 }
 
@@ -822,6 +824,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
    numOfCells = msg->l2_scheduleIE_numOfCells;
    msg->owner = COMPONENT_SIXTOP_RES;
   
+   //the packet cannot be transmitted
    if(error == E_FAIL) {
       openserial_printError(
                COMPONENT_SIXTOP,
@@ -1056,13 +1059,6 @@ void sixtop_notifyReceiveLinkRequest(
          );
       scheduleCellSuccess = TRUE;
 
-    /*  openserial_printError(
-              COMPONENT_OTF,
-              ERR_OTF_INSUFFICIENT,
-              (errorparameter_t)(uint16_t)(bandwidth_ie->track.instance),
-              (errorparameter_t)bandwidth_ie->numOfLinks
-           );
-*/
     }
   
    //call link response command
@@ -1158,14 +1154,13 @@ void sixtop_notifyReceiveLinkResponse(
    if(bw == 0){
       // link request failed
       // todo- should inform some one
-       openserial_printError(
+      /* openserial_printError(
                     COMPONENT_SIXTOP_RES,
                     ERR_GENERIC,
                     (errorparameter_t)5,
                     (errorparameter_t)bw
                  );
-
-      return;
+          */
    } else {
       // need to check whether the links are available to be scheduled.
       if(bw != numOfcells                                                ||
@@ -1174,31 +1169,33 @@ void sixtop_notifyReceiveLinkResponse(
                                                numOfcells, 
                                                schedule_ie->cellList, 
                                                bw) == FALSE){
-         // TODO- link request failed,inform uplayer
-         openserial_printError(
+         // link request failed,inform uplayer
+         /*openserial_printError(
                       COMPONENT_SIXTOP_RES,
                       ERR_GENERIC,
                       (errorparameter_t)6,
                       (errorparameter_t)bw
                    );
-
+          */
 
       } else {
 
-         //TODO: the request has been accepted
-         //-> MUST verify a slot is correctly allocated in the schedule (in both motes)
+         //the request has been accepted
          sixtop_addCellsByState(frameID,
                                 bw,
                                 track,
                                 schedule_ie->cellList,
                                 addr,
                                 sixtop_vars.six2six_state);
-      // link request success,inform uplayer
+
       }
    }
    leds_debug_off();
    sixtop_vars.six2six_state = SIX_IDLE;
   
+   //OTF callback
+   otf_update_schedule();
+
    opentimers_stop(sixtop_vars.timeoutTimerId);
 }
 

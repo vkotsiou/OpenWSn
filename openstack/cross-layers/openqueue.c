@@ -493,9 +493,9 @@ OpenQueueEntry_t* openqueue_macGetAdvPacket() {
    return NULL;
 }
 
-//returns the pos^th packet of the queue (called by OTF to walk enough resource is allocated for the present queue)
-OpenQueueEntry_t* openqueue_getPacket(uint8_t pos) {
-   return (&(openqueue_vars.queue[pos]));
+//returns the i^th packet of the queue (called by OTF to walk enough resource is allocated for the present queue)
+OpenQueueEntry_t* openqueue_getPacket(uint8_t i) {
+   return (&(openqueue_vars.queue[i]));
 }
 
 

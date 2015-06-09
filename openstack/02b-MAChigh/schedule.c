@@ -315,6 +315,10 @@ owerror_t schedule_addActiveSlot(
    }
    
    ENABLE_INTERRUPTS();
+
+   //notification through the serial line
+   openserial_celladd(slotContainer);
+
    return E_SUCCESS;
 }
 
@@ -327,6 +331,7 @@ owerror_t schedule_addActiveSlot(
 */
 owerror_t schedule_removeActiveSlot(slotOffset_t slotOffset, open_addr_t* neighbor) {
    scheduleEntry_t* slotContainer;
+   scheduleEntry_t* slotContainer_copy;
    scheduleEntry_t* previousSlotWalker;
    
    INTERRUPT_DECLARATION();
@@ -387,12 +392,19 @@ owerror_t schedule_removeActiveSlot(slotOffset_t slotOffset, open_addr_t* neighb
          schedule_vars.currentScheduleEntry = slotContainer->next;
       }
    }
-   
+   //saves temporarily the values
+   memcpy(&slotContainer_copy, slotContainer, sizeof(slotContainer_copy));
+
    // reset removed schedule entry
    schedule_resetEntry(slotContainer);
-   
+
    ENABLE_INTERRUPTS();
    
+   //notification through the serial line
+   openserial_celladd(slotContainer);
+
+   
+
    return E_SUCCESS;
 }
 

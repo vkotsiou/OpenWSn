@@ -27,19 +27,22 @@
 // admin
 void      otf_init(void);
 
-// notification from sixtop (interest?)
+// notification from sixtop (obslolete)
 void      otf_notif_addedCell(void);
 void      otf_notif_removedCell(void);
+
+//agressive schedule update
 
 /**
 \}
 \}
 */
-//to update the schedule (for on the fly re-scheduling)
-void otf_update_schedule(void);
 
 //a packet is pushed to the MAC layer -> OTF notification
-void     otf_notif_transmit(OpenQueueEntry_t* msg);
+void  otf_notif_transmit(OpenQueueEntry_t* msg);
+
+//called to possibly update the schedule by OTF (e.g. sixtop has finished an allocation, has timeouted, etc.)
+void  otf_update_schedule(void);
 
 
 typedef struct{

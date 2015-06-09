@@ -20,7 +20,7 @@
 /// info for traffic generation
 #define  PAYLOADLEN           40
 #define  TRACK_INSTANCE       2
-#define  CEXAMPLE_STARTTIME   10000
+//#define  CEXAMPLE_STARTTIME   10000
 #define  CEXAMPLE_PERIOD      4000
 
 const uint16_t cexample_timeout = 5000; //in ms {0, 0, 0, 0, 0};   //in ASN
@@ -60,14 +60,20 @@ void cexample_init() {
 
    opencoap_register(&cexample_vars.desc);
 
+   cexample_vars.timerId    = opentimers_start(
+         CEXAMPLE_PERIOD,
+         TIMER_PERIODIC,TIME_MS,
+         cexample_timer_cb);
+
    //starts generating packets only after a random time after begin synchronized
-   uint16_t starttime = openrandom_get16b() % CEXAMPLE_STARTTIME;
+  /* uint16_t starttime = openrandom_get16b() % CEXAMPLE_STARTTIME;
    cexample_vars.timerId    = opentimers_start(
          starttime,
          TIMER_ONESHOT,TIME_MS,
          cexample_start);
+*/
 }
-
+/*
 
 //start generating packets
 void cexample_start(){
@@ -89,7 +95,7 @@ void cexample_start(){
             TIMER_PERIODIC,TIME_MS,
             cexample_timer_cb);
 }
-
+*/
 
 
 
