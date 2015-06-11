@@ -250,7 +250,7 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
    //find the first free position after the current position (if the current buffer is full)
    pos = openserial_vars.statOutputCurrentW;
    if (length + 12 + openserial_vars.statOutputBufIdxW[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
-      pos = openserial_vars.statOutputCurrentW++;
+      pos = openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
    }
    openserial_vars.statOutputBufFilled[pos] = TRUE;
 
@@ -829,7 +829,7 @@ void isr_openserial_tx() {
 
          if (openserial_vars.statOutputBufIdxW[i]==openserial_vars.statOutputBufIdxR[i]) {
             openserial_vars.statOutputBufFilled[i] = FALSE;
-            openserial_vars.statOutputCurrentR++;
+            openserial_vars.statOutputCurrentR = (1 + openserial_vars.statOutputCurrentR) % OPENSERIAL_NBFRAMES;;
          }
          if (openserial_vars.statOutputBufFilled[i]) {
             uart_writeByte(openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxR[i]++]);
