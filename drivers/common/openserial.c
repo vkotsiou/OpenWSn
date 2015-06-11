@@ -99,14 +99,41 @@ uint8_t  openserial_enough_space(uint8_t length){
 }
 */
 
-owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t length) {
-   uint8_t i, pos;
+
+//return the ouput buffer we should now use
+uint8_t openserial_get_output_buffer(uint8_t length){
+   uint8_t  pos;
 
    //find the first free position after the current position (if the current buffer is full)
    pos = openserial_vars.statOutputCurrentW;
-   if (length + 12 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
+
+   if (length * 2 + 2 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
+
+      //the next buffer is already pending -> not anymore space
+      if (openserial_vars.statOutputCurrentR == openserial_vars.statOutputCurrentW + 1)
+         return(-1);
+
+      //else, get the next buffer in the cycle
       openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
       pos = openserial_vars.statOutputCurrentW;
+   }
+
+   return(pos);
+}
+
+
+
+
+
+
+
+owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t length) {
+   uint8_t i, pos;
+
+   pos = openserial_get_output_buffer(length + 3);
+   if (pos >= OPENSERIAL_NBFRAMES){
+      leds_error_toggle();
+      return(E_FAIL);
    }
    openserial_vars.statOutputBufFilled[pos] = TRUE;
 
@@ -252,13 +279,13 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
 
    DISABLE_INTERRUPTS();
 
-   //find the first free position after the current position (if the current buffer is full)
-   pos = openserial_vars.statOutputCurrentW;
-   if (length + 12 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
-      openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
-      pos = openserial_vars.statOutputCurrentW;
+   pos = openserial_get_output_buffer(length + 9);
+   if (pos >= OPENSERIAL_NBFRAMES){
+      leds_error_toggle();
+      return(E_FAIL);
    }
    openserial_vars.statOutputBufFilled[pos] = TRUE;
+
 
 
    statOutputHdlcOpen(pos);
@@ -291,13 +318,13 @@ owerror_t openserial_printInfoErrorCritical(
    ) {
    uint8_t pos;
 
-   //find the first free position after the current position (if the current buffer is full)
-   pos = openserial_vars.statOutputCurrentW;
-   if (12 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
-      openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
-      pos = openserial_vars.statOutputCurrentW;
+   pos = openserial_get_output_buffer(8);
+   if (pos >= OPENSERIAL_NBFRAMES){
+      leds_error_toggle();
+      return(E_FAIL);
    }
    openserial_vars.statOutputBufFilled[pos] = TRUE;
+
 
 
    INTERRUPT_DECLARATION();
@@ -323,14 +350,13 @@ owerror_t openserial_printInfoErrorCritical(
 owerror_t openserial_printData(uint8_t* buffer, uint8_t length) {
    uint8_t  i;
    uint8_t  asn[5];
-
    uint8_t  pos;
 
-   //find the first free position after the current position (if the current buffer is full)
-   pos = openserial_vars.statOutputCurrentW;
-   if (12 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
-      openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
-      pos = openserial_vars.statOutputCurrentW;
+
+   pos = openserial_get_output_buffer(length + 8);
+   if (pos >= OPENSERIAL_NBFRAMES){
+      leds_error_toggle();
+      return(E_FAIL);
    }
    openserial_vars.statOutputBufFilled[pos] = TRUE;
 
