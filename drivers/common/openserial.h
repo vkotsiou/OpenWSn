@@ -40,9 +40,9 @@
 enum {
    MODE_OFF    = 0,  ///< The module is off, no serial activity.
    MODE_INPUT  = 1,  ///< The serial is listening or receiving bytes.
-   MODE_OUTPUT = 2,  ///< The serial is transmitting bytes.
-   MODE_STAT   = 3   ///< The serial is transmitting bytes for statistics
+   MODE_STAT   = 2   ///< The serial is transmitting bytes for statistics
 };
+//MODE_OUTPUT = 2,  ///< The serial is transmitting bytes.
 
 // frames sent mote->PC
 #define SERFRAME_MOTE2PC_DATA               ((uint8_t)'D')
@@ -133,7 +133,7 @@ typedef struct{
 END_PACK
 
 
-#define  OPENSERIAL_NBFRAMES        10
+#define  OPENSERIAL_NBFRAMES        4
 
 
 
@@ -154,12 +154,12 @@ typedef struct {
    uint8_t    inputBufFill;
    uint8_t    inputBuf[SERIAL_INPUT_BUFFER_SIZE];
    // output
-   bool       outputBufFilled;
+/*   bool       outputBufFilled;
    uint16_t   outputCrc;
    uint8_t    outputBufIdxW;
    uint8_t    outputBufIdxR;
    uint8_t    outputBuf[SERIAL_OUTPUT_BUFFER_SIZE];
-   //statOutput
+ */  //statOutput
  //  uint8_t    statOutputNb;
    uint8_t    statOutputCurrentR;   //index to push to serial
    uint8_t    statOutputCurrentW;   //index to write our data
