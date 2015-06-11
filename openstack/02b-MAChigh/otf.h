@@ -27,17 +27,6 @@
 // admin
 void      otf_init(void);
 
-// notification from sixtop (obslolete)
-void      otf_notif_addedCell(void);
-void      otf_notif_removedCell(void);
-
-//agressive schedule update
-
-/**
-\}
-\}
-*/
-
 //a packet is pushed to the MAC layer -> OTF notification
 void  otf_notif_transmit(OpenQueueEntry_t* msg);
 

@@ -38,9 +38,10 @@
 
 /// Modes of the openserial module.
 enum {
-   MODE_OFF    = 0, ///< The module is off, no serial activity.
-   MODE_INPUT  = 1, ///< The serial is listening or receiving bytes.
-   MODE_OUTPUT = 2  ///< The serial is transmitting bytes.
+   MODE_OFF    = 0,  ///< The module is off, no serial activity.
+   MODE_INPUT  = 1,  ///< The serial is listening or receiving bytes.
+   MODE_OUTPUT = 2,  ///< The serial is transmitting bytes.
+   MODE_STAT   = 3   ///< The serial is transmitting bytes for statistics
 };
 
 // frames sent mote->PC
@@ -68,6 +69,8 @@ enum{
    SERTYPE_ACK_RX             = 0x07
 };
 //=========================== typedef =========================================
+
+
 
 BEGIN_PACK
 typedef struct{
@@ -130,6 +133,10 @@ typedef struct{
 END_PACK
 
 
+#define  OPENSERIAL_NBFRAMES        10
+
+
+
 
 //=========================== module variables ================================
 
@@ -152,6 +159,15 @@ typedef struct {
    uint8_t    outputBufIdxW;
    uint8_t    outputBufIdxR;
    uint8_t    outputBuf[SERIAL_OUTPUT_BUFFER_SIZE];
+   //statOutput
+ //  uint8_t    statOutputNb;
+   uint8_t    statOutputCurrentR;   //index to push to serial
+   uint8_t    statOutputCurrentW;   //index to write our data
+   bool       statOutputBufFilled[OPENSERIAL_NBFRAMES];
+   uint16_t   statOutputCrc[OPENSERIAL_NBFRAMES];
+   uint8_t    statOutputBufIdxW[OPENSERIAL_NBFRAMES];
+   uint8_t    statOutputBufIdxR[OPENSERIAL_NBFRAMES];
+   uint8_t    statOutputBuf[OPENSERIAL_NBFRAMES][SERIAL_OUTPUT_BUFFER_SIZE];
 } openserial_vars_t;
 
 //=========================== prototypes ======================================

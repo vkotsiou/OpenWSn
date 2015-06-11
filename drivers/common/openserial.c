@@ -36,15 +36,21 @@ owerror_t openserial_printInfoErrorCritical(
 void outputHdlcOpen(void);
 void outputHdlcWrite(uint8_t b);
 void outputHdlcClose(void);
+// HDLC stat output
+void statOutputHdlcOpen(uint8_t i);
+void statOutputHdlcWrite(uint8_t i, uint8_t b);
+void statOutputHdlcClose(uint8_t i);
 // HDLC input
 void inputHdlcOpen(void);
 void inputHdlcWrite(uint8_t b);
 void inputHdlcClose(void);
 
+
 //=========================== public ==========================================
 
 void openserial_init() {
    uint16_t crc;
+   uint8_t  i;
    
    // reset variable
    memset(&openserial_vars,0,sizeof(openserial_vars_t));
@@ -73,13 +79,32 @@ void openserial_init() {
    openserial_vars.outputBufIdxR       = 0;
    openserial_vars.outputBufIdxW       = 0;
    
+   //queue for stats
+   openserial_vars.statOutputCurrentW  = 0;
+   openserial_vars.statOutputCurrentR  = 0;
+   for(i=0; i<OPENSERIAL_NBFRAMES; i++){
+      openserial_vars.statOutputBufFilled[i] = FALSE;
+   }
+
    // set callbacks
    uart_setCallbacks(isr_openserial_tx,
                      isr_openserial_rx);
 }
 
+
+uint8_t  openserial_enough_space(uint8_t length){
+   return(openserial_vars.outputBufIdxW - openserial_vars.outputBufIdxR + length < SERIAL_OUTPUT_BUFFER_SIZE);
+}
+
 owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t length) {
    uint8_t i;
+
+   //rough estimation to avoid a buffer overflow
+   if (openserial_vars.outputBufFilled && !openserial_enough_space(length + 8)){
+      leds_error_toggle();
+      return E_SUCCESS;
+   }
+
    INTERRUPT_DECLARATION();
    
    DISABLE_INTERRUPTS();
@@ -100,6 +125,7 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
 
 //a cell was inserted in the schedule
 void openserial_celladd(scheduleEntry_t* slotContainer){
+
    #ifdef STATSERIAL
 
    evtCellAdd_t evt;
@@ -116,6 +142,7 @@ void openserial_celladd(scheduleEntry_t* slotContainer){
 
 //a cell was removed in the schedule
 void openserial_cellremove(scheduleEntry_t* slotContainer){
+
    #ifdef STATSERIAL
 
    evtCellRem_t evt;
@@ -192,6 +219,7 @@ void openserial_statTx(OpenQueueEntry_t* msg){
 
 //push an event to track generated frames
 void openserial_statGen(uint16_t seqnum, track_t track){
+
    #ifdef STATSERIAL
       evtPktGen_t          dataGen;
 
@@ -208,31 +236,42 @@ void openserial_statGen(uint16_t seqnum, track_t track){
 
 
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length) {
-   uint8_t    i;
    uint8_t  asn[5];
+   uint8_t  pos, i;
+
+
    INTERRUPT_DECLARATION();
 
    // retrieve ASN
    ieee154e_getAsn(asn);// byte01,byte23,byte4
 
    DISABLE_INTERRUPTS();
-   openserial_vars.outputBufFilled  = TRUE;
-   outputHdlcOpen();
-   outputHdlcWrite(SERFRAME_MOTE2PC_STAT);
-   outputHdlcWrite(idmanager_getMyID(ADDR_16B)->addr_16b[0]);
-   outputHdlcWrite(idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-   outputHdlcWrite(calling_component);
-   outputHdlcWrite(asn[0]);
-   outputHdlcWrite(asn[1]);
-   outputHdlcWrite(asn[2]);
-   outputHdlcWrite(asn[3]);
-   outputHdlcWrite(asn[4]);
-   outputHdlcWrite(type);
-   for (i=0;i<length;i++){
-       outputHdlcWrite(buffer[i]);
+
+   //find the first free position after the current position (if the current buffer is full)
+   pos = openserial_vars.statOutputCurrentW;
+   if (length + 12 + openserial_vars.statOutputBufIdxW[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
+      pos = openserial_vars.statOutputCurrentW++;
    }
-   outputHdlcClose();
+   openserial_vars.statOutputBufFilled[pos] = TRUE;
+
+
+   statOutputHdlcOpen(pos);
+   statOutputHdlcWrite(pos, SERFRAME_MOTE2PC_STAT);
+   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   statOutputHdlcWrite(pos, calling_component);
+   statOutputHdlcWrite(pos, asn[0]);
+   statOutputHdlcWrite(pos, asn[1]);
+   statOutputHdlcWrite(pos, asn[2]);
+   statOutputHdlcWrite(pos, asn[3]);
+   statOutputHdlcWrite(pos, asn[4]);
+   statOutputHdlcWrite(pos, type);
+   for (i=0;i<length;i++){
+      statOutputHdlcWrite(pos, buffer[i]);
+   }
+   statOutputHdlcClose(pos);
    ENABLE_INTERRUPTS();
+
 
    return E_SUCCESS;
 }
@@ -244,6 +283,13 @@ owerror_t openserial_printInfoErrorCritical(
       errorparameter_t arg1,
       errorparameter_t arg2
    ) {
+
+   //rough estimation to avoid a buffer overflow
+    if (openserial_vars.outputBufFilled && !openserial_enough_space(12)){
+       leds_error_toggle();
+       return E_SUCCESS;
+    }
+
    INTERRUPT_DECLARATION();
    
    DISABLE_INTERRUPTS();
@@ -267,6 +313,15 @@ owerror_t openserial_printInfoErrorCritical(
 owerror_t openserial_printData(uint8_t* buffer, uint8_t length) {
    uint8_t  i;
    uint8_t  asn[5];
+
+   //rough estimation to avoid a buffer overflow
+    if (openserial_vars.outputBufFilled && !openserial_enough_space(length + 6 + 20)){
+       leds_error_toggle();
+       return E_SUCCESS;
+    }
+
+
+
    INTERRUPT_DECLARATION();
    
    // retrieve ASN
@@ -308,7 +363,7 @@ owerror_t openserial_printError(uint8_t calling_component, uint8_t error_code,
                               errorparameter_t arg1,
                               errorparameter_t arg2) {
    // blink error LED, this is serious
-   leds_error_toggle();
+   //leds_error_toggle();
    
    return openserial_printInfoErrorCritical(
       SERFRAME_MOTE2PC_ERROR,
@@ -412,8 +467,8 @@ void openserial_startOutput() {
    DISABLE_INTERRUPTS();
    openserial_vars.debugPrintCounter = (openserial_vars.debugPrintCounter+1)%STATUS_MAX;
    debugPrintCounter = openserial_vars.debugPrintCounter;
-   ENABLE_INTERRUPTS();
    
+   ENABLE_INTERRUPTS();
    // print debug information
    switch (debugPrintCounter) {
       case STATUS_ISSYNC:
@@ -470,21 +525,60 @@ void openserial_startOutput() {
    uart_clearTxInterrupts();
    uart_clearRxInterrupts();          // clear possible pending interrupts
    uart_enableInterrupts();           // Enable USCI_A1 TX & RX interrupt
-   DISABLE_INTERRUPTS();
-   openserial_vars.mode=MODE_OUTPUT;
-   if (openserial_vars.outputBufFilled) {
-#ifdef FASTSIM
-      uart_writeCircularBuffer_FASTSIM(
-         openserial_vars.outputBuf,
-         &openserial_vars.outputBufIdxR,
-         &openserial_vars.outputBufIdxW
+
+
+   //STAT buffer
+   uint8_t i = openserial_vars.statOutputCurrentR;
+
+   //conflict OUTPUT / STAT
+   if(openserial_vars.outputBufFilled && openserial_vars.statOutputBufFilled[i]){
+      openserial_printError(
+            COMPONENT_OTF,
+            ERR_GENERIC,
+            (errorparameter_t)i,
+            (errorparameter_t)openserial_vars.statOutputBufFilled[i]
       );
-#else
-      uart_writeByte(openserial_vars.outputBuf[openserial_vars.outputBufIdxR++]);
-#endif
-   } else {
+   }
+
+   DISABLE_INTERRUPTS();
+
+   //STAT OUTPUT buffer
+   if (openserial_vars.statOutputBufFilled[i]){
+
+      openserial_vars.mode=MODE_STAT;
+
+   #ifdef FASTSIM
+      uart_writeCircularBuffer_FASTSIM(
+         openserial_vars.statOutputBuf[i],
+         &openserial_vars.statOutputBufIdxR[i],
+         &openserial_vars.statOutputBufIdxW[i]
+      );
+   #else
+      uart_writeByte(openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxR[i]++]);
+   #endif
+   }
+   //OUTPUT buffer
+   else if (openserial_vars.outputBufFilled){
+
+      openserial_vars.mode=MODE_OUTPUT;
+      if (openserial_vars.outputBufFilled) {
+      #ifdef FASTSIM
+         uart_writeCircularBuffer_FASTSIM(
+               openserial_vars.outputBuf,
+               &openserial_vars.outputBufIdxR,
+               &openserial_vars.outputBufIdxW
+         );
+      #else
+         uart_writeByte(openserial_vars.outputBuf[openserial_vars.outputBufIdxR++]);
+      #endif
+
+      }
+   }
+
+   else {
       openserial_stop();
    }
+
    ENABLE_INTERRUPTS();
 }
 
@@ -567,7 +661,7 @@ bool debugPrint_outBufferIndexes() {
 
 //=========================== private =========================================
 
-//===== hdlc (output)
+//===== hdlc (stat output)
 
 /**
 \brief Start an HDLC frame in the output buffer.
@@ -575,7 +669,7 @@ bool debugPrint_outBufferIndexes() {
 port_INLINE void outputHdlcOpen() {
    // initialize the value of the CRC
    openserial_vars.outputCrc                          = HDLC_CRCINIT;
-   
+
    // write the opening HDLC flag
    openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]     = HDLC_FLAG;
 }
@@ -583,34 +677,81 @@ port_INLINE void outputHdlcOpen() {
 \brief Add a byte to the outgoing HDLC frame being built.
 */
 port_INLINE void outputHdlcWrite(uint8_t b) {
-   
-   // iterate through CRC calculator
+
+    // iterate through CRC calculator
    openserial_vars.outputCrc = crcIteration(openserial_vars.outputCrc,b);
-   
+
    // add byte to buffer
    if (b==HDLC_FLAG || b==HDLC_ESCAPE) {
       openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]  = HDLC_ESCAPE;
       b                                               = b^HDLC_ESCAPE_MASK;
    }
    openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]     = b;
-   
+
 }
 /**
 \brief Finalize the outgoing HDLC frame.
 */
 port_INLINE void outputHdlcClose() {
    uint16_t   finalCrc;
-    
+
    // finalize the calculation of the CRC
    finalCrc   = ~openserial_vars.outputCrc;
-   
+
    // write the CRC value
    outputHdlcWrite((finalCrc>>0)&0xff);
    outputHdlcWrite((finalCrc>>8)&0xff);
-   
+
    // write the closing HDLC flag
    openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]   = HDLC_FLAG;
 }
+
+
+//===== hdlc (stat-output)
+
+/**
+\brief Start an HDLC frame in the output buffer.
+*/
+port_INLINE void statOutputHdlcOpen(uint8_t i) {
+   // initialize the value of the CRC
+   openserial_vars.statOutputCrc[i]                          = HDLC_CRCINIT;
+   
+   // write the opening HDLC flag
+   openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxW[i]++]     = HDLC_FLAG;
+}
+/**
+\brief Add a byte to the outgoing HDLC frame being built.
+*/
+port_INLINE void statOutputHdlcWrite(uint8_t i, uint8_t b) {
+   
+   // iterate through CRC calculator
+   openserial_vars.statOutputCrc[i] = crcIteration(openserial_vars.statOutputCrc[i],b);
+   
+   // add byte to buffer
+   if (b==HDLC_FLAG || b==HDLC_ESCAPE) {
+      openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxW[i]++]  = HDLC_ESCAPE;
+      b                                               = b^HDLC_ESCAPE_MASK;
+   }
+   openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxW[i]++]     = b;
+   
+}
+/**
+\brief Finalize the outgoing HDLC frame.
+*/
+port_INLINE void statOutputHdlcClose(uint8_t i) {
+   uint16_t   finalCrc;
+    
+   // finalize the calculation of the CRC
+   finalCrc   = ~openserial_vars.statOutputCrc[i];
+   
+   // write the CRC value
+   statOutputHdlcWrite(i, (finalCrc>>0)&0xff);
+   statOutputHdlcWrite(i, (finalCrc>>8)&0xff);
+   
+   // write the closing HDLC flag
+   openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxW[i]++]   = HDLC_FLAG;
+}
+
 
 //===== hdlc (input)
 
@@ -667,6 +808,7 @@ port_INLINE void inputHdlcClose() {
 
 //executed in ISR, called from scheduler.c
 void isr_openserial_tx() {
+   uint8_t  i;
    switch (openserial_vars.mode) {
       case MODE_INPUT:
          openserial_vars.reqFrameIdx++;
@@ -680,6 +822,17 @@ void isr_openserial_tx() {
          }
          if (openserial_vars.outputBufFilled) {
             uart_writeByte(openserial_vars.outputBuf[openserial_vars.outputBufIdxR++]);
+         }
+         break;
+      case MODE_STAT:
+         i = openserial_vars.statOutputCurrentR;
+
+         if (openserial_vars.statOutputBufIdxW[i]==openserial_vars.statOutputBufIdxR[i]) {
+            openserial_vars.statOutputBufFilled[i] = FALSE;
+            openserial_vars.statOutputCurrentR++;
+         }
+         if (openserial_vars.statOutputBufFilled[i]) {
+            uart_writeByte(openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxR[i]++]);
          }
          break;
       case MODE_OFF:

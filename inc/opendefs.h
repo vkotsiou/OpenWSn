@@ -27,7 +27,7 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define CHANNEL_STATIC_FOR_DISCOVERY
 
 //push statistics to the serial when an event occurs (tx, rx, etc.)
-//#define STATSERIAL 1
+#define STATSERIAL 1
 
 //to delimit the implementation of draft-thubert-6man-flow-label-for-rpl-03
 #define FLOW_LABEL_RPL_DOMAIN 1

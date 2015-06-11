@@ -26,7 +26,7 @@ void otf_init(void) {
 }
 
 
-
+#ifdef OTF_AGRESSIVE
 
 //asks 6top to reserve a cell if we don't have enough for this packet
 //returns the number of cells asked to 6top
@@ -69,12 +69,6 @@ void otf_update_agressive(void){
    uint8_t  i;
    OpenQueueEntry_t* msg;
 
-   openserial_printError(
-       COMPONENT_OTF,
-       ERR_GENERIC,
-       (errorparameter_t)123,
-       (errorparameter_t)12
-   );
 
    //only one request may be transmitted through sixtop.
    //This function will be called back when sixtop has finished its reservation later for the other messages in the queue
@@ -87,14 +81,10 @@ void otf_update_agressive(void){
   }
 }
 
+#endif
 
 void otf_update_schedule(void){
-   openserial_printError(
-        COMPONENT_OTF,
-        ERR_GENERIC,
-        (errorparameter_t)123,
-        (errorparameter_t)45
-    );
+
 
 #ifdef OTF_AGRESSIVE
    otf_update_agressive();
@@ -108,20 +98,6 @@ void otf_notif_transmit(OpenQueueEntry_t* msg){
 #endif
 }
 
-
-
-
-/****otf_notif_addedCell
- * Nothing to do when sixtop has removed / added some cells
- * i.e. We DON'T reserve a track for the whole path toward the sink. It is reserved hop-by-hop
- */
-void otf_notif_addedCell(void) {
-   //  scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);
-}
-
-void otf_notif_removedCell(void) {
-//   scheduler_push_task(otf_removeCell_task,TASKPRIO_OTF);
-}
 
 
 

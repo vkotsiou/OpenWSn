@@ -15,6 +15,8 @@
 #include "sixtop.h"
 #include "adaptive_sync.h"
 #include "processIE.h"
+#include "otf.h"
+
 
 //=========================== variables =======================================
 
@@ -816,17 +818,21 @@ port_INLINE void activity_ti1ORri1() {
       openserial_startOutput();
       return;
    }
-   
-   //otf to update the schedule
-   switch(cellType){
-      case CELLTYPE_ADV:
-      case CELLTYPE_TX:
-      case CELLTYPE_TXRX:
-          otf_update_schedule();
-   }
 
    // check the schedule to see what type of slot this is
    cellType = schedule_getType();
+   
+   //otf to update the schedule
+      switch(cellType){
+         case CELLTYPE_ADV:
+         case CELLTYPE_TX:
+         case CELLTYPE_TXRX:
+             otf_update_schedule();
+             break;
+         default:
+            break;
+      }
+
    switch (cellType) {
       case CELLTYPE_ADV:
         // stop using serial
