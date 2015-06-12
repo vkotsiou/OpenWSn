@@ -33,6 +33,16 @@ void otf_init(void) {
 uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    uint8_t nbCells_curr, nbCells_req;
 
+
+ /*  if (msg->l2_track.instance != TRACK_BESTEFFORT)
+      openserial_printError(
+       COMPONENT_OTF,
+       ERR_GENERIC,
+       (errorparameter_t)sixtop_getState(),
+       (errorparameter_t)msg->l2_track.instance
+   );
+*/
+
    //when 6top will have finished, otf will ask for bandwidth for this packet (if reqquired)
     if (sixtop_getState() != SIX_IDLE)
        return(0);
@@ -44,6 +54,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    // requested and current allocations
    nbCells_curr   = schedule_getNbCellsWithTrack(msg->l2_track);
    nbCells_req    = openqueue_count_track(msg->l2_track);
+
 
    //the current allocation is correct
    if (nbCells_curr >= nbCells_req)

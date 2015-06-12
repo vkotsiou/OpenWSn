@@ -32,7 +32,10 @@ owerror_t     sixtop_send_internal(
 
 // timer interrupt callbacks
 void          sixtop_maintenance_timer_cb(void);
-void          sixtop_timeout_timer_cb(void);
+
+// state change
+six2six_state_t sixtop_getState(void);
+void  sixtop_setState(six2six_state_t state);
 
 //=== EB/KA task
 
@@ -133,12 +136,7 @@ void sixtop_init() {
       sixtop_maintenance_timer_cb
    );
    
-   sixtop_vars.timeoutTimerId     = opentimers_start(
-      SIX2SIX_TIMEOUT_MS,
-      TIMER_ONESHOT,
-      TIME_MS,
-      sixtop_timeout_timer_cb
-   );
+
 }
 
 void sixtop_setKaPeriod(uint16_t kaPeriod) {
@@ -150,9 +148,7 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 }
 
 
-six2six_state_t sixtop_getState(void){
-   return(sixtop_vars.six2six_state);
-}
+
 
 
 //======= scheduling
@@ -220,7 +216,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    }
    
    // update state
-   sixtop_vars.six2six_state  = SIX_SENDING_ADDREQUEST;
+   sixtop_setState(SIX_SENDING_ADDREQUEST);
    
    // take ownership
    pkt->creator = COMPONENT_SIXTOP_RES;
@@ -246,7 +242,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    sixtop_send(pkt);
 
    // update state
-   sixtop_vars.six2six_state = SIX_WAIT_ADDREQUEST_SENDDONE;
+   sixtop_setState(SIX_WAIT_ADDREQUEST_SENDDONE);
    
    // arm timeout
    opentimers_setPeriod(
@@ -301,7 +297,7 @@ void sixtop_removeCell(open_addr_t* neighbor, track_t track){
    }
    
    // update state
-   sixtop_vars.six2six_state = SIX_SENDING_REMOVEREQUEST;
+   sixtop_setState(SIX_SENDING_REMOVEREQUEST);
    
    // declare ownership over that packet
    pkt->creator = COMPONENT_SIXTOP_RES;
@@ -327,15 +323,7 @@ void sixtop_removeCell(open_addr_t* neighbor, track_t track){
    sixtop_send(pkt);
    
    // update state
-   sixtop_vars.six2six_state = SIX_WAIT_REMOVEREQUEST_SENDDONE;
-   
-   // arm timeout
-   opentimers_setPeriod(
-      sixtop_vars.timeoutTimerId,
-      TIME_MS,
-      SIX2SIX_TIMEOUT_MS
-   );
-   opentimers_restart(sixtop_vars.timeoutTimerId);
+   sixtop_setState(SIX_WAIT_REMOVEREQUEST_SENDDONE);
 }
 
 //======= from upper layer
@@ -615,14 +603,65 @@ owerror_t sixtop_send_internal(
 }
 
 // timer interrupt callbacks
-
-void sixtop_maintenance_timer_cb() {
+void sixtop_maintenance_timer_cb(void) {
    scheduler_push_task(timer_sixtop_management_fired, TASKPRIO_SIXTOP);
 }
 
-void sixtop_timeout_timer_cb() {
+void sixtop_timeout_timer_cb(void) {
    scheduler_push_task(timer_sixtop_six2six_timeout_fired,TASKPRIO_SIXTOP_TIMEOUT);
 }
+
+//get the current sixtop state (for otf: two requests should not be transmitted simultaneously)
+six2six_state_t sixtop_getState(void){
+   return(sixtop_vars.six2six_state);
+}
+//changes the current sixtop state
+void sixtop_setState(six2six_state_t state){
+   sixtop_vars.six2six_state = state;
+   opentimers_stop(sixtop_vars.timeoutTimerId);
+
+   //back to the idle state after a timeout
+   if (state != SIX_IDLE){
+      openserial_printError(
+          COMPONENT_SIXTOP,
+          ERR_GENERIC,
+          (errorparameter_t)123,
+          (errorparameter_t)state
+       );
+
+
+      sixtop_vars.timeoutTimerId     = opentimers_start(
+            SIX2SIX_TIMEOUT_MS,
+            TIMER_ONESHOT,
+            TIME_MS,
+            sixtop_timeout_timer_cb
+            );
+   }
+}
+
+void timer_sixtop_six2six_timeout_fired(void) {
+
+   //if we are already in idle mode, this means we are just boostraping!
+   if (sixtop_vars.six2six_state != SIX_IDLE)
+    openserial_printError(
+        COMPONENT_SIXTOP,
+        ERR_SIXTOP_TIMEOUT,
+        (errorparameter_t)sixtop_vars.six2six_state,
+        (errorparameter_t)0
+     );
+
+   //remove the packets which caused the timeout (they may not have been transmitted)
+   openqueue_removeAllCreatedBy(COMPONENT_SIXTOP_RES);
+   //TODO: debug the packets destroyed in the queue
+
+   // timeout timer fired, reset the state of sixtop to idle
+   sixtop_vars.six2six_state = SIX_IDLE;
+
+   //OTF callback
+   otf_update_schedule();
+
+}
+
 
 //======= EB/KA task
 
@@ -790,28 +829,7 @@ port_INLINE void sixtop_sendKA() {
 
 //======= six2six task
 
-void timer_sixtop_six2six_timeout_fired(void) {
 
-   //if we are already in idle mode, this means we are just boostraping!
-   if (sixtop_vars.six2six_state != SIX_IDLE)
-    openserial_printError(
-        COMPONENT_SIXTOP,
-        ERR_SIXTOP_TIMEOUT,
-        (errorparameter_t)sixtop_vars.six2six_state,
-        (errorparameter_t)0
-     );
-
-   //remove the packets which caused the timeout (they may not have been transmitted)
-   openqueue_removeAllCreatedBy(COMPONENT_SIXTOP_RES);
-   //TODO: debug the packets destroyed in the queue
-
-   // timeout timer fired, reset the state of sixtop to idle
-   sixtop_vars.six2six_state = SIX_IDLE;
-
-   //OTF callback
-   otf_update_schedule();
-
-}
 
 void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
    uint8_t i,numOfCells;
@@ -833,18 +851,19 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
                (errorparameter_t)001
             );
 
-      sixtop_vars.six2six_state = SIX_IDLE;
+      sixtop_setState(SIX_IDLE);
       openqueue_freePacketBuffer(msg);
       return;
    }
 
+
    switch (sixtop_vars.six2six_state) {
       case SIX_WAIT_ADDREQUEST_SENDDONE:
-         sixtop_vars.six2six_state = SIX_WAIT_ADDRESPONSE;
+         sixtop_setState(SIX_WAIT_ADDRESPONSE);
          break;
          
       case SIX_WAIT_ADDRESPONSE_SENDDONE:
-         sixtop_vars.six2six_state = SIX_IDLE;
+         sixtop_setState(SIX_IDLE);
          //otf_notif_addedCell();
          
          break;
@@ -868,7 +887,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
                &(msg->l2_nextORpreviousHop)
             );
          }
-         sixtop_vars.six2six_state = SIX_IDLE;
+         sixtop_setState(SIX_IDLE);
          leds_debug_off();
          break;
       default:
@@ -1000,21 +1019,21 @@ void sixtop_notifyReceiveCommand(
       case SIXTOP_SOFT_CELL_REQ:
          if(sixtop_vars.six2six_state == SIX_IDLE)
          {
-             sixtop_vars.six2six_state = SIX_ADDREQUEST_RECEIVED;
+            sixtop_setState(SIX_ADDREQUEST_RECEIVED);
             //received uResCommand is reserve link request
             sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
          }
          break;
       case SIXTOP_SOFT_CELL_RESPONSE:
          if(sixtop_vars.six2six_state == SIX_WAIT_ADDRESPONSE){
-           sixtop_vars.six2six_state = SIX_ADDRESPONSE_RECEIVED;
+            sixtop_setState(SIX_ADDRESPONSE_RECEIVED);
            //received uResCommand is reserve link response
            sixtop_notifyReceiveLinkResponse(bandwidth_ie, schedule_ie, addr);
          }
          break;
       case SIXTOP_REMOVE_SOFT_CELL_REQUEST:
          if(sixtop_vars.six2six_state == SIX_IDLE){
-            sixtop_vars.six2six_state = SIX_REMOVEREQUEST_RECEIVED;
+            sixtop_setState(SIX_REMOVEREQUEST_RECEIVED);
           //received uResComand is remove link request
              sixtop_notifyReceiveRemoveLinkRequest(schedule_ie, addr);
         }
@@ -1100,7 +1119,7 @@ void sixtop_linkResponse(
     }
     
    // changing state to resLinkRespone command
-   sixtop_vars.six2six_state = SIX_SENDING_ADDRESPONSE;
+   sixtop_setState(SIX_SENDING_ADDRESPONSE);
     
    // declare ownership over that packet
    sixtopPkt->creator = COMPONENT_SIXTOP_RES;
@@ -1133,7 +1152,8 @@ void sixtop_linkResponse(
   
    sixtop_send(sixtopPkt);
   
-   sixtop_vars.six2six_state = SIX_WAIT_ADDRESPONSE_SENDDONE;
+   //changes the current state
+   sixtop_setState(SIX_WAIT_ADDRESPONSE_SENDDONE);
 }
 
 void sixtop_notifyReceiveLinkResponse(
@@ -1191,7 +1211,7 @@ void sixtop_notifyReceiveLinkResponse(
       }
    }
    leds_debug_off();
-   sixtop_vars.six2six_state = SIX_IDLE;
+   sixtop_setState(SIX_IDLE);
   
    //OTF callback
    otf_update_schedule();
@@ -1209,17 +1229,9 @@ void sixtop_notifyReceiveRemoveLinkRequest(
    numOfCells  = schedule_ie->numberOfcells;
    frameID     = schedule_ie->frameID;
    cellList    = schedule_ie->cellList;
-   
-   leds_debug_on();
-   
-   sixtop_removeCellsByState(frameID, numOfCells, cellList, addr);
-   
-   // notify OTF
-   //otf_notif_removedCell();
-   
-   sixtop_vars.six2six_state = SIX_IDLE;
 
-   leds_debug_off();
+   sixtop_removeCellsByState(frameID, numOfCells, cellList, addr);
+   sixtop_setState(SIX_IDLE);
 }
 
 //======= helper functions
