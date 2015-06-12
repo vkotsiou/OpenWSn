@@ -33,8 +33,6 @@ typedef struct {
 typedef struct {
    OpenQueueEntry_t  queue[QUEUELENGTH];
    uint8_t           debugPrintRow;
-   opentimer_id_t    timeoutTimerId;   // to remove timeouted packets
-   bool              verif_scheduled;  // the verification for timeouts has been already scheduled
 } openqueue_vars_t;
 
 //=========================== prototypes ======================================
@@ -42,6 +40,9 @@ typedef struct {
 // admin
 void               openqueue_init(void);
 bool               debugPrint_queue(void);
+//called by 80154E component when it is not busy
+//remove the packets which are timeouted in the queue
+void               openqueue_timeout_drop(void);
 // called by any component
 OpenQueueEntry_t*  openqueue_getFreePacketBuffer(uint8_t creator);
 OpenQueueEntry_t*  openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const uint16_t duration_ms);

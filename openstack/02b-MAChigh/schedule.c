@@ -317,7 +317,7 @@ owerror_t schedule_addActiveSlot(
    ENABLE_INTERRUPTS();
 
    //notification through the serial line
-   openserial_celladd(slotContainer);
+   openserial_statCelladd(slotContainer);
 
    return E_SUCCESS;
 }
@@ -361,6 +361,8 @@ owerror_t schedule_removeActiveSlot(slotOffset_t slotOffset, open_addr_t* neighb
       return E_FAIL;
    }
    
+   openserial_statCellremove(slotContainer);
+
    // remove from linked list
    if (slotContainer->next==slotContainer) {
       // this is the last active slot
@@ -401,7 +403,7 @@ owerror_t schedule_removeActiveSlot(slotOffset_t slotOffset, open_addr_t* neighb
    ENABLE_INTERRUPTS();
    
    //notification through the serial line
-   openserial_celladd(slotContainer);
+   openserial_statCelladd(slotContainer);
 
    
 

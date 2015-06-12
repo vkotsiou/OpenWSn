@@ -394,6 +394,15 @@ void neighbors_indicateTx(open_addr_t* l2_dest,
                           bool         was_finally_acked,
                           asn_t*       asnTs) {
    uint8_t i;
+
+   //todo-debug
+      if (l2_dest->type == 0)
+         openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                     (errorparameter_t)l2_dest->type,
+                                     (errorparameter_t)12);
+
+
+
    // don't run through this function if packet was sent to broadcast address
    if (packetfunctions_isBroadcastMulticast(l2_dest)==TRUE) {
       return;

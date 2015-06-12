@@ -190,6 +190,13 @@ void forwarding_receive(
    memcpy(&(msg->l3_destinationAdd),&ipv6_header->dest,sizeof(open_addr_t));
    memcpy(&(msg->l3_sourceAdd),     &ipv6_header->src, sizeof(open_addr_t));
    
+   //todo-debug
+    if (ipv6_header->dest.type == 0)
+       openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                   (errorparameter_t)ipv6_header->dest.type,
+                                   (errorparameter_t)88);
+
+
    if (
          (
             idmanager_isMyAddress(&ipv6_header->dest)
@@ -324,6 +331,13 @@ void forwarding_getNextHop(open_addr_t* destination128b, open_addr_t* addressToW
    uint8_t         i;
    open_addr_t     temp_prefix64btoWrite;
    
+   //todo-debug
+    if (destination128b->type == 0)
+       openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                   (errorparameter_t)destination128b->type,
+                                   (errorparameter_t)99);
+
+
    if (packetfunctions_isBroadcastMulticast(destination128b)) {
       // IP destination is broadcast, send to 0xffffffffffffffff
       addressToWrite64b->type = ADDR_64B;

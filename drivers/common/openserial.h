@@ -66,7 +66,8 @@ enum{
    SERTYPE_CELL_ADD           = 0x04,
    SERTYPE_CELL_REMOVE        = 0x05,
    SERTYPE_ACK_TX             = 0x06,
-   SERTYPE_ACK_RX             = 0x07
+   SERTYPE_ACK_RX             = 0x07,
+   SERTYPE_PKT_TIMEOUT        = 0x08
 };
 //=========================== typedef =========================================
 
@@ -171,15 +172,6 @@ typedef struct {
 } openserial_vars_t;
 
 //=========================== prototypes ======================================
-//statistics to openvisualizer
-void  openserial_celladd(scheduleEntry_t* slotContainer);
-void  openserial_cellremove(scheduleEntry_t* slotContainer);
-void  openserial_statAckTx(void);
-void  openserial_statAckRx(void);
-void  openserial_statRx(OpenQueueEntry_t* msg);
-void  openserial_statTx(OpenQueueEntry_t* msg);
-void  openserial_statGen(uint16_t seqnum, track_t track);
-
 
 
 void    openserial_init(void);
@@ -206,6 +198,19 @@ void    openserial_echo(uint8_t* but, uint8_t bufLen);
 // interrupt handlers
 void    isr_openserial_rx(void);
 void    isr_openserial_tx(void);
+
+//statistics to openvisualizer
+void  openserial_statCelladd(scheduleEntry_t* slotContainer);
+void  openserial_statCellremove(scheduleEntry_t* slotContainer);
+void  openserial_statAckTx(void);
+void  openserial_statAckRx(void);
+void  openserial_statRx(OpenQueueEntry_t* msg);
+void  openserial_statTx(OpenQueueEntry_t* msg);
+void  openserial_statPktTimeout(OpenQueueEntry_t* msg);
+void  openserial_statGen(uint16_t seqnum, track_t track);
+
+
+
 
 /**
 \}

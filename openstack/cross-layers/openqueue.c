@@ -32,7 +32,7 @@ void openqueue_init() {
    for (i=0;i<QUEUELENGTH;i++){
       openqueue_reset_entry(&(openqueue_vars.queue[i]));
    }
-   openqueue_vars.verif_scheduled = FALSE;
+
 }
 
 /**
@@ -120,59 +120,8 @@ uint64_t openqueue_timeout_diff(timeout_t a, timeout_t b){
 }
 
 
-//timer for timeouts in openqueue
-void openqueue_timeout_timer_cb(){
-    scheduler_push_task(openqueue_timeout_timer_fired, TASKPRIO_NONE);
-}
-
-
-//schedules the next verification to remove timeouted entries in openqueue
-void openqueue_timeout_schedule_verification(void){
-   uint8_t     i;
-   timeout_t   now;
-   uint64_t    diff_oldest, tmp;
-
-   //initialization
-   ieee154e_getAsn(now.byte);
-   diff_oldest = 0;
-
-   for (i=0;i<QUEUELENGTH;i++) {
-
-
-      //this timeout must not be considered (no timeout or no packet)
-      if (!openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout)
-            &&
-            (openqueue_vars.queue[i].owner != COMPONENT_NULL)
-            ){
-
-         //entry is in the future, and we must remember the oldest one
-         tmp = openqueue_timeout_diff(openqueue_vars.queue[i].timeout, now);
-         if ((tmp < diff_oldest) || (diff_oldest == 0))
-            diff_oldest = tmp;
-      }
-    }
-
-
-   //next verification (1000 to convert us in ms)
-   if (diff_oldest != 0){
-      openqueue_vars.verif_scheduled = TRUE;
-      openqueue_vars.timeoutTimerId = opentimers_start(
-            diff_oldest * TsSlotDuration * PORT_TICS_PER_MS / 1000,
-            TIMER_ONESHOT,
-            TIME_MS,
-            openqueue_timeout_timer_cb
-      );
-   }
-   //no verification is required
-   else if (openqueue_vars.verif_scheduled){
-      opentimers_stop(openqueue_vars.timeoutTimerId);
-      openqueue_vars.verif_scheduled = FALSE;
-   }
-
-}
-
 //remove the packets which are timeouted in the queue
-void openqueue_timeout_timer_fired(void){
+void openqueue_timeout_drop(void){
    uint8_t     i;
    timeout_t   now;
 
@@ -188,16 +137,17 @@ void openqueue_timeout_timer_fired(void){
          if (!openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout))
             if (openqueue_timeout_is_greater(now, openqueue_vars.queue[i].timeout)){
 
-               openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
+               openserial_statPktTimeout(&(openqueue_vars.queue[i]));
+
+             /*  openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
                      (errorparameter_t)openqueue_vars.queue[i].owner,
                      (errorparameter_t)openqueue_vars.queue[i].creator);
-
+               */
                openqueue_reset_entry(&(openqueue_vars.queue[i]));
             }
    }
 
-   //schedule the next verification
-   openqueue_timeout_schedule_verification();
+
    ENABLE_INTERRUPTS();
 }
 
@@ -304,8 +254,6 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
    }
 
 
-   //schedule the next verification and terminates
-   openqueue_timeout_schedule_verification();
    ENABLE_INTERRUPTS();
    return(entry);
 }

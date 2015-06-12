@@ -155,117 +155,6 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
    return E_SUCCESS;
 }
 
-//a cell was inserted in the schedule
-void openserial_celladd(scheduleEntry_t* slotContainer){
-
-   #ifdef STATSERIAL
-
-   evtCellAdd_t evt;
-   evt.track_instance   = slotContainer->track.instance;
-   memcpy(evt.track_owner, slotContainer->track.owner.addr_64b, 8);
-   evt.slotOffset      = slotContainer->slotOffset;
-   evt.type            = slotContainer->type;
-   evt.shared          = slotContainer->shared;
-   evt.channelOffset   = slotContainer->channelOffset;
-   memcpy(evt.neighbor,      slotContainer->neighbor.addr_64b, 8);
-   openserial_printStat(SERTYPE_CELL_ADD, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
-   #endif
-}
-
-//a cell was removed in the schedule
-void openserial_cellremove(scheduleEntry_t* slotContainer){
-
-   #ifdef STATSERIAL
-
-   evtCellRem_t evt;
-   evt.track_instance   = slotContainer->track.instance;
-   memcpy(evt.track_owner, slotContainer->track.owner.addr_64b, 8);
-   evt.slotOffset      = slotContainer->slotOffset;
-   evt.type            = slotContainer->type;
-   evt.shared          = slotContainer->shared;
-   evt.channelOffset   = slotContainer->channelOffset;
-   memcpy(evt.neighbor,      slotContainer->neighbor.addr_64b, 8);
-   openserial_printStat(SERTYPE_CELL_REMOVE, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
-
-   #endif
-}
-
-
-//a ack was txed
-void openserial_statAckTx(){
-
-    #ifdef STATSERIAL
-
-   #endif
-}
-
-//a ack was received
-void openserial_statAckRx(){
-
-    #ifdef STATSERIAL
-
-   #endif
-}
-
-//push an event to track received frames
-void openserial_statRx(OpenQueueEntry_t* msg){
-
-   //stat for reception
-   #ifdef STATSERIAL
-
-      evtPktRx_t evt;
-      evt.length           = msg->length;
-      evt.rssi             = msg->l1_rssi;
-      evt.lqi              = msg->l1_lqi;
-      evt.crc              = msg->l1_crc;
-      evt.track_instance   = msg->l2_track.instance;
-      evt.frame_type       = msg->l2_frameType;
-      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
-      memcpy(evt.l2Src, msg->l2_nextORpreviousHop.addr_64b, 8);
-
-      openserial_printStat(SERTYPE_PKT_RX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
-  #endif
-
-}
-
-//push an event to track transmitted frames
-void openserial_statTx(OpenQueueEntry_t* msg){
-
-   #ifdef STATSERIAL
-      evtPktTx_t evt;
-      evt.length           = msg->length;
-      evt.txPower          = msg->l1_txPower;
-      evt.track_instance   = msg->l2_track.instance;
-      evt.numTxAttempts    = msg->l2_numTxAttempts;
-      evt.l4_protocol      = msg->l4_protocol;
-      evt.frame_type       = msg->l2_frameType;
-      evt.l4_sourcePortORicmpv6Type = msg->l4_sourcePortORicmpv6Type;
-      evt.l4_destination_port       = msg->l4_destination_port;
-
-      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
-      memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
-
-     openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
-   #endif
-}
-
-//push an event to track generated frames
-void openserial_statGen(uint16_t seqnum, track_t track){
-
-   #ifdef STATSERIAL
-      evtPktGen_t          dataGen;
-
-      //info
-      dataGen.seqnum          = seqnum ;
-      dataGen.track_instance  = track.instance;
-      memcpy(dataGen.track_owner, track.owner.addr_64b, 8);
-
-      //memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
-      openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
-   #endif
-
-}
-
 
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length) {
    uint8_t  asn[5];
@@ -973,3 +862,149 @@ void openserial_echo(uint8_t* buf, uint8_t bufLen){
     openserial_vars.inputBufFill = 0;
     ENABLE_INTERRUPTS();
 }
+
+
+
+
+//========= SERIAL FOR STATS ======
+
+
+
+
+
+//a cell was inserted in the schedule
+void openserial_statCelladd(scheduleEntry_t* slotContainer){
+
+   #ifdef STATSERIAL
+
+   evtCellAdd_t evt;
+   evt.track_instance   = slotContainer->track.instance;
+   memcpy(evt.track_owner, slotContainer->track.owner.addr_64b, 8);
+   evt.slotOffset      = slotContainer->slotOffset;
+   evt.type            = slotContainer->type;
+   evt.shared          = slotContainer->shared;
+   evt.channelOffset   = slotContainer->channelOffset;
+   memcpy(evt.neighbor,      slotContainer->neighbor.addr_64b, 8);
+   openserial_printStat(SERTYPE_CELL_ADD, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   #endif
+}
+
+//a cell was removed in the schedule
+void openserial_statCellremove(scheduleEntry_t* slotContainer){
+
+   #ifdef STATSERIAL
+
+   evtCellRem_t evt;
+   evt.track_instance   = slotContainer->track.instance;
+   memcpy(evt.track_owner, slotContainer->track.owner.addr_64b, 8);
+   evt.slotOffset      = slotContainer->slotOffset;
+   evt.type            = slotContainer->type;
+   evt.shared          = slotContainer->shared;
+   evt.channelOffset   = slotContainer->channelOffset;
+   memcpy(evt.neighbor,      slotContainer->neighbor.addr_64b, 8);
+   openserial_printStat(SERTYPE_CELL_REMOVE, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+
+   #endif
+}
+
+
+//a ack was txed
+void openserial_statAckTx(){
+
+    #ifdef STATSERIAL
+
+   #endif
+}
+
+//a ack was received
+void openserial_statAckRx(){
+
+    #ifdef STATSERIAL
+
+   #endif
+}
+
+//push an event to track received frames
+void openserial_statRx(OpenQueueEntry_t* msg){
+
+   //stat for reception
+   #ifdef STATSERIAL
+
+      evtPktRx_t evt;
+      evt.length           = msg->length;
+      evt.rssi             = msg->l1_rssi;
+      evt.lqi              = msg->l1_lqi;
+      evt.crc              = msg->l1_crc;
+      evt.track_instance   = msg->l2_track.instance;
+      evt.frame_type       = msg->l2_frameType;
+      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
+      memcpy(evt.l2Src, msg->l2_nextORpreviousHop.addr_64b, 8);
+
+      openserial_printStat(SERTYPE_PKT_RX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+  #endif
+
+}
+
+//push an event to track transmitted frames
+void openserial_statTx(OpenQueueEntry_t* msg){
+
+   #ifdef STATSERIAL
+      evtPktTx_t evt;
+      evt.length           = msg->length;
+      evt.txPower          = msg->l1_txPower;
+      evt.track_instance   = msg->l2_track.instance;
+      evt.numTxAttempts    = msg->l2_numTxAttempts;
+      evt.l4_protocol      = msg->l4_protocol;
+      evt.frame_type       = msg->l2_frameType;
+      evt.l4_sourcePortORicmpv6Type = msg->l4_sourcePortORicmpv6Type;
+      evt.l4_destination_port       = msg->l4_destination_port;
+
+      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
+      memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
+
+     openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   #endif
+}
+
+
+//a ack was txed
+void openserial_statPktTimeout(OpenQueueEntry_t* msg){
+
+#ifdef STATSERIAL
+     evtPktTx_t evt;
+     evt.length           = msg->length;
+     evt.txPower          = msg->l1_txPower;
+     evt.track_instance   = msg->l2_track.instance;
+     evt.numTxAttempts    = msg->l2_numTxAttempts;
+     evt.l4_protocol      = msg->l4_protocol;
+     evt.frame_type       = msg->l2_frameType;
+     evt.l4_sourcePortORicmpv6Type = msg->l4_sourcePortORicmpv6Type;
+     evt.l4_destination_port       = msg->l4_destination_port;
+
+     memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
+     memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
+
+    openserial_printStat(SERTYPE_PKT_TIMEOUT, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+  #endif
+}
+
+
+
+//push an event to track generated frames
+void openserial_statGen(uint16_t seqnum, track_t track){
+
+   #ifdef STATSERIAL
+      evtPktGen_t          dataGen;
+
+      //info
+      dataGen.seqnum          = seqnum ;
+      dataGen.track_instance  = track.instance;
+      memcpy(dataGen.track_owner, track.owner.addr_64b, 8);
+
+      //memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
+      openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
+   #endif
+
+}
+
+

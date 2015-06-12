@@ -566,10 +566,14 @@ owerror_t sixtop_send_internal(
    uint8_t iePresent, 
    uint8_t frameVersion) {
 
+   //todo-debug
+   if (msg->l2_nextORpreviousHop.type == 0)
+      openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                  (errorparameter_t)msg->l2_nextORpreviousHop.type,
+                                  (errorparameter_t)123);
+
    // assign a number of retries
-   if (
-      packetfunctions_isBroadcastMulticast(&(msg->l2_nextORpreviousHop))==TRUE
-      ) {
+   if (packetfunctions_isBroadcastMulticast(&(msg->l2_nextORpreviousHop))==TRUE) {
       msg->l2_retriesLeft = 1;
    } else {
       msg->l2_retriesLeft = TXRETRIES;
@@ -621,22 +625,14 @@ void sixtop_setState(six2six_state_t state){
    opentimers_stop(sixtop_vars.timeoutTimerId);
 
    //back to the idle state after a timeout
-   if (state != SIX_IDLE){
-      openserial_printError(
-          COMPONENT_SIXTOP,
-          ERR_GENERIC,
-          (errorparameter_t)123,
-          (errorparameter_t)state
-       );
-
-
+   if (state != SIX_IDLE)
       sixtop_vars.timeoutTimerId     = opentimers_start(
             SIX2SIX_TIMEOUT_MS,
             TIMER_ONESHOT,
             TIME_MS,
             sixtop_timeout_timer_cb
             );
-   }
+
 }
 
 void timer_sixtop_six2six_timeout_fired(void) {
@@ -844,13 +840,13 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
   
    //the packet cannot be transmitted
    if(error == E_FAIL) {
-      openserial_printError(
+   /*   openserial_printError(
                COMPONENT_SIXTOP,
                ERR_UNKNOWN,
                (errorparameter_t)123,
                (errorparameter_t)001
             );
-
+*/
       sixtop_setState(SIX_IDLE);
       openqueue_freePacketBuffer(msg);
       return;
@@ -1174,13 +1170,7 @@ void sixtop_notifyReceiveLinkResponse(
    if(bw == 0){
       // link request failed
       // todo- should inform some one
-      /* openserial_printError(
-                    COMPONENT_SIXTOP_RES,
-                    ERR_GENERIC,
-                    (errorparameter_t)5,
-                    (errorparameter_t)bw
-                 );
-          */
+
    } else {
       // need to check whether the links are available to be scheduled.
       if(bw != numOfcells                                                ||
@@ -1190,13 +1180,7 @@ void sixtop_notifyReceiveLinkResponse(
                                                schedule_ie->cellList, 
                                                bw) == FALSE){
          // link request failed,inform uplayer
-         /*openserial_printError(
-                      COMPONENT_SIXTOP_RES,
-                      ERR_GENERIC,
-                      (errorparameter_t)6,
-                      (errorparameter_t)bw
-                   );
-          */
+
 
       } else {
 

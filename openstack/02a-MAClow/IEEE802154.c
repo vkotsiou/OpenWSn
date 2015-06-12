@@ -37,6 +37,12 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
    
    // previousHop address (always 64-bit)
    packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_64B),OW_LITTLE_ENDIAN);
+   //todo-debug
+   if (nextHop->type == 0)
+      openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                  (errorparameter_t)nextHop->type,
+                                  (errorparameter_t)198);
+
    // nextHop address
    if (packetfunctions_isBroadcastMulticast(nextHop)) {
       //broadcast address is always 16-bit
@@ -65,6 +71,13 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
    //fcf (2nd byte)
    packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
    temp_8b              = 0;
+
+   //todo-debug
+   if (nextHop->type == 0)
+      openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                  (errorparameter_t)nextHop->type,
+                                  (errorparameter_t)15);
+
    if (packetfunctions_isBroadcastMulticast(nextHop)) {
       temp_8b          |= IEEE154_ADDR_SHORT              << IEEE154_FCF_DEST_ADDR_MODE;
    } else {
@@ -90,6 +103,13 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
    temp_8b             |= frameType                       << IEEE154_FCF_FRAME_TYPE;
    temp_8b             |= securityEnabled                 << IEEE154_FCF_SECURITY_ENABLED;
    temp_8b             |= IEEE154_PENDING_NO_FRAMEPENDING << IEEE154_FCF_FRAME_PENDING;
+
+   //todo-debug
+   if (nextHop->type == 0)
+      openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                  (errorparameter_t)nextHop->type,
+                                  (errorparameter_t)68);
+
    if (frameType==IEEE154_TYPE_ACK || packetfunctions_isBroadcastMulticast(nextHop)) {
       temp_8b          |= IEEE154_ACK_NO_ACK_REQ          << IEEE154_FCF_ACK_REQ;
    } else {

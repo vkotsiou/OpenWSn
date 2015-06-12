@@ -433,7 +433,10 @@ port_INLINE void activity_synchronize_newSlot() {
    // take turns every 8 slots sending and receiving
    if        ((ieee154e_vars.asn.bytes0and1&0x000f)==0x0000) {
       openserial_stop();
+      //remove timeouted entries in openqueue
+      openqueue_timeout_drop();
       openserial_startOutput();
+
    } else if ((ieee154e_vars.asn.bytes0and1&0x000f)==0x0008) {
       openserial_stop();
       openserial_startInput();
@@ -814,6 +817,8 @@ port_INLINE void activity_ti1ORri1() {
       openserial_stop();
       // abort the slot
       endSlot();
+      //remove timeouted entries in openqueue
+      openqueue_timeout_drop();
       //start outputing serial
       openserial_startOutput();
       return;
@@ -863,16 +868,7 @@ port_INLINE void activity_ti1ORri1() {
          }
          break;
       case CELLTYPE_TX:
-  /*       openserial_printError(
-                                 COMPONENT_IEEE802154E,
-                                 ERR_GENERIC,
-                                 (errorparameter_t)15,
-                                 (errorparameter_t)ieee154e_vars.asnOffset
-                              );
-    */
-         case CELLTYPE_TXRX:
-
-
+      case CELLTYPE_TXRX:
 
          // stop using serial
          openserial_stop();
@@ -904,13 +900,6 @@ port_INLINE void activity_ti1ORri1() {
          }
       case CELLTYPE_RX:
 
-     /*    openserial_printError(
-                                 COMPONENT_IEEE802154E,
-                                 ERR_GENERIC,
-                                 (errorparameter_t)16,
-                                 (errorparameter_t)ieee154e_vars.asnOffset
-                              );
-*/
          // stop using serial
          openserial_stop();
          // change state
@@ -1075,6 +1064,14 @@ port_INLINE void activity_ti5(PORT_RADIOTIMER_WIDTH capturedTime) {
    // record the captured time
    ieee154e_vars.lastCapturedTime = capturedTime;
    
+   //todo-debug
+    if (ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == 0)
+       openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                   (errorparameter_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type,
+                                   (errorparameter_t)976);
+
+
+
    // decides whether to listen for an ACK
    if (packetfunctions_isBroadcastMulticast(&ieee154e_vars.dataToSend->l2_nextORpreviousHop)==TRUE) {
       listenForAck = FALSE;
@@ -1739,7 +1736,14 @@ A valid Rx frame satisfies the following constraints:
 \returns TRUE if packet is valid received frame, FALSE otherwise
 */
 port_INLINE bool isValidRxFrame(ieee802154_header_iht* ieee802514_header) {
-   return ieee802514_header->valid==TRUE                                                           && \
+   //todo-debug
+    if (ieee802514_header->dest.type == 0)
+       openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+                                   (errorparameter_t)ieee802514_header->dest.type,
+                                   (errorparameter_t)986);
+
+
+    return ieee802514_header->valid==TRUE                                                           && \
           (
              ieee802514_header->frameType==IEEE154_TYPE_DATA                   ||
              ieee802514_header->frameType==IEEE154_TYPE_BEACON
