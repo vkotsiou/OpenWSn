@@ -1,6 +1,7 @@
 #include "opendefs.h"
 #include "neighbors.h"
 #include "openqueue.h"
+#include "openrandom.h"
 #include "packetfunctions.h"
 #include "idmanager.h"
 #include "openserial.h"
@@ -37,7 +38,8 @@ bool isThisRowMatching(
 \brief Initializes this module.
 */
 void neighbors_init() {
-   
+   uint8_t i;
+ 
    // clear module variables
    memset(&neighbors_vars,0,sizeof(neighbors_vars_t));
    
@@ -47,6 +49,11 @@ void neighbors_init() {
    } else {
       neighbors_vars.myDAGrank=DEFAULTDAGRANK;
    }
+
+    // init balance factor
+    for (i=0; i<MAX_NUM_BTNECKS; i++){
+        neighbors_vars.balance_factors[i] = 1 / MAX_NUM_BTNECKS; // same amount to each btneck
+    }
 }
 
 //===== getters
@@ -78,27 +85,134 @@ uint8_t neighbors_getNumNeighbors() {
    return returnVal;
 }
 
+bool neighbors_getPreferedTrack(open_addr_t* addressToWrite){
+    uint8_t i;
+    bool track_found;
+    uint8_t cursor;
+    uint8_t rand;
+
+    // get random number
+    rand = openrandom_get16b() % 99;
+
+    // get the corresponding track
+    cursor = 0;
+    for (i=0; i<MAX_NUM_BTNECKS; i++) {
+        if (cursor += neighbors_vars.balance_factors[i] =! 0){
+            if (rand > cursor && rand < cursor + neighbors_vars.balance_factors[i]){
+                // copy address of prefered track
+                memcpy(addressToWrite,&(neighbors_vars.btnecks[i].addr),sizeof(open_addr_t));
+                track_found = TRUE;         
+                break;
+            } 
+            cursor += neighbors_vars.balance_factors[i];
+        }
+    }
+
+    return track_found;
+}
+
+ 
+/**
+\brief Retrieve the address of the parent that:
+   - Advertise the track
+   - Have the smallest path ETX to that track
+*/
+void neighbors_getPreferedTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite) {
+   uint8_t i,j;
+   uint8_t best_addr[8];
+   uint16_t min_etx;
+   uint16_t link_etx;
+
+   min_etx = 0xFFFF; // init to max value
+
+   // get parents (in parent set) announcing given track and choose the best one (smaller ETX)
+   for (i=0; i<MAXNUMNEIGHBORS; i++) {
+      if (neighbors_vars.neighbors[i].used==TRUE && neighbors_vars.neighbors[i].inParentSet==TRUE){
+         link_etx = (uint16_t)((float)neighbors_vars.neighbors[i].numTx
+                              /(float)neighbors_vars.neighbors[i].numTxACK);
+         for (j=0; j<MAX_NUM_BTNECKS; j++){
+            if (packetfunctions_sameAddress(&neighbors_vars.neighbors[i].btnecks[j].addr,track_owner)){
+               if ((neighbors_vars.neighbors[i].btnecks[j].etx + link_etx )< min_etx){
+                  memcpy(best_addr,&(neighbors_vars.neighbors[i].btnecks[j].addr.addr_64b),LENGTH_ADDR64b);
+                  min_etx = neighbors_vars.neighbors[i].btnecks[j].etx + link_etx;
+               }
+            }
+         }
+      }
+   }   
+}
+
+void neighbors_getAdvBtnecks(btneck_t * advBtnecks){
+    /*
+    uint8_t i,j;
+    bool btneck_replaced;
+    uint8_t self_counter;
+    uint16_t ETX;
+
+    btneck_replaced = FALSE; // I did not add myself to the btneck list
+    self_counter = sixtop_getBtneckCounter();
+
+    // get neighbor ETX
+    for (i=0;i<MAXNUMNEIGHBORS;i++) {
+        if (isThisRowMatching(&neighbors_vars.btnecks[i].addr.addr_64b,i)){
+            ETX = (uint16_t)((float)neighbors_vars.neighbors[i].numTx
+        / (float)neighbors_vars.neighbors[i].numTxACK);
+        }
+    }
+
+    // remove bottlenecks more constrained than myself
+    for (j=0; j<MAX_NUM_BTNECKS; j++){
+        if (neighbors_vars.btnecks[k].counter >= self_counter){
+            if (btneckReplaced == FALSE){
+                memcpy(neighbors_vars.btnecks[j].addr.addr_64b,idmanager_getMyID(ADDR_64B)->addr_64b,LENGTH_ADDR64b);
+                neighbors_vars.btnecks[j].counter = self_counter;
+                neighbors_vars.btnecks[j].etx = 0;
+                btneck_replaced = TRUE;
+            }
+            else { // remove bottleneck
+                memset(&neighbors_vars.btnecks[j].addr.addr_64b,0, LENGTH_ADDR64b); 
+                neighbors_vars.btnecks[j].counter = 0;
+                neighbors_vars.btnecks[j].etx = 0;
+            }
+        }
+    }
+    */
+    // return advertised bottleneck
+    memcpy(neighbors_vars.btnecks,&neighbors_vars.btnecks, sizeof(btneck_t)*MAX_NUM_BTNECKS);
+}
+
+/**
+\brief Retrieve my parent's EUI64 address.
+
+\param[out] addressToWrite Where to write the preferred parent's address to.
+*/
+//bool neighbors_getBalancedParentEui64(open_addr_t* addressToWrite) {
+    //btneck_t  btneck = malloc(sizeof(btneck_t))
+    //neighbors_getAdvBtnecks(&btnecks);
+    
+//}
+
 /**
 \brief Retrieve my parent set's EUI64 address.
 
 \param[out] addressToWrite Where to write the preferred parent's addresses to.
 */
 uint8_t neighbors_getParentSetEui64(open_addr_t* addressToWrite[MAXNUMPARENTS]) {
-	uint8_t   i;
-	uint8_t   num_parent;
+    uint8_t   i;
+    uint8_t   num_parent;
 
-	num_parent = 0;
+    num_parent = 0;
 
-	for (i=0; i<MAXNUMNEIGHBORS; i++) {
-  	if (neighbors_vars.neighbors[i].used==TRUE && neighbors_vars.neighbors[i].inParentSet==TRUE){
-			memcpy(addressToWrite[num_parent],&(neighbors_vars.neighbors[i].addr_64b),sizeof(open_addr_t));
-			num_parent++;
-			if (num_parent>MAXNUMPARENTS) // this should nerver happend
-				break;
-		}
-	}
+    for (i=0; i<MAXNUMNEIGHBORS; i++) {
+    if (neighbors_vars.neighbors[i].used==TRUE && neighbors_vars.neighbors[i].inParentSet==TRUE){
+            memcpy(addressToWrite[num_parent],&(neighbors_vars.neighbors[i].addr_64b),sizeof(open_addr_t));
+            num_parent++;
+            if (num_parent>MAXNUMPARENTS) // this should nerver happend
+                break;
+        }
+    }
 
-	return num_parent;
+    return num_parent;
 }
 
 /**
@@ -205,10 +319,6 @@ open_addr_t* neighbors_getKANeighbor(uint16_t kaPeriod) {
    } else {
       return NULL;
    }
-}
-
-void neighbors_getAdvBtnecks(btneck_t* btnecks){
-	memcpy(btnecks,&neighbors_vars.btnecks, sizeof(btneck_t)*MAX_NUM_BTNECKS);
 }
 
 //===== interrogators
@@ -476,7 +586,7 @@ The fields which are updated are:
    header.
 */
 void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
-   uint8_t          i;
+   uint8_t          i,j;
   
    // take ownership over the packet
    msg->owner = COMPONENT_NEIGHBORS;
@@ -498,6 +608,11 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
             } else {
                neighbors_vars.neighbors[i].DAGrank = neighbors_vars.dio->rank;
             }
+
+            // update neighbor bottlecks
+            for (j=0; j<MAX_NUM_BTNECKS; j++){
+                neighbors_vars.neighbors[i].btnecks[j] = neighbors_vars.dio->btnecks[j];
+            }
             break;
          }
       }
@@ -505,17 +620,20 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
    // update my routing information
    neighbors_updateMyDAGrankAndNeighborPreference();
 
-	 // update parent set
-	 neighbors_updateMyParentsSet();
+   // update parent set
+   neighbors_updateMyParentsSet();
 
-	 // update bottlenecks
-	 neighbors_updateMyBottlenecksSet(&(msg->l2_nextORpreviousHop));
+   // update bottlenecks
+   neighbors_updateMyBottlenecksSet(&(msg->l2_nextORpreviousHop));
 
-	// stats
+   // update balance factors
+   neighbors_updateBalanceFactors();
+
+    // stats
    //uint8_t SERTYPE_DIO = 6;
    //uint8_t txAttCounter = neighbors_vars.dio->txAttCounter;
    //openserial_printStat(SERTYPE_DIO, COMPONENT_NEIGHBORS, (uint8_t*)&txAttCounter, 
-	//	sizeof(txAttCounter)); 
+    //  sizeof(txAttCounter)); 
 }
 
 //===== write addresses
@@ -537,6 +655,7 @@ void  neighbors_getNeighbor(open_addr_t* address, uint8_t addr_type, uint8_t ind
    }
 }
 
+<<<<<<< HEAD
 //returns the whole entry concerning a neighbor
 neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address){
    uint8_t  i;
@@ -549,6 +668,9 @@ neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address){
    //unfound
    return(NULL);
 }
+=======
+
+>>>>>>> Adding track forwarding, multiparent, track select, capabilities
 
 //===== managing routing info
 
@@ -562,12 +684,16 @@ routing decisions to change. Examples are:
 - I became a DAGroot, so my DAGrank should be 0.
 */
 void neighbors_updateMyDAGrankAndNeighborPreference() {
-   uint8_t   i;
-   uint16_t  rankIncrease;
-   uint32_t  tentativeDAGrank; // 32-bit since is used to sum
-   uint8_t   prefParentIdx;
-   bool      prefParentFound;
-   
+   uint8_t     i;
+   uint16_t    rankIncrease;
+   uint32_t    tentativeDAGrank; // 32-bit since is used to sum
+   uint8_t     prefParentIdx;
+   bool        prefParentFound;
+   uint8_t     RPL_OF; // RPL Objective Funtion
+   uint8_t     minRank, maxRank;
+
+    RPL_OF = 1; // Compute rank using worst parent (greedy approach)
+
    // if I'm a DAGroot, my DAGrank is always 0
    if ((idmanager_getIsDAGroot())==TRUE) {
       neighbors_vars.myDAGrank=0;
@@ -596,6 +722,7 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
          if (neighbors_vars.neighbors[i].numTx == 0) {
             rankIncrease = DEFAULTLINKCOST*MINHOPRANKINCREASE;
          } else {
+<<<<<<< HEAD
             //6TiSCH minimal draft using OF0 for rank computation
 #ifdef RPL_OF0
             rankIncrease = (uint16_t)
@@ -641,8 +768,38 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
               tentativeDAGrank<MAXDAGRANK) {
             // found better parent, lower my DAGrank
             neighbors_vars.myDAGrank   = tentativeDAGrank;
+=======
+             //6TiSCH minimal draft using OF0 for rank computation
+             rankIncrease = (uint16_t)((((float)neighbors_vars.neighbors[i].numTx)/((float)neighbors_vars.neighbors[i].numTxACK))*2*MINHOPRANKINCREASE);
+         }
+         
+         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank+rankIncrease;
+
+         // prefered parent
+         if (tentativeDAGrank < minRank && tentativeDAGrank<MAXDAGRANK){
+            minRank = tentativeDAGrank;
+>>>>>>> Adding track forwarding, multiparent, track select, capabilities
             prefParentFound            = TRUE;
             prefParentIdx              = i;
+         }
+         if (tentativeDAGrank > maxRank && tentativeDAGrank<MAXDAGRANK){
+            maxRank = tentativeDAGrank;
+         }
+
+         // rank
+         if (RPL_OF == 0){
+            if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
+                 tentativeDAGrank<MAXDAGRANK) {
+             // found better parent, lower my DAGrank
+             neighbors_vars.myDAGrank   = tentativeDAGrank;
+            }
+         }
+         else{
+            if ( tentativeDAGrank>neighbors_vars.myDAGrank &&
+                 tentativeDAGrank<MAXDAGRANK) {
+             // found worst parent, lower my DAGrank
+             neighbors_vars.myDAGrank   = tentativeDAGrank;
+            }
          }
       }
    } 
@@ -663,59 +820,57 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
 \brief Update my bottlecks set
 
 **/
-void	neighbors_updateMyBottlenecksSet(open_addr_t* addr_64b){
-	uint8_t i,j,k,l;
-	uint8_t self_counter, min_counter, min_id;
-	bool btneckReplaced;
-	uint16_t ETX;
+void neighbors_updateMyBottlenecksSet(open_addr_t* addr_64b){
+   uint8_t i,j,k;
+   uint8_t max_counter, max_id;
+    
+   // For each used neighbor with higher rank, save less constrained bottlenecks
+   for (i=0;i<MAXNUMNEIGHBORS;i++) {
+      if (isThisRowMatching(&neighbors_vars.neighbors[i].addr_64b,i) 
+          && neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank) {
+         for (j=0; j<MAX_NUM_BTNECKS; j++){
+            // find the most contrained bottleneck
+            for (k=0; k<MAX_NUM_BTNECKS; k++){
+                if (neighbors_vars.btnecks[k].counter > max_counter){
+                    max_counter = neighbors_vars.dio->btnecks[k].counter;
+                    max_id = k;
+                }
+            }
+            // update bottlenecks list if advertized bottleneck is less constrained
+            if (neighbors_vars.dio->btnecks[j].counter < max_counter && max_counter != 0){
+                // copy bottleneck to local list
+                memcpy(&neighbors_vars.btnecks[max_id], 
+                       &neighbors_vars.dio->btnecks[j], 
+                       sizeof(btneck_t)*MAX_NUM_BTNECKS);
+            }           
+         }
+      }
+   }
+}
 
-	btneckReplaced = FALSE;
- 	self_counter = sixtop_getBtneckCounter();
-	min_counter = 255;
-	min_id = 0;
 
-	// get neighbor ETX
-	for (i=0;i<MAXNUMNEIGHBORS;i++) {
-		if (isThisRowMatching(addr_64b,i)){
-			ETX = (uint16_t)((float)neighbors_vars.neighbors[i].numTx
-        / (float)neighbors_vars.neighbors[i].numTxACK);
-		}
-	}
+// remove bottleneck that are too constrained
+void neighbors_filterBtnecks(){
+    uint8_t i;
+    bool ratioAcceptable;
 
-	for (j=0; j<MAX_NUM_BTNECKS; j++){
-		// find minimal value
-		for (k=0; k<MAX_NUM_BTNECKS; k++){
-			if (neighbors_vars.btnecks[k].btneck_counter < min_counter){
-				min_counter = neighbors_vars.dio->btnecks[k].btneck_counter;
-				min_id = k;
-			}
-		
-			// update local bottleneck list if advertized counter is higher than local minimal value
-			if (neighbors_vars.dio->btnecks[j].btneck_counter > min_counter && min_counter != 255){
-				// copy bottleneck to local list
-				neighbors_vars.btnecks[min_id] = neighbors_vars.dio->btnecks[j];
-				// inscrease ETX counter
-				neighbors_vars.btnecks[min_id].btneck_etx += ETX;
-			}			
-		}
-	}
+    ratioAcceptable = FALSE;
 
-	// remove bottleneck less constrained than myself
-	for (l=0; l<MAX_NUM_BTNECKS; l++){
-		if (neighbors_vars.btnecks[k].btneck_counter <= self_counter){
-			if (btneckReplaced == TRUE){
-				memcpy(neighbors_vars.btnecks[k].btneck_addr.addr_64b,idmanager_getMyID(ADDR_64B)->addr_16b,8);
-				neighbors_vars.btnecks[k].btneck_counter = self_counter;
-				neighbors_vars.btnecks[k].btneck_etx = 0;
-			}
-			else { // remove bottleneck
-				memset(&neighbors_vars.btnecks[k].btneck_addr.addr_64b[8],0, LENGTH_ADDR64b); 
-				neighbors_vars.btnecks[k].btneck_counter = 0;
-				neighbors_vars.btnecks[k].btneck_etx = 0;
-			}
-		}
-	}
-	
+    // Until traffic ratios are acceptable (>5%) for each bottleneck    
+    while(ratioAcceptable == FALSE){
+        // Calculate traffic ratio to send to each bottleneck
+        neighbors_updateBalanceFactors();
+
+        // Remove too coinstrained bottlenecks
+        ratioAcceptable = TRUE;
+        for (i=0; i<MAX_NUM_BTNECKS; i++){
+            if (neighbors_vars.balance_factors[i] < 5){
+                memset(&neighbors_vars.btnecks[i],0,sizeof(btneck_t));
+                ratioAcceptable = FALSE;
+                break;
+            }
+        }
+    }
 }
 
 /**
@@ -723,43 +878,137 @@ void	neighbors_updateMyBottlenecksSet(open_addr_t* addr_64b){
 
 **/
 void  neighbors_updateMyParentsSet(){
-	uint8_t i,j,k;
-	uint8_t parentset_ids[MAXNUMNEIGHBORS];
-	uint8_t parentset_ranks[MAXNUMNEIGHBORS];
-	uint8_t min_rank_id, min_rank_val;
+    uint8_t i,j,k;
+    uint8_t parentset_ids[MAXNUMNEIGHBORS];
+    uint8_t parentset_ranks[MAXNUMNEIGHBORS];
+    uint8_t min_rank_id, min_rank_val;
 
-	// init parent set	
-	for (i=0; i<MAXNUMNEIGHBORS; i++) {
-  	if (neighbors_vars.neighbors[i].used==TRUE && neighbors_vars.neighbors[i].inParentSet==TRUE){
-			neighbors_vars.neighbors[i].inParentSet = FALSE;
-		}
-		parentset_ids[i] = 0;
-		parentset_ranks[i] = 0;
-	}
+    // init parent set  
+    for (i=0; i<MAXNUMNEIGHBORS; i++) {
+    if (neighbors_vars.neighbors[i].used==TRUE && neighbors_vars.neighbors[i].inParentSet==TRUE){
+            neighbors_vars.neighbors[i].inParentSet = FALSE;
+        }
+        parentset_ids[i] = 0;
+        parentset_ranks[i] = 0;
+    }
 
-	// select parent with minimal rank	
-	for (i=0; i<MAXNUMNEIGHBORS; i++) {
-  	if (neighbors_vars.neighbors[i].used==TRUE){
-			uint8_t curr_parent_rank = neighbors_vars.neighbors[i].DAGrank;
-			// get parent with smaller rank in parent set
-			for (j=0; j<MAXNUMPARENTS; j++){
-				if ( parentset_ranks[j] < min_rank_val){
-					min_rank_val = parentset_ranks[j]; 
-					min_rank_id = j;
-				}
-			}
-			// replace the parent in the set if the neighbor have a smaller rank
-			if( curr_parent_rank < min_rank_val){
-				parentset_ranks[min_rank_id] = curr_parent_rank;
-				parentset_ids[min_rank_id] = i;
-			}
-		}
-	}
-	
-	// update neighbors values 
-	for (k=0; k<MAXNUMPARENTS; k++){
-		neighbors_vars.neighbors[parentset_ids[k]].inParentSet = TRUE;
-	}
+    // select parent with minimal rank  
+    for (i=0; i<MAXNUMNEIGHBORS; i++) {
+    if (neighbors_vars.neighbors[i].used==TRUE){
+            uint8_t curr_parent_rank = neighbors_vars.neighbors[i].DAGrank;
+            // get parent with smaller rank in parent set
+            for (j=0; j<MAXNUMPARENTS; j++){
+                if ( parentset_ranks[j] < min_rank_val){
+                    min_rank_val = parentset_ranks[j]; 
+                    min_rank_id = j;
+                }
+            }
+            // replace the parent in the set if the neighbor have a smaller rank
+            if( curr_parent_rank < min_rank_val){
+                parentset_ranks[min_rank_id] = curr_parent_rank;
+                parentset_ids[min_rank_id] = i;
+            }
+        }
+    }
+    
+    // update neighbors values 
+    for (k=0; k<MAXNUMPARENTS; k++){
+        neighbors_vars.neighbors[parentset_ids[k]].inParentSet = TRUE;
+    }
+
+}
+
+void neighbors_updateBalanceFactors() {
+    uint8_t i,j;
+    uint16_t sum_counters;
+    uint8_t btnecks_number;
+    float obj_value, diff_balance_factor;
+
+    // get number of btneck and the sum of their counter
+    for (i=0; i<MAX_NUM_BTNECKS; i++) {
+        if (neighbors_vars.btnecks[i].counter != 0){
+            sum_counters += (uint16_t)neighbors_vars.btnecks[i].counter;
+            btnecks_number++;
+        }
+    }
+
+    // get the balanced value objective
+    obj_value = (float)sum_counters / (float)btnecks_number;
+
+    // if counters different from objective, update balance factor
+    for (j=0; j<MAX_NUM_BTNECKS; j++) {
+    if (neighbors_vars.btnecks[j].counter != 0){
+            diff_balance_factor = neighbors_vars.btnecks[j].counter - obj_value;
+            if (diff_balance_factor != 0){
+                if ( (diff_balance_factor / 4) > 5 
+                    && (diff_balance_factor / 4) < 5) // don't change difference if < 5% (absolute value)
+                    neighbors_vars.balance_factors[j] += diff_balance_factor / 4; // gradual increase
+            }
+        }
+    }
+    
+}
+
+// recalculate the advertised bottlenecks ETX
+void neighbors_updateTrackETX(open_addr_t track_owner){
+   uint8_t i,j,k;
+   uint8_t sum_etx;     // ETX value of the path between btneck and parent
+   uint16_t link_etx;   // ETX value of last hop
+   uint8_t nb_etx;      // Number of ETX value per track
+   uint16_t avg_etx;    // Average value of path ETX for a track
+
+   sum_etx = 0;
+   nb_etx = 0;
+
+   for (i=0; i<MAX_NUM_BTNECKS; i++){
+         sum_etx = 0;
+         nb_etx = 0;            
+
+         // for each parent get the btneck path ETX and add the last hop ETX
+         for (j=0;j<MAXNUMNEIGHBORS;j++) {
+             if (isThisRowMatching(&neighbors_vars.neighbors[j].addr_64b,j)){
+                for (k=0; k<MAX_NUM_BTNECKS; k++){
+                     if (packetfunctions_sameAddress(&neighbors_vars.neighbors[i].btnecks[j].addr,
+                                                     &neighbors_vars.btnecks[k].addr)){
+                         link_etx = (uint16_t)((float)(neighbors_vars.neighbors[i].numTx) 
+                                             / (float)(neighbors_vars.neighbors[i].numTxACK));
+                         sum_etx += neighbors_vars.btnecks[k].etx + link_etx;
+                         nb_etx++;
+                     }
+                }
+             }
+         }
+
+         // Calculate ETX average for this bottleneck
+         avg_etx = (uint16_t)((float)sum_etx / (float)nb_etx);
+ 
+         // update the local values
+         neighbors_vars.btnecks[i].etx = avg_etx; 
+    }
+}
+
+// for each parent announcing a selected track, ask sixtop to resserv cells
+void neighbors_reserveTracks(){
+    uint8_t i,j,k;
+    track_t newTrack;
+
+    // Create track with each parent
+    for (i=0;i<MAXNUMNEIGHBORS;i++) {
+    if (isThisRowMatching(&neighbors_vars.neighbors[i].addr_64b,i)
+    && neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank) {
+            for (j=0; j<MAX_NUM_BTNECKS; j++){
+                for (k=0; k<MAX_NUM_BTNECKS; k++){
+                    if (packetfunctions_sameAddress(&neighbors_vars.neighbors[i].btnecks[j].addr,
+                                                    &neighbors_vars.btnecks[k].addr)){
+                        newTrack.owner = neighbors_vars.neighbors[i].btnecks[j].addr;
+                        newTrack.instance = TRACK_BALANCING;
+                        sixtop_addCells(neighbors_vars.neighbors[i].addr_64b, TRACK_INIT_CELLS, newTrack);
+                    }
+                }
+            }
+        }
+    }
+    
 
 }
 

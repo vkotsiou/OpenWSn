@@ -86,6 +86,9 @@ void          sixtop_notifyReceiveRemoveLinkRequest(
    schedule_IE_ht*      schedule_ie,
    open_addr_t*         addr
 );
+void          sixtop_trackForward(
+   OpenQueueEntry_t*    msg
+);
 
 //=== helper functions
 
@@ -155,7 +158,7 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 
 
-uint8_t sixtop_getBtneckCounter(){
+uint8_t sixtop_getBtneckCounter(void){
    return(sixtop_vars.btneckCounter);
 }
 
@@ -403,11 +406,30 @@ void sixtop_removeCell(open_addr_t* neighbor){
 //======= from upper layer
 
 owerror_t sixtop_send(OpenQueueEntry_t *msg) {
+    open_addr_t* self_addr;
+    open_addr_t* dest_addr;
    
    // set metadata
    msg->owner        = COMPONENT_SIXTOP;
    msg->l2_frameType = IEEE154_TYPE_DATA;
-   
+
+   // apply track forwarding mecanism if necessary
+      // init addresses
+      self_addr = idmanager_getMyID(ADDR_64B);
+      memset(&dest_addr,0,sizeof(open_addr_t));
+
+      // if I am the track owner, replace by new track
+      if (packetfunctions_sameAddress(&msg->l2_track.owner, self_addr)){
+         // modify track owner
+         neighbors_getPreferedTrack(dest_addr);
+         memcpy(msg->l2_track.owner.addr_64b, dest_addr, LENGTH_ADDR64b);
+      }
+
+      // change the next parent according to track
+      neighbors_getPreferedTrackParent(&msg->l2_track.owner, dest_addr);
+      memcpy(msg->l2_nextORpreviousHop.addr_64b, dest_addr, LENGTH_ADDR64b);
+
+ 
    if (msg->l2_IEListPresent == IEEE154_IELIST_NO) {
       return sixtop_send_internal(
          msg,
@@ -553,8 +575,14 @@ void task_sixtopNotifReceive() {
       case IEEE154_TYPE_DATA:
       case IEEE154_TYPE_CMD:
          if (msg->length>0) {
-            // send to upper layer
-            iphc_receive(msg);
+            if (msg->l2_track.instance == TRACK_BALANCING){
+               // forward the packet
+               sixtop_send(msg);
+            }
+            else {
+               // send to upper layer
+               iphc_receive(msg);
+            }
          } else {
             // free up the RAM
             openqueue_freePacketBuffer(msg);
@@ -575,18 +603,18 @@ void task_sixtopNotifReceive() {
    }
 
 
-		// update the counters
-		// -- we use only 1B for currentSlotFrame because we only care about differencing slotframe
-		uint8_t currentSlotFrame = (uint8_t)(msg->l2_asn.bytes0and1 
-										+ 65356*msg->l2_asn.bytes2and3 
-										+ 4294967296*msg->l2_asn.byte4)
-										/ SUPERFRAME_LENGTH;
-		if ( sixtop_vars.currentSlotFrame == currentSlotFrame )
-			sixtop_vars.btneckCounter+= msg->l2_numTxAttempts;
-		else { 
-			sixtop_vars.currentSlotFrame = currentSlotFrame;
-			sixtop_vars.btneckCounter = msg->l2_numTxAttempts; // restart counter
-		}
+      // update the counters
+      // -- we use only 1B for currentSlotFrame because we only care about differencing slotframe
+      uint8_t currentSlotFrame = (uint8_t)(msg->l2_asn.bytes0and1 
+                              + 65356*msg->l2_asn.bytes2and3 
+                              + 4294967296*msg->l2_asn.byte4)
+                              / SUPERFRAME_LENGTH;
+      if ( sixtop_vars.currentSlotFrame == currentSlotFrame )
+         sixtop_vars.btneckCounter+= msg->l2_numTxAttempts;
+      else { 
+         sixtop_vars.currentSlotFrame = currentSlotFrame;
+         sixtop_vars.btneckCounter = msg->l2_numTxAttempts; // restart counter
+      }
 }
 
 //======= debugging
@@ -1362,6 +1390,16 @@ void sixtop_notifyReceiveRemoveLinkRequest(
 
    sixtop_removeCellsByState(frameID, numOfCells, cellList, addr);
    sixtop_setState(SIX_IDLE);
+}
+
+void sixtop_trackForward(OpenQueueEntry_t* msg){
+   open_addr_t* next_addr;
+   
+   // get next hop address from track
+   neighbors_getPreferedTrackParent(&msg->l2_track.owner,next_addr);
+
+   // save next hop addr
+   memcpy(msg->l2_nextORpreviousHop.addr_64b, next_addr, LENGTH_ADDR64b);
 }
 
 //======= helper functions
