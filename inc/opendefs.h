@@ -65,6 +65,8 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define LENGTH_ADDR64b  8
 #define LENGTH_ADDR128b 16
 
+// the number of cells reserved along the track when receiving DIO
+#define TRACK_INIT_CELLS 1
 
 enum {
    E_SUCCESS                           = 0,
@@ -285,6 +287,7 @@ enum{
 	TRACK_BESTEFFORT                   = 0,   // for best effort traffic
 	TRACK_IMCPv6RPL                    = 1,   // for RPL unicast traffic (DAO)
 	TRACK_CEXAMPLE                     = 2    // for Cexample (application traffic)
+   TRACK_BALANCING                    = 3, // for load balancing
 };
 
 enum{
@@ -336,9 +339,9 @@ END_PACK
 
 BEGIN_PACK
 typedef struct{
-   open_addr_t btneck_addr;											// the address of the bottleneck
-   uint8_t		 btneck_counter;									// the metric use to compute the bottleneck
-	 uint16_t		 btneck_etx; 											// the ETX of the Path to the bottleneck
+   open_addr_t    addr;                         // the address of the bottleneck
+   uint8_t        counter;                      // the metric use to compute the bottleneck
+   uint16_t       etx;                          // the ETX of the Path to the bottleneck
 } btneck_t;
 END_PACK
 
@@ -375,7 +378,7 @@ typedef struct {
    uint8_t       l2_joinPriority;                // the join priority received in EB
    bool          l2_IEListPresent;               //did have IE field?
    bool          l2_joinPriorityPresent;
-   track_t       l2_track; 					       //the track associated with this packet
+   track_t       l2_track;                       //the track associated with this packet
    //l1 (drivers)
    uint8_t       l1_txPower;                     // power for packet to Tx at
    int8_t        l1_rssi;                        // RSSI of received packet
