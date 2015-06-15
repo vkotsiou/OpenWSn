@@ -17,10 +17,13 @@
 //=========================== variables =======================================
 
 //=========================== prototypes ======================================
-
+/*
 void      forwarding_getNextHop(
    open_addr_t*         destination,
    open_addr_t*         addressToWrite
+);*/
+void      forwarding_getNextHop(
+   OpenQueueEntry_t* msg
 );
 owerror_t forwarding_send_internal_RoutingTable(
    OpenQueueEntry_t*    msg,
@@ -265,14 +268,14 @@ void forwarding_receive(
       if (ipv6_header->next_header!=IANA_IPv6ROUTE) {
          // no source routing header present
          //check if flow label rpl header
-    	 #ifdef FLOW_LABEL_RPL_DOMAIN             
+       #ifdef FLOW_LABEL_RPL_DOMAIN             
              flags = (uint8_t)((uint32_t)((ipv6_header->flow_label)>>16)&0xFF);
              senderRank = (uint16_t)((uint32_t)(ipv6_header->flow_label)>>8)&0xFFFF;
              senderRank = senderRank*MINHOPRANKINCREASE;//shift it according to HopRank Increase
          #else
-    	     flags = rpl_option->flags;
-    	     senderRank = rpl_option->senderRank;
-    	 #endif
+           flags = rpl_option->flags;
+           senderRank = rpl_option->senderRank;
+       #endif
 
          if ((flags & O_FLAG)!=0){
             // wrong direction
@@ -292,10 +295,10 @@ void forwarding_receive(
             
             // set flag
             #ifdef FLOW_LABEL_RPL_DOMAIN
-        	    flags |= R_FLAG;
-        	    ipv6_header->flow_label|= ((uint32_t)flags<<16);
+             flags |= R_FLAG;
+             ipv6_header->flow_label|= ((uint32_t)flags<<16);
             #else
-        	    rpl_option->flags |= R_FLAG;
+             rpl_option->flags |= R_FLAG;
             #endif
 
             // log error
@@ -352,7 +355,13 @@ void forwarding_receive(
 \param[in]  destination128b  Final IPv6 destination address.
 \param[out] addressToWrite64b Location to write the EUI64 of next hop to.
 */
-void forwarding_getNextHop(open_addr_t* destination128b, open_addr_t* addressToWrite64b) {
+void forwarding_getNextHop(OpenQueueEntry_t * msg) {
+   open_addr_t * addressToWrite64b;
+   open_addr_t * destination128b;
+
+   memset(destination128b,0,LENGTH_ADDR128b);
+   memcpy(destination128b,&(msg->l3_destinationAdd),LENGTH_ADDR128b);
+   addressToWrite64b = &(msg->l2_nextORpreviousHop);
    uint8_t         i;
   // open_addr_t     temp_prefix64btoWrite;
    
@@ -377,6 +386,7 @@ void forwarding_getNextHop(open_addr_t* destination128b, open_addr_t* addressToW
    else {
       // destination is remote, send to preferred parent
       neighbors_getPreferredParentEui64(addressToWrite64b);
+      msg->l2_track.instance = TRACK_BALANCING;
    }
 }
 
@@ -412,7 +422,8 @@ owerror_t forwarding_send_internal_RoutingTable(
 
 
    // retrieve the next hop from the routing table
-   forwarding_getNextHop(&(msg->l3_destinationAdd),&(msg->l2_nextORpreviousHop));
+   //forwarding_getNextHop(&(msg->l3_destinationAdd),&(msg->l2_nextORpreviousHop));
+   forwarding_getNextHop(msg);
    if (msg->l2_nextORpreviousHop.type==ADDR_NONE) {
       openserial_printError(
          COMPONENT_FORWARDING,
