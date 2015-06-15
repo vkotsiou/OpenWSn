@@ -93,12 +93,6 @@ void openserial_init() {
                      isr_openserial_rx);
 }
 
-/*
-uint8_t  openserial_enough_space(uint8_t length){
-   return(openserial_vars.outputBufIdxW - openserial_vars.outputBufIdxR + length < SERIAL_OUTPUT_BUFFER_SIZE);
-}
-*/
-
 
 //return the ouput buffer we should now use
 uint8_t openserial_get_output_buffer(uint8_t length){
@@ -122,40 +116,6 @@ uint8_t openserial_get_output_buffer(uint8_t length){
 }
 
 
-
-
-
-
-
-owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t length) {
-   uint8_t i, pos;
-
-   pos = openserial_get_output_buffer(length + 3);
-   if (pos >= OPENSERIAL_NBFRAMES){
-      leds_error_toggle();
-      return(E_FAIL);
-   }
-   openserial_vars.statOutputBufFilled[pos] = TRUE;
-
-
-   INTERRUPT_DECLARATION();
-   
-   DISABLE_INTERRUPTS();
-   statOutputHdlcOpen(pos);
-   statOutputHdlcWrite(pos, SERFRAME_MOTE2PC_STATUS);
-   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
-   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-   statOutputHdlcWrite(pos, statusElement);
-   for (i=0;i<length;i++){
-      statOutputHdlcWrite(pos, buffer[i]);
-   }
-   statOutputHdlcClose(pos);
-   ENABLE_INTERRUPTS();
-   
-   return E_SUCCESS;
-}
-
-
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length) {
    uint8_t  asn[5];
    uint8_t  pos, i;
@@ -174,8 +134,6 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
       return(E_FAIL);
    }
    openserial_vars.statOutputBufFilled[pos] = TRUE;
-
-
 
    statOutputHdlcOpen(pos);
    statOutputHdlcWrite(pos, SERFRAME_MOTE2PC_STAT);
@@ -197,6 +155,75 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
 
    return E_SUCCESS;
 }
+
+owerror_t openserial_printf(uint8_t calling_component, uint8_t* buffer, uint8_t length) {
+   uint8_t  i, pos;
+   uint8_t  asn[5];
+
+   pos = openserial_get_output_buffer(length + 3);
+   if (pos >= OPENSERIAL_NBFRAMES){
+      leds_error_toggle();
+      return(E_FAIL);
+   }
+   openserial_vars.statOutputBufFilled[pos] = TRUE;
+
+
+   INTERRUPT_DECLARATION();
+
+   ieee154e_getAsn(asn);// byte01,byte23,byte4
+
+   DISABLE_INTERRUPTS();
+   statOutputHdlcOpen(pos);
+   statOutputHdlcWrite(pos, SERFRAME_MOTE2PC_PRINTF);
+   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   statOutputHdlcWrite(pos, calling_component);
+   statOutputHdlcWrite(pos, asn[0]);
+   statOutputHdlcWrite(pos, asn[1]);
+   statOutputHdlcWrite(pos, asn[2]);
+   statOutputHdlcWrite(pos, asn[3]);
+   statOutputHdlcWrite(pos, asn[4]);
+
+   for (i=0;i<length;i++){
+      statOutputHdlcWrite(pos, buffer[i]);
+   }
+   statOutputHdlcClose(pos);
+   ENABLE_INTERRUPTS();
+
+   return E_SUCCESS;
+}
+
+
+
+owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t length) {
+   uint8_t i, pos;
+
+   pos = openserial_get_output_buffer(length + 3);
+   if (pos >= OPENSERIAL_NBFRAMES){
+      leds_error_toggle();
+      return(E_FAIL);
+   }
+   openserial_vars.statOutputBufFilled[pos] = TRUE;
+
+
+   INTERRUPT_DECLARATION();
+
+   DISABLE_INTERRUPTS();
+   statOutputHdlcOpen(pos);
+   statOutputHdlcWrite(pos, SERFRAME_MOTE2PC_STATUS);
+   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   statOutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   statOutputHdlcWrite(pos, statusElement);
+   for (i=0;i<length;i++){
+      statOutputHdlcWrite(pos, buffer[i]);
+   }
+   statOutputHdlcClose(pos);
+   ENABLE_INTERRUPTS();
+
+   return E_SUCCESS;
+}
+
+
 
 owerror_t openserial_printInfoErrorCritical(
       char             severity,

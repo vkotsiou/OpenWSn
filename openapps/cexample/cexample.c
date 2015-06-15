@@ -15,6 +15,7 @@
 #include "idmanager.h"
 #include "IEEE802154E.h"
 #include "sixtop.h"
+#include <stdio.h>
 
 
 //=========================== defines =========================================
@@ -67,37 +68,8 @@ void cexample_init() {
          TIMER_PERIODIC,TIME_MS,
          cexample_timer_cb);
 
-   //starts generating packets only after a random time after begin synchronized
-  /* uint16_t starttime = openrandom_get16b() % CEXAMPLE_STARTTIME;
-   cexample_vars.timerId    = opentimers_start(
-         starttime,
-         TIMER_ONESHOT,TIME_MS,
-         cexample_start);
-*/
 }
-/*
 
-//start generating packets
-void cexample_start(){
-
-   //defer the packet generation (avoids a synchronization when all the nodes are turned on simultaneously
-   if (ieee154e_isSynch() == FALSE){
-      uint16_t starttime = openrandom_get16b() % CEXAMPLE_STARTTIME;
-
-      cexample_vars.timerId    = opentimers_start(
-            starttime,
-            TIMER_ONESHOT, TIME_MS,
-            cexample_start);
-   }
-
-   //starts generating periodical packets
-   else
-      cexample_vars.timerId    = opentimers_start(
-            CEXAMPLE_PERIOD,
-            TIMER_PERIODIC,TIME_MS,
-            cexample_timer_cb);
-}
-*/
 
 
 
@@ -119,6 +91,11 @@ void cexample_task_cb() {
    OpenQueueEntry_t*    pkt;
    owerror_t            outcome;
    uint8_t              i;
+
+
+//   char                 msg[15];
+//   snprintf(msg, 15, "generation");
+//   openserial_printf(COMPONENT_CEXAMPLE, (uint8_t*)msg, strlen(msg));
    
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) return;
