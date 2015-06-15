@@ -92,7 +92,7 @@ typedef struct {
    uint8_t         flags;
    uint8_t         reserved;
    uint8_t         DODAGID[16];    
-	 btneck_t				 btnecks[MAX_NUM_BTNECKS]; // maximum number of advertized bottlenecks tracks
+   btneck_t        btnecks[MAX_NUM_BTNECKS]; // maximum number of advertized bottlenecks tracks
 } icmpv6rpl_dio_ht;
 END_PACK
 

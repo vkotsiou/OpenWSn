@@ -419,7 +419,7 @@ void sendDIO() {
    //===== DIO payload
    // note: DIO is already mostly populated
    icmpv6rpl_vars.dio.rank            = neighbors_getMyDAGrank();
-   neighbors_getAdvBtnecks(&icmpv6rpl_vars.dio.btnecks); // populate DIO with advertised bottleneck
+   neighbors_getAdvBtnecks(icmpv6rpl_vars.dio.btnecks); // populate DIO with advertised bottleneck
    packetfunctions_reserveHeaderSize(msg,sizeof(icmpv6rpl_dio_ht));
    memcpy(
       ((icmpv6rpl_dio_ht*)(msg->payload)),
