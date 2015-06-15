@@ -11,6 +11,7 @@ settings
 *.a
 *.pyd
 *.pyc
+*.swp
 path.txt
 /build
 /.sconsign.dblite
