@@ -596,6 +596,34 @@ uint8_t schedule_getNbCellsWithTrack(track_t track, open_addr_t *nextHop){
 }
 
 /**
+\brief Get the number of cells with particular track and parent in the schedule
+
+\returns The number of cells with this parent and track
+**/
+uint8_t schedule_getNbCellsWithTrackAndNeihbor(track_t track, open_addr_t neighbor_addr){
+   uint8_t  returnVal = 0;
+   uint8_t  i;
+
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+
+   //count the nb of usable cells (in tx) for this track
+   for (i=0;i<MAXACTIVESLOTS;i++) {
+      if (sixtop_track_equal(schedule_vars.scheduleBuf[i].track, track) &&
+          packetfunctions_sameAddress(&neighbor_addr,&schedule_vars.scheduleBuf[i].neighbor) &&
+            (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
+                  ||
+            schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX)
+            )
+         returnVal++;
+   }
+
+   ENABLE_INTERRUPTS();
+
+   return returnVal; 
+}
+
+/**
 \brief Get the track of the current schedule entry.
 
 \returns The channel offset of the current schedule entry.

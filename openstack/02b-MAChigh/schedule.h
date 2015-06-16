@@ -165,7 +165,12 @@ slotOffset_t       schedule_getNextActiveSlotOffset(void);
 frameLength_t      schedule_getFrameLength(void);
 cellType_t         schedule_getType(void);
 void               schedule_getNeighbor(open_addr_t* addrToWrite);
+<<<<<<< HEAD
 uint8_t            schedule_getNbCellsWithTrack(track_t track, open_addr_t *nextHop);
+=======
+uint8_t            schedule_getNbCellsWithTrack(track_t track);
+uint8_t            schedule_getNbCellsWithTrackAndNeihbor(track_t track, open_addr_t neighbor_addr);
+>>>>>>> Adding function to get number of cells associated with a couple (parent, track)
 void               schedule_getTrack(track_t *track);
 channelOffset_t    schedule_getChannelOffset(void);
 slotOffset_t       schedule_getSlotOffset(void);
