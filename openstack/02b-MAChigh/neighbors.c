@@ -142,43 +142,48 @@ void neighbors_getPreferedTrackParent(open_addr_t* track_owner, open_addr_t* add
    }   
 }
 
+/**
+\brief Retreive the advertised bottleneck with updated ETX values
+**/
 void neighbors_getAdvBtnecks(btneck_t * advBtnecks){
-    /*
-    uint8_t i,j;
-    bool btneck_replaced;
-    uint8_t self_counter;
-    uint16_t ETX;
+   uint8_t i,j,k;
+   uint8_t sum_etx;     // ETX value of the path between btneck and parent
+   uint16_t link_etx;   // ETX value of last hop
+   uint8_t nb_etx;      // Number of ETX value per track
+   uint16_t avg_etx;    // Average value of path ETX for a track
 
-    btneck_replaced = FALSE; // I did not add myself to the btneck list
-    self_counter = sixtop_getBtneckCounter();
+   sum_etx = 0;
+   nb_etx = 0;
+   
+   // copy selected bottleneck list
+   memcpy(advBtnecks,&neighbors_vars.btnecks, sizeof(btneck_t)*MAX_NUM_BTNECKS);
 
-    // get neighbor ETX
-    for (i=0;i<MAXNUMNEIGHBORS;i++) {
-        if (isThisRowMatching(&neighbors_vars.btnecks[i].addr.addr_64b,i)){
-            ETX = (uint16_t)((float)neighbors_vars.neighbors[i].numTx
-        / (float)neighbors_vars.neighbors[i].numTxACK);
-        }
-    }
+   for (i=0; i<MAX_NUM_BTNECKS; i++){
+      sum_etx = 0;
+      nb_etx = 0;
 
-    // remove bottlenecks more constrained than myself
-    for (j=0; j<MAX_NUM_BTNECKS; j++){
-        if (neighbors_vars.btnecks[k].counter >= self_counter){
-            if (btneckReplaced == FALSE){
-                memcpy(neighbors_vars.btnecks[j].addr.addr_64b,idmanager_getMyID(ADDR_64B)->addr_64b,LENGTH_ADDR64b);
-                neighbors_vars.btnecks[j].counter = self_counter;
-                neighbors_vars.btnecks[j].etx = 0;
-                btneck_replaced = TRUE;
-            }
-            else { // remove bottleneck
-                memset(&neighbors_vars.btnecks[j].addr.addr_64b,0, LENGTH_ADDR64b); 
-                neighbors_vars.btnecks[j].counter = 0;
-                neighbors_vars.btnecks[j].etx = 0;
-            }
-        }
-    }
-    */
-    // return advertised bottleneck
-    memcpy(neighbors_vars.btnecks,&neighbors_vars.btnecks, sizeof(btneck_t)*MAX_NUM_BTNECKS);
+      // for each parent get the btneck path ETX and add the last hop ETX
+      for (j=0;j<MAXNUMNEIGHBORS;j++) {
+          if (isThisRowMatching(&neighbors_vars.neighbors[j].addr_64b,j)){
+             for (k=0; k<MAX_NUM_BTNECKS; k++){
+                  // if parent advertise the bottleneck, record the path ETX
+                  if (packetfunctions_sameAddress(&neighbors_vars.neighbors[i].btnecks[j].addr,
+                                                  &neighbors_vars.btnecks[k].addr)){
+                      link_etx = (uint16_t)((float)(neighbors_vars.neighbors[i].numTx)
+                                          / (float)(neighbors_vars.neighbors[i].numTxACK));
+                      sum_etx += neighbors_vars.btnecks[k].etx + link_etx;
+                      nb_etx++;
+                  }
+             }
+          }
+      }
+
+      // Calculate ETX average for this bottleneck
+      avg_etx = (uint16_t)((float)sum_etx / (float)nb_etx);
+
+      // update the returned value
+      advBtnecks[i].etx = avg_etx;
+   }
 }
 
 /**
@@ -620,14 +625,17 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
    // update my routing information
    neighbors_updateMyDAGrankAndNeighborPreference();
 
-   // update parent set
-   neighbors_updateMyParentsSet();
-
    // update bottlenecks
-   neighbors_updateMyBottlenecksSet(&(msg->l2_nextORpreviousHop));
+   neighbors_updateMyBottlenecksSet();
 
    // update balance factors
    neighbors_updateBalanceFactors();
+
+   // update parent set
+   neighbors_updateMyParentsSet();
+
+   // update reserved tracks cells
+   neighbors_updateReservedTracks();
 
     // stats
    //uint8_t SERTYPE_DIO = 6;
@@ -817,19 +825,21 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
 }
 
 /**
-\brief Update my bottlecks set
+\brief Update the bottlecks I advertise by saving only less constrained nodes
 
 **/
-void neighbors_updateMyBottlenecksSet(open_addr_t* addr_64b){
+void neighbors_updateMyBottlenecksSet(){
    uint8_t i,j,k;
    uint8_t max_counter, max_id;
-    
+   
+   max_counter = 0;
+ 
    // For each used neighbor with higher rank, save less constrained bottlenecks
    for (i=0;i<MAXNUMNEIGHBORS;i++) {
       if (isThisRowMatching(&neighbors_vars.neighbors[i].addr_64b,i) 
           && neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank) {
          for (j=0; j<MAX_NUM_BTNECKS; j++){
-            // find the most contrained bottleneck
+            // find the most contrained local bottleneck
             for (k=0; k<MAX_NUM_BTNECKS; k++){
                 if (neighbors_vars.btnecks[k].counter > max_counter){
                     max_counter = neighbors_vars.dio->btnecks[k].counter;
@@ -949,66 +959,38 @@ void neighbors_updateBalanceFactors() {
     
 }
 
-// recalculate the advertised bottlenecks ETX
-void neighbors_updateTrackETX(open_addr_t track_owner){
+/**
+\brief Reserve link with parents advertising selected tracks
+**/
+void neighbors_updateReservedTracks(){
    uint8_t i,j,k;
-   uint8_t sum_etx;     // ETX value of the path between btneck and parent
-   uint16_t link_etx;   // ETX value of last hop
-   uint8_t nb_etx;      // Number of ETX value per track
-   uint16_t avg_etx;    // Average value of path ETX for a track
+   track_t new_track;
 
-   sum_etx = 0;
-   nb_etx = 0;
+   // for each selected parent
+   for (i=0;i<MAXNUMNEIGHBORS;i++) {
+      if (isThisRowMatching(&neighbors_vars.neighbors[i].addr_64b,i)
+      && neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank) {
+         // for eacth of the selected parent's advertise bottleneck
+         for (j=0; j<MAX_NUM_BTNECKS; j++){
+            // for each of the bottleneck I advertise
+            for (k=0; k<MAX_NUM_BTNECKS; k++){
+               // if this parent advertise a bottleneck I choose to advertise
+               if (packetfunctions_sameAddress(&neighbors_vars.neighbors[i].btnecks[j].addr,
+                                               &neighbors_vars.btnecks[k].addr)){
+                  // create track
+                  new_track.owner = neighbors_vars.btnecks[j].addr;
+                  new_track.owner.type = ADDR_64B;
+                  new_track.instance = TRACK_BALANCING;
 
-   for (i=0; i<MAX_NUM_BTNECKS; i++){
-         sum_etx = 0;
-         nb_etx = 0;            
-
-         // for each parent get the btneck path ETX and add the last hop ETX
-         for (j=0;j<MAXNUMNEIGHBORS;j++) {
-             if (isThisRowMatching(&neighbors_vars.neighbors[j].addr_64b,j)){
-                for (k=0; k<MAX_NUM_BTNECKS; k++){
-                     if (packetfunctions_sameAddress(&neighbors_vars.neighbors[i].btnecks[j].addr,
-                                                     &neighbors_vars.btnecks[k].addr)){
-                         link_etx = (uint16_t)((float)(neighbors_vars.neighbors[i].numTx) 
-                                             / (float)(neighbors_vars.neighbors[i].numTxACK));
-                         sum_etx += neighbors_vars.btnecks[k].etx + link_etx;
-                         nb_etx++;
-                     }
-                }
-             }
-         }
-
-         // Calculate ETX average for this bottleneck
-         avg_etx = (uint16_t)((float)sum_etx / (float)nb_etx);
- 
-         // update the local values
-         neighbors_vars.btnecks[i].etx = avg_etx; 
-    }
-}
-
-// for each parent announcing a selected track, ask sixtop to resserv cells
-void neighbors_reserveTracks(){
-    uint8_t i,j,k;
-    track_t newTrack;
-
-    // Create track with each parent
-    for (i=0;i<MAXNUMNEIGHBORS;i++) {
-    if (isThisRowMatching(&neighbors_vars.neighbors[i].addr_64b,i)
-    && neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank) {
-            for (j=0; j<MAX_NUM_BTNECKS; j++){
-                for (k=0; k<MAX_NUM_BTNECKS; k++){
-                    if (packetfunctions_sameAddress(&neighbors_vars.neighbors[i].btnecks[j].addr,
-                                                    &neighbors_vars.btnecks[k].addr)){
-                        newTrack.owner = neighbors_vars.neighbors[i].btnecks[j].addr;
-                        newTrack.instance = TRACK_BALANCING;
-                        sixtop_addCells(neighbors_vars.neighbors[i].addr_64b, TRACK_INIT_CELLS, newTrack);
-                    }
-                }
+                  // if this parent does not already have a link with me for this track
+                  if (schedule_getNbCellsWithTrackAndNeihbor(new_track,neighbors_vars.neighbors[i].addr_64b)){
+                     sixtop_addCells(neighbors_vars.neighbors[i].addr_64b, TRACK_INIT_CELLS, new_track);
+                  }
+               }
             }
-        }
-    }
-    
+         }
+      }
+   }
 
 }
 

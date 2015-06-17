@@ -42,7 +42,7 @@ BEGIN_PACK
 typedef struct {
    bool             used;
    uint8_t          parentPreference;
-	 bool							inParentSet;
+   bool             inParentSet;
    bool             stableNeighbor;
    uint8_t          switchStabilityCounter;
    open_addr_t      addr_64b;
@@ -79,9 +79,9 @@ END_PACK
    
 typedef struct {
    neighborRow_t        neighbors[MAXNUMNEIGHBORS];
-	 bool                 amIBottleneck;
-	 btneck_t             btnecks[MAX_NUM_BTNECKS];
-	 float								balance_factors[MAX_NUM_BTNECKS]; // percentage of data sent to each btneck 
+   bool                 amIBottleneck;
+   btneck_t             btnecks[MAX_NUM_BTNECKS];
+   float                balance_factors[MAX_NUM_BTNECKS]; // percentage of data sent to each btneck 
    dagrank_t            myDAGrank;
    uint8_t              debugRow;
    icmpv6rpl_dio_ht*    dio; //keep it global to be able to debug correctly.
@@ -95,7 +95,7 @@ void          neighbors_init(void);
 dagrank_t     neighbors_getMyDAGrank(void);
 uint8_t       neighbors_getNumNeighbors(void);
 bool          neighbors_getPreferedTrack(open_addr_t* addressToWrite);
-void 					neighbors_getPreferedTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite);
+void          neighbors_getPreferedTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite);
 bool          neighbors_getPreferredParentEui64(open_addr_t* addressToWrite);
 open_addr_t*  neighbors_getKANeighbor(uint16_t kaPeriod);
 void          neighbors_getNeighborID(open_addr_t addr_64b);
@@ -131,12 +131,11 @@ neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address);
 // managing routing info
 void          neighbors_updateMyDAGrankAndNeighborPreference(void);
 void          neighbors_updateMyDAGrankWorst(void);
-void          neighbors_updateMyBottlenecksSet(open_addr_t* addr_64b);
-void					neighbors_filterBtnecks(void);
+void          neighbors_updateMyBottlenecksSet(void);
+void          neighbors_filterBtnecks(void);
 void          neighbors_updateMyParentsSet(void);
 void          neighbors_updateBalanceFactors(void);
-void					neighbors_updateTrackETX(open_addr_t track_owner);
-void					neighbors_reserveTracks(void);
+void          neighbors_updateReservedTracks(void);
 
 // maintenance
 void          neighbors_removeOld(void);
