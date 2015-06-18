@@ -85,7 +85,7 @@ uint8_t neighbors_getNumNeighbors() {
    return returnVal;
 }
 
-bool neighbors_getPreferedTrack(open_addr_t* addressToWrite){
+bool neighbors_getPreferredTrack(open_addr_t* addressToWrite){
     uint8_t i;
     bool track_found;
     uint8_t cursor;
@@ -117,7 +117,7 @@ bool neighbors_getPreferedTrack(open_addr_t* addressToWrite){
    - Advertise the track
    - Have the smallest path ETX to that track
 */
-void neighbors_getPreferedTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite) {
+void neighbors_getPreferredTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite) {
    uint8_t i,j;
    uint8_t best_addr[8];
    uint16_t min_etx;
@@ -615,16 +615,17 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
             }
 
             // update neighbor bottlecks
+            /*
             for (j=0; j<MAX_NUM_BTNECKS; j++){
                 neighbors_vars.neighbors[i].btnecks[j] = neighbors_vars.dio->btnecks[j];
-            }
+            }*/
             break;
          }
       }
    } 
    // update my routing information
    neighbors_updateMyDAGrankAndNeighborPreference();
-
+/*
    // update bottlenecks
    neighbors_updateMyBottlenecksSet();
 
@@ -636,12 +637,13 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
 
    // update reserved tracks cells
    neighbors_updateReservedTracks();
-
-    // stats
-   //uint8_t SERTYPE_DIO = 6;
-   //uint8_t txAttCounter = neighbors_vars.dio->txAttCounter;
-   //openserial_printStat(SERTYPE_DIO, COMPONENT_NEIGHBORS, (uint8_t*)&txAttCounter, 
-    //  sizeof(txAttCounter)); 
+*/ 
+   // stats
+   uint8_t SERTYPE_DIO = 6;
+   uint8_t counter = 66;
+   //uint8_t counter = neighbors_vars.dio->btnecks[0].counter;
+   openserial_printStat(SERTYPE_DIO, COMPONENT_NEIGHBORS, (uint8_t*)&counter, 
+      sizeof(counter)); 
 }
 
 //===== write addresses
@@ -1021,11 +1023,12 @@ status information about several modules in the OpenWSN stack.
 \returns TRUE if this function printed something, FALSE otherwise.
 */
 bool debugPrint_neighbors() {
+   /*
    debugNeighborEntry_t temp;
    neighbors_vars.debugRow=(neighbors_vars.debugRow+1)%MAXNUMNEIGHBORS;
    temp.row=neighbors_vars.debugRow;
    temp.neighborEntry=neighbors_vars.neighbors[neighbors_vars.debugRow];
-   openserial_printStatus(STATUS_NEIGHBORS,(uint8_t*)&temp,sizeof(debugNeighborEntry_t));
+   openserial_printStatus(STATUS_NEIGHBORS,(uint8_t*)&temp,sizeof(debugNeighborEntry_t));*/
    return TRUE;
 }
 

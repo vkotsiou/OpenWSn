@@ -26,9 +26,13 @@
 #define DEFAULTLINKCOST           15
 
 #define MAXDAGRANK                0xffff
+<<<<<<< HEAD
 #define DEFAULTDAGRANK            MAXDAGRANK
 
 #ifdef RPL_OF0
+=======
+#define DEFAULTDAGRANK            1
+>>>>>>> Correting Preferer to Preferred
 #define MINHOPRANKINCREASE        256  //default value in RPL and Minimal 6TiSCH draft
 #endif
 
@@ -94,8 +98,8 @@ void          neighbors_init(void);
 // getters
 dagrank_t     neighbors_getMyDAGrank(void);
 uint8_t       neighbors_getNumNeighbors(void);
-bool          neighbors_getPreferedTrack(open_addr_t* addressToWrite);
-void          neighbors_getPreferedTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite);
+bool          neighbors_getPreferredTrack(open_addr_t* addressToWrite);
+void          neighbors_getPreferredTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite);
 bool          neighbors_getPreferredParentEui64(open_addr_t* addressToWrite);
 open_addr_t*  neighbors_getKANeighbor(uint16_t kaPeriod);
 void          neighbors_getNeighborID(open_addr_t addr_64b);
