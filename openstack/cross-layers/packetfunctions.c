@@ -194,6 +194,13 @@ bool packetfunctions_sameAddress(open_addr_t* address_1, open_addr_t* address_2)
    return FALSE;
 }
 
+bool packetfunctions_sameAddress64(uint8_t (*address_1)[LENGTH_ADDR64b], uint8_t (*address_2)[LENGTH_ADDR64b]) {
+   if (memcmp((void*)address_1,(void*)address_2,LENGTH_ADDR64b)==0) {
+      return TRUE;
+   }
+   return FALSE;
+}
+
 //======= address read/write
 
 void packetfunctions_readAddress(uint8_t* payload, uint8_t type, open_addr_t* writeToAddress, bool littleEndian) {
