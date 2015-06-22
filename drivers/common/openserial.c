@@ -117,9 +117,9 @@ uint8_t openserial_get_output_buffer(uint8_t length){
 
 
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length) {
+#ifdef OPENSERIAL_STATS
    uint8_t  asn[5];
    uint8_t  pos, i;
-
 
    INTERRUPT_DECLARATION();
 
@@ -152,11 +152,14 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
    statOutputHdlcClose(pos);
    ENABLE_INTERRUPTS();
 
+#endif
 
    return E_SUCCESS;
 }
 
-owerror_t openserial_printf(uint8_t calling_component, uint8_t* buffer, uint8_t length) {
+owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t length) {
+#ifdef OPENSERIAL_PRINTF
+
    uint8_t  i, pos;
    uint8_t  asn[5];
 
@@ -190,6 +193,7 @@ owerror_t openserial_printf(uint8_t calling_component, uint8_t* buffer, uint8_t 
    statOutputHdlcClose(pos);
    ENABLE_INTERRUPTS();
 
+#endif
    return E_SUCCESS;
 }
 
@@ -485,16 +489,7 @@ void openserial_startOutput() {
    //STAT buffer
    uint8_t i = openserial_vars.statOutputCurrentR;
 
-   //conflict OUTPUT / STAT
- /*  if(openserial_vars.outputBufFilled && openserial_vars.statOutputBufFilled[i]){
-      openserial_printError(
-            COMPONENT_OTF,
-            ERR_GENERIC,
-            (errorparameter_t)i,
-            (errorparameter_t)openserial_vars.statOutputBufFilled[i]
-      );
-   }
-*/
+
    DISABLE_INTERRUPTS();
 
    //STAT OUTPUT buffer
@@ -512,24 +507,7 @@ void openserial_startOutput() {
       uart_writeByte(openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxR[i]++]);
    #endif
    }
-/*   //OUTPUT buffer
-   else if (openserial_vars.outputBufFilled){
 
-      openserial_vars.mode=MODE_OUTPUT;
-      if (openserial_vars.outputBufFilled) {
-      #ifdef FASTSIM
-         uart_writeCircularBuffer_FASTSIM(
-               openserial_vars.outputBuf,
-               &openserial_vars.outputBufIdxR,
-               &openserial_vars.outputBufIdxW
-         );
-      #else
-         uart_writeByte(openserial_vars.outputBuf[openserial_vars.outputBufIdxR++]);
-      #endif
-
-      }
-   }
-*/
    else {
       openserial_stop();
    }
@@ -616,55 +594,6 @@ bool debugPrint_outBufferIndexes() {
 
 //=========================== private =========================================
 
-//===== hdlc (stat output)
-
-/**
-\brief Start an HDLC frame in the output buffer.
-*/
-/*port_INLINE void outputHdlcOpen() {
-   // initialize the value of the CRC
-   openserial_vars.outputCrc                          = HDLC_CRCINIT;
-
-   // write the opening HDLC flag
-   openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]     = HDLC_FLAG;
-}
-*/
-/**
-\brief Add a byte to the outgoing HDLC frame being built.
-*/
-/*
-port_INLINE void outputHdlcWrite(uint8_t b) {
-
-    // iterate through CRC calculator
-   openserial_vars.outputCrc = crcIteration(openserial_vars.outputCrc,b);
-
-   // add byte to buffer
-   if (b==HDLC_FLAG || b==HDLC_ESCAPE) {
-      openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]  = HDLC_ESCAPE;
-      b                                               = b^HDLC_ESCAPE_MASK;
-   }
-   openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]     = b;
-
-}
-*/
-/**
-\brief Finalize the outgoing HDLC frame.
-*/
-/*
-port_INLINE void outputHdlcClose() {
-   uint16_t   finalCrc;
-
-   // finalize the calculation of the CRC
-   finalCrc   = ~openserial_vars.outputCrc;
-
-   // write the CRC value
-   outputHdlcWrite((finalCrc>>0)&0xff);
-   outputHdlcWrite((finalCrc>>8)&0xff);
-
-   // write the closing HDLC flag
-   openserial_vars.outputBuf[openserial_vars.outputBufIdxW++]   = HDLC_FLAG;
-}
-*/
 
 //===== hdlc (stat-output)
 
@@ -775,15 +704,7 @@ void isr_openserial_tx() {
             uart_writeByte(openserial_vars.reqFrame[openserial_vars.reqFrameIdx]);
          }
          break;
- /*     case MODE_OUTPUT:
-         if (openserial_vars.outputBufIdxW==openserial_vars.outputBufIdxR) {
-            openserial_vars.outputBufFilled = FALSE;
-         }
-         if (openserial_vars.outputBufFilled) {
-            uart_writeByte(openserial_vars.outputBuf[openserial_vars.outputBufIdxR++]);
-         }
-         break;
-   */
+
       case MODE_STAT:
          i = openserial_vars.statOutputCurrentR;
 
@@ -902,7 +823,7 @@ void openserial_echo(uint8_t* buf, uint8_t bufLen){
 //a cell was inserted in the schedule
 void openserial_statCelladd(scheduleEntry_t* slotContainer){
 
-   #ifdef STATSERIAL
+   #ifdef OPENSERIAL_STAT
 
    evtCellAdd_t evt;
    evt.track_instance   = slotContainer->track.instance;
@@ -919,7 +840,7 @@ void openserial_statCelladd(scheduleEntry_t* slotContainer){
 //a cell was removed in the schedule
 void openserial_statCellremove(scheduleEntry_t* slotContainer){
 
-   #ifdef STATSERIAL
+   #ifdef OPENSERIAL_STAT
 
    evtCellRem_t evt;
    evt.track_instance   = slotContainer->track.instance;
@@ -938,7 +859,7 @@ void openserial_statCellremove(scheduleEntry_t* slotContainer){
 //a ack was txed
 void openserial_statAckTx(){
 
-    #ifdef STATSERIAL
+    #ifdef OPENSERIAL_STAT
 
    #endif
 }
@@ -946,7 +867,7 @@ void openserial_statAckTx(){
 //a ack was received
 void openserial_statAckRx(){
 
-    #ifdef STATSERIAL
+    #ifdef OPENSERIAL_STAT
 
    #endif
 }
@@ -955,7 +876,7 @@ void openserial_statAckRx(){
 void openserial_statRx(OpenQueueEntry_t* msg){
 
    //stat for reception
-   #ifdef STATSERIAL
+   #ifdef OPENSERIAL_STAT
 
       evtPktRx_t evt;
       evt.length           = msg->length;
@@ -997,7 +918,7 @@ void openserial_statTx(OpenQueueEntry_t* msg){
 //a ack was txed
 void openserial_statPktTimeout(OpenQueueEntry_t* msg){
 
-#ifdef STATSERIAL
+#ifdef OPENSERIAL_STAT
      evtPktTx_t evt;
      evt.length           = msg->length;
      evt.txPower          = msg->l1_txPower;
@@ -1035,3 +956,53 @@ void openserial_statGen(uint16_t seqnum, track_t track){
 }
 
 
+//append a uint8_t at the end of a string
+char *openserial_ncat_uint8_t(char *str, uint8_t val, uint8_t length){
+   uint8_t l = strlen(str);
+
+   if (l + 3 > length)
+      return(str);
+
+   uint8_t a, b, c;
+
+   a = val / 100;
+   b = (val - a * 100)/10;
+   c = val - a * 100 - b * 10;
+
+   str[l] = '0' + a;
+   str[l+1] = '0' + b;
+   str[l+2] = '0' + c;
+   str[l+3] = '\0';
+   return(str);
+}
+
+
+//append a uint32_t at the end of a string (without the non significant zeros)
+char *openserial_ncat_uint32_t(char *str, uint32_t val, uint8_t length){
+   uint8_t l = strlen(str);
+
+   if (l + 10 > length) //at most 10 digits
+      return(str);
+
+   uint8_t  digit, shift, i;
+   uint32_t power;
+   bool     nonzero = FALSE;
+
+
+   power = 1000000000;
+   shift = 0;           // to avoid non significant zeros
+   for(i=0; i<10; i++){
+      digit = val / power;
+      if (digit != 0 || i == 9 || nonzero){
+         nonzero = TRUE;
+         str[l + shift] = '0' + digit;
+         shift++;
+      }
+      val = val - power * digit;
+      power = power / 10;
+   }
+   str[l+shift] = '\0';
+
+
+   return(str);
+}

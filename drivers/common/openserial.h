@@ -178,7 +178,7 @@ typedef struct {
 
 void    openserial_init(void);
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length);
-owerror_t openserial_printf(uint8_t calling_component, uint8_t* buffer, uint8_t length);
+owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t length);
 owerror_t openserial_printStatus(uint8_t statusElement, uint8_t* buffer, uint8_t length);
 owerror_t openserial_printInfo(uint8_t calling_component, uint8_t error_code,
                               errorparameter_t arg1,
@@ -212,6 +212,9 @@ void  openserial_statTx(OpenQueueEntry_t* msg);
 void  openserial_statPktTimeout(OpenQueueEntry_t* msg);
 void  openserial_statGen(uint16_t seqnum, track_t track);
 
+// -- tools
+//append a uint8_t at the end of a string
+char *openserial_ncat_uint32_t(char *str, uint32_t val, uint8_t length);
 
 
 

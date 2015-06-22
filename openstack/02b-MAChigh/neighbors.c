@@ -5,6 +5,7 @@
 #include "idmanager.h"
 #include "openserial.h"
 #include "IEEE802154E.h"
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -528,19 +529,33 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
       if (neighbors_vars.neighbors[i].used==TRUE) {
          
          // reset parent preference
-         neighbors_vars.neighbors[i].parentPreference=0;
+         neighbors_vars.neighbors[i].parentPreference = 0;
          
          // calculate link cost to this neighbor
-         if (neighbors_vars.neighbors[i].numTxACK==0) {
+         if (neighbors_vars.neighbors[i].numTxACK == 0) {
             rankIncrease = DEFAULTLINKCOST*2*MINHOPRANKINCREASE;
          } else {
             //6TiSCH minimal draft using OF0 for rank computation
             rankIncrease = (uint16_t)((((float)neighbors_vars.neighbors[i].numTx)/((float)neighbors_vars.neighbors[i].numTxACK))*2*MINHOPRANKINCREASE);
          }
          
-         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank+rankIncrease;
+         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank + rankIncrease;
          if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
               tentativeDAGrank<MAXDAGRANK) {
+
+            char str[150];
+            sprintf(str, "rank:");
+            openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTx, 150);
+            strncat(str, " / ", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTxACK, 150);
+            strncat(str, " - link metric ", 150);
+            openserial_ncat_uint32_t(str, rankIncrease, 150);
+            strncat(str, " - rank  ", 150);
+            openserial_ncat_uint32_t(str, tentativeDAGrank, 150);
+            strncat(str, " - current best ", 150);
+            openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
+            openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
+
             // found better parent, lower my DAGrank
             neighbors_vars.myDAGrank   = tentativeDAGrank;
             prefParentFound            = TRUE;

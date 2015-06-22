@@ -68,10 +68,24 @@ bool debugPrint_queue() {
    return TRUE;
 }
 
+//this represents an invalid timeout
+bool openqueue_timeout_is_zero(timeout_t value){
+   uint8_t  i;
 
-//is a >= b
+   for (i=0; i<5; i++)
+      if (value.byte[i] != 0)
+      return FALSE;
+
+   return(TRUE);
+}
+
+//is a >= b AND b != INVALID
 bool openqueue_timeout_is_greater(timeout_t a, timeout_t b){
    uint8_t  i;
+
+   //invalid timeout
+   if(openqueue_timeout_is_zero(b))
+      return(FALSE);
 
    //for each byte (byte 4 is the biggest)
    for(i=sizeof(timeout_t)-1; i>=0 && i<=sizeof(timeout_t)-1; i--)
@@ -84,16 +98,6 @@ bool openqueue_timeout_is_greater(timeout_t a, timeout_t b){
    return(TRUE);
 }
 
-//this represents an invalid timeout
-bool openqueue_timeout_is_zero(timeout_t value){
-   uint8_t  i;
-
-   for (i=0; i<5; i++)
-      if (value.byte[i] != 0)
-      return FALSE;
-
-   return(TRUE);
-}
 
 //returns a - b (or 0 if b > a)
 uint64_t openqueue_timeout_diff(timeout_t a, timeout_t b){
@@ -139,10 +143,10 @@ void openqueue_timeout_drop(void){
 
                openserial_statPktTimeout(&(openqueue_vars.queue[i]));
 
-             /*  openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
+               openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
                      (errorparameter_t)openqueue_vars.queue[i].owner,
                      (errorparameter_t)openqueue_vars.queue[i].creator);
-               */
+
                openqueue_reset_entry(&(openqueue_vars.queue[i]));
             }
    }
@@ -186,10 +190,21 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
    // walk through queue and find free entry
    for (i=0;i<QUEUELENGTH;i++) {
       if (openqueue_vars.queue[i].owner==COMPONENT_NULL) {
-         openqueue_vars.queue[i].creator=creator;
-         openqueue_vars.queue[i].owner=COMPONENT_OPENQUEUE;
+
          bzero(openqueue_vars.queue[i].timeout.byte, sizeof(timeout_t));
+         openqueue_vars.queue[i].creator  = creator;
+         openqueue_vars.queue[i].owner    = COMPONENT_OPENQUEUE;
+
          ENABLE_INTERRUPTS();
+
+      /*   openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
+                                                  (errorparameter_t)123,
+                                                  (errorparameter_t)i);
+         openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
+                                                  (errorparameter_t)456,
+                                                  (errorparameter_t)creator);
+
+*/
          return &openqueue_vars.queue[i];
       }
    }
@@ -305,8 +320,15 @@ void openqueue_removeAllCreatedBy(uint8_t creator) {
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++){
-      if (openqueue_vars.queue[i].creator==creator) {
+      if (openqueue_vars.queue[i].creator == creator) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
+         openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
+                                        (errorparameter_t)i,
+                                        (errorparameter_t)979);
+         openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
+                                        (errorparameter_t)creator,
+                                        (errorparameter_t)979);
+
       }
    }
    ENABLE_INTERRUPTS();
@@ -396,9 +418,12 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
             (openqueue_vars.queue[i].l2_track.instance == track->instance) &&
             (packetfunctions_sameAddress(&(openqueue_vars.queue[i].l2_track.owner), &(track->owner)))
             ) {
-
-
             ENABLE_INTERRUPTS();
+
+           /* openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
+                                         (errorparameter_t)i,
+                                         (errorparameter_t)980);
+*/
             return &openqueue_vars.queue[i];
          }
       }
@@ -417,6 +442,11 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
              )
             ) {
             ENABLE_INTERRUPTS();
+/*
+            openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
+                                         (errorparameter_t)i,
+                                         (errorparameter_t)981);
+*/
             return &openqueue_vars.queue[i];
          }
       }
@@ -466,8 +496,8 @@ void openqueue_reset_entry(OpenQueueEntry_t* entry) {
    entry->l2_frameType                 = IEEE154_TYPE_UNDEFINED;
    entry->l2_retriesLeft               = 0;
    entry->l2_IEListPresent             = 0;
+   bzero(entry->l2_track.owner.addr_128b, sizeof(entry->l2_track.owner.addr_128b));    //the longest address
    entry->l2_track.owner.type          = ADDR_NONE;
    entry->l2_track.instance            = TRACK_BESTEFFORT;
-
    bzero(entry->timeout.byte, sizeof(timeout_t));
 }

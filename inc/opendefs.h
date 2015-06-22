@@ -27,7 +27,9 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define CHANNEL_STATIC_FOR_DISCOVERY
 
 //push statistics to the serial when an event occurs (tx, rx, etc.)
-#define STATSERIAL 1
+#define OPENSERIAL_STAT    1
+#define OPENSERIAL_PRINTF  1
+
 
 //to delimit the implementation of draft-thubert-6man-flow-label-for-rpl-03
 #define FLOW_LABEL_RPL_DOMAIN 1
@@ -268,7 +270,7 @@ typedef uint16_t  errorparameter_t;
 typedef uint16_t  dagrank_t;
 typedef uint8_t   owerror_t;
 
-//ASN notes in an array of bytes
+//ASN notes in an array of bytes (big endian)
 BEGIN_PACK
 typedef struct{
    uint8_t byte[5];

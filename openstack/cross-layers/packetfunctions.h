@@ -53,6 +53,8 @@ uint16_t packetfunctions_ntohs( uint8_t* src );
 void     packetfunctions_htonl( uint32_t val, uint8_t* dest );
 uint32_t packetfunctions_ntohl( uint8_t* src );
 
+
+
 /**
 \}
 \}

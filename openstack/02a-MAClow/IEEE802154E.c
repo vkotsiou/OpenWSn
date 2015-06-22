@@ -844,6 +844,7 @@ port_INLINE void activity_ti1ORri1() {
          openserial_stop();
          // look for an ADV packet in the queue
          ieee154e_vars.dataToSend = openqueue_macGetAdvPacket();
+
          if (ieee154e_vars.dataToSend==NULL) {   // I will be listening for an ADV
             // change state
             changeState(S_RXDATAOFFSET);
@@ -878,10 +879,37 @@ port_INLINE void activity_ti1ORri1() {
             schedule_getNeighbor(&neighbor);
             schedule_getTrack(&track);
             ieee154e_vars.dataToSend = openqueue_macGetDataPacket(&neighbor, &track);
+            //openserial_statTx(ieee154e_vars.dataToSend);
          } else {
             ieee154e_vars.dataToSend = NULL;
          }
          if (ieee154e_vars.dataToSend!=NULL) {   // I have a packet to send
+/*
+            if (ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == 0){
+               timeout_t   now;
+
+               //initialization
+               ieee154e_getAsn(now.byte);
+
+               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
+                                        (errorparameter_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type,
+                                        (errorparameter_t)978);
+
+
+               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
+                                           (errorparameter_t)ieee154e_vars.dataToSend->creator,
+                                           (errorparameter_t)0);
+
+               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
+                                           (errorparameter_t)ieee154e_vars.dataToSend->owner,
+                                           (errorparameter_t)ieee154e_vars.dataToSend->timeout.byte[4]);
+
+               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
+                                          (errorparameter_t)ieee154e_vars.dataToSend->l2_track.instance,
+                                          (errorparameter_t)ieee154e_vars.dataToSend->timeout.byte[1]);
+
+            }
+*/
             // change state
             changeState(S_TXDATAOFFSET);
             // change owner
@@ -1058,7 +1086,7 @@ port_INLINE void activity_ti5(PORT_RADIOTIMER_WIDTH capturedTime) {
    radiotimer_cancel();
    
    // turn off the radio
-    radio_rfOff();
+   radio_rfOff();
    ieee154e_vars.radioOnTics+=(radio_getTimerValue()-ieee154e_vars.radioOnInit);
    
    // record the captured time
@@ -1066,7 +1094,7 @@ port_INLINE void activity_ti5(PORT_RADIOTIMER_WIDTH capturedTime) {
    
    //todo-debug
     if (ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == 0)
-       openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+       openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
                                    (errorparameter_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type,
                                    (errorparameter_t)976);
 
@@ -1738,7 +1766,7 @@ A valid Rx frame satisfies the following constraints:
 port_INLINE bool isValidRxFrame(ieee802154_header_iht* ieee802514_header) {
    //todo-debug
     if (ieee802514_header->dest.type == 0)
-       openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+       openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
                                    (errorparameter_t)ieee802514_header->dest.type,
                                    (errorparameter_t)986);
 
