@@ -22,7 +22,6 @@
 
 /// info for traffic generation
 #define  PAYLOADLEN           40
-#define  TRACK_INSTANCE       2
 #define  CEXAMPLE_PERIOD      4000
 
 const uint16_t cexample_timeout = 4000; //in ms {0, 0, 0, 0, 0};   //in ASN
@@ -59,7 +58,7 @@ void cexample_init() {
 
    //I am the owner of this track (8 bytes address)
    memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
-   cexample_vars.track.instance            = (uint16_t)TRACK_INSTANCE;
+   cexample_vars.track.instance            = (uint16_t)TRACK_CEXAMPLE;
 
    opencoap_register(&cexample_vars.desc);
 

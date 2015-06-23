@@ -458,6 +458,11 @@ void sendDAO() {
    msg->l4_protocol                         = IANA_ICMPv6;
    msg->l4_sourcePortORicmpv6Type           = IANA_ICMPv6_RPL;
    
+   // set track for DAO
+   memcpy(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
+   msg->l2_track.instance            = (uint16_t)TRACK_IMCPv6RPL;
+
+
    // set DAO destination
    msg->l3_destinationAdd.type=ADDR_128B;
    memcpy(msg->l3_destinationAdd.addr_128b,icmpv6rpl_vars.dio.DODAGID,sizeof(icmpv6rpl_vars.dio.DODAGID));

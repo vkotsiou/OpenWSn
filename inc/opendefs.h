@@ -10,6 +10,7 @@
 
 
 
+
 // general
 #include <stdint.h>               // needed for uin8_t, uint16_t
 #include "toolchain_defs.h"
@@ -25,6 +26,11 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 //use a static channel for debug (in any case / for the ADVT slots / never)
 //#define CHANNEL_STATIC_ALWAYS
 #define CHANNEL_STATIC_FOR_DISCOVERY
+#define CHANNEL_RAND_DEDICATED_SLOTS      //random channel offset when assigning a new cell
+#define CHANNELS_NB                    16 //nb. of channels
+#define SCHEDULING_RANDOM                 //a random slot nb is assigned when OTF asks for a cell
+
+
 
 //push statistics to the serial when an event occurs (tx, rx, etc.)
 #define OPENSERIAL_STAT    1
@@ -257,7 +263,9 @@ enum {
 
 
 enum{
-	TRACK_BESTEFFORT                   = 0, // for best effort traffic
+	TRACK_BESTEFFORT                   = 0,   // for best effort traffic
+	TRACK_IMCPv6RPL                    = 1,   // for RPL unicast traffic (DAO)
+	TRACK_CEXAMPLE                     = 2    // for Cexample (application traffic)
 };
 
 enum{

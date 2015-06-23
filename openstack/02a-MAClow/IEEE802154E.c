@@ -16,7 +16,7 @@
 #include "adaptive_sync.h"
 #include "processIE.h"
 #include "otf.h"
-
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -884,32 +884,35 @@ port_INLINE void activity_ti1ORri1() {
             ieee154e_vars.dataToSend = NULL;
          }
          if (ieee154e_vars.dataToSend!=NULL) {   // I have a packet to send
-/*
+
             if (ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == 0){
-               timeout_t   now;
-
-               //initialization
-               ieee154e_getAsn(now.byte);
-
-               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
-                                        (errorparameter_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type,
-                                        (errorparameter_t)978);
 
 
-               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
-                                           (errorparameter_t)ieee154e_vars.dataToSend->creator,
-                                           (errorparameter_t)0);
+               char str[150];
+               sprintf(str, "ERR 154E TX: typeaddr=");
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type, 150);
+               strncat(str, ", creator=", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->creator, 150);
+               strncat(str, ", owner ", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->owner, 150);
+               strncat(str, ", timeout=", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[0], 150);
+               strncat(str, ",", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[1], 150);
+               strncat(str, ",", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[2], 150);
+               strncat(str, ",", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[3], 150);
+               strncat(str, ",", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[4], 150);
+               strncat(str, ", track=", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_track.instance, 150);
+               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
-               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
-                                           (errorparameter_t)ieee154e_vars.dataToSend->owner,
-                                           (errorparameter_t)ieee154e_vars.dataToSend->timeout.byte[4]);
-
-               openserial_printCritical(COMPONENT_IEEE802154E, ERR_GENERIC,
-                                          (errorparameter_t)ieee154e_vars.dataToSend->l2_track.instance,
-                                          (errorparameter_t)ieee154e_vars.dataToSend->timeout.byte[1]);
+               openserial_statTx(ieee154e_vars.dataToSend);
 
             }
-*/
+
             // change state
             changeState(S_TXDATAOFFSET);
             // change owner
