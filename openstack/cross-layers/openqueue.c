@@ -330,13 +330,13 @@ void openqueue_removeAllCreatedBy(uint8_t creator) {
    for (i=0;i<QUEUELENGTH;i++){
       if (openqueue_vars.queue[i].creator == creator) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
-         openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
+       /*  openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
                                         (errorparameter_t)i,
                                         (errorparameter_t)979);
          openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
                                         (errorparameter_t)creator,
                                         (errorparameter_t)979);
-
+*/
       }
    }
    ENABLE_INTERRUPTS();
