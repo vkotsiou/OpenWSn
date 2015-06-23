@@ -1294,16 +1294,16 @@ bool sixtop_candidateAddCellList(
    *frameID = SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE;
    *flag = 1; // the cells listed in cellList are available to be schedule.
    
-#ifdef SCHEDULING_RANDOM
-   uint8_t  slotnb = openrandom_get16b() % (SUPERFRAME_LENGTH - 1);
-#else
    uint8_t  slotnb = 0;
+
+#ifdef SCHEDULING_RANDOM
+   slotnb = openrandom_get16b() % SUPERFRAME_LENGTH;
 #endif
 
    numCandCells=0;
    for(i=0;i<MAXACTIVESLOTS;i++){
 
-      slotnb += 1 % MAXACTIVESLOTS;
+      slotnb = (slotnb + 1) % SUPERFRAME_LENGTH;
 
       if(schedule_isSlotOffsetAvailable(slotnb)==TRUE){
          cellList[numCandCells].tsNum       = slotnb;
