@@ -117,7 +117,7 @@ uint8_t openserial_get_output_buffer(uint8_t length){
 
 
 owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t *buffer, uint8_t length) {
-#ifdef OPENSERIAL_STATS
+#ifdef OPENSERIAL_STAT
    uint8_t  asn[5];
    uint8_t  pos, i;
 
@@ -896,7 +896,7 @@ void openserial_statRx(OpenQueueEntry_t* msg){
 //push an event to track transmitted frames
 void openserial_statTx(OpenQueueEntry_t* msg){
 
-   #ifdef STATSERIAL
+   #ifdef OPENSERIAL_STAT
       evtPktTx_t evt;
       evt.length           = msg->length;
       evt.txPower          = msg->l1_txPower;
@@ -941,7 +941,7 @@ void openserial_statPktTimeout(OpenQueueEntry_t* msg){
 //push an event to track generated frames
 void openserial_statGen(uint16_t seqnum, track_t track){
 
-   #ifdef STATSERIAL
+   #ifdef OPENSERIAL_STAT
       evtPktGen_t          dataGen;
 
       //info

@@ -1295,7 +1295,7 @@ bool sixtop_candidateAddCellList(
    *flag = 1; // the cells listed in cellList are available to be schedule.
    
 #ifdef SCHEDULING_RANDOM
-   uint8_t  slotnb = openrandom_get16b() % MAXACTIVESLOTS;
+   uint8_t  slotnb = openrandom_get16b() % (SUPERFRAME_LENGTH - 1);
 #else
    uint8_t  slotnb = 0;
 #endif

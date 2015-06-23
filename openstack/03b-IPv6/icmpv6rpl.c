@@ -386,11 +386,11 @@ void icmpv6rpl_timer_DAO_task() {
    // check whether we need to send DAO
    if (icmpv6rpl_vars.delayDAO==0) {
       
+      // pick a new pseudo-random periodDAO
+       icmpv6rpl_vars.periodDAO = TIMER_DAO_TIMEOUT+(openrandom_get16b()&0xff);
+
       // send DAO
       sendDAO();
-      
-      // pick a new pseudo-random periodDAO
-      icmpv6rpl_vars.periodDAO = TIMER_DAO_TIMEOUT+(openrandom_get16b()&0xff);
       
       // arm the DAO timer with this new value
       opentimers_setPeriod(
@@ -442,7 +442,7 @@ void sendDAO() {
    // if you get here, you start construct DAO
    
    // reserve a free packet buffer for DAO
-   msg = openqueue_getFreePacketBuffer(COMPONENT_ICMPv6RPL);
+   msg = openqueue_getFreePacketBuffer_with_timeout(COMPONENT_ICMPv6RPL,  icmpv6rpl_vars.periodDAO);
    if (msg==NULL) {
       openserial_printError(COMPONENT_ICMPv6RPL,ERR_NO_FREE_PACKET_BUFFER,
                             (errorparameter_t)0,
@@ -459,7 +459,9 @@ void sendDAO() {
    msg->l4_sourcePortORicmpv6Type           = IANA_ICMPv6_RPL;
    
    // set track for DAO
-   memcpy(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
+   memcpy(msg->l2_track.owner.addr_64b, &(icmpv6rpl_vars.dio.DODAGID[8]), 8);
+   msg->l2_track.owner.type = ADDR_64B;
+  //   memcpy(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
    msg->l2_track.instance            = (uint16_t)TRACK_IMCPv6RPL;
 
 
