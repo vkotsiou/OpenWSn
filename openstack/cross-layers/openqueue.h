@@ -25,6 +25,9 @@ typedef struct {
    uint8_t     creator;
    uint8_t     owner;
    asn_t       timeout;    //timeout MUST be transmitted in ASN format to openvizualizer
+   uint16_t    trackInstance;
+   open_addr_t trackOwner;
+   uint8_t     garbage;    //we MUST use an even nb. of bytes (else the compiler may have some uncompliant optimizations)
 } debugOpenQueueEntry_t;
 
 

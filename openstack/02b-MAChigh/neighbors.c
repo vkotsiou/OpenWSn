@@ -543,7 +543,7 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
          if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
               tentativeDAGrank<MAXDAGRANK) {
 
-            char str[150];
+        /*    char str[150];
             sprintf(str, "rank:");
             openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTx, 150);
             strncat(str, " / ", 150);
@@ -555,7 +555,7 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
             strncat(str, " - current best ", 150);
             openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
             openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-
+*/
             // found better parent, lower my DAGrank
             neighbors_vars.myDAGrank   = tentativeDAGrank;
             prefParentFound            = TRUE;

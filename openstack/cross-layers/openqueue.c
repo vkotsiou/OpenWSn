@@ -6,6 +6,7 @@
 #include "scheduler.h"
 #include "opentimers.h"
 #include "sixtop.h"
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -59,6 +60,13 @@ bool debugPrint_queue() {
    output.timeout.bytes2and3 =
          openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[2] +
          openqueue_vars.queue[openqueue_vars.debugPrintRow].timeout.byte[3] *256;
+   output.trackInstance                  = \
+       (uint16_t)openqueue_vars.queue[openqueue_vars.debugPrintRow].l2_track.instance;
+    memcpy(
+          &output.trackOwner,
+          &(openqueue_vars.queue[openqueue_vars.debugPrintRow].l2_track.owner),
+          sizeof(open_addr_t)
+       );
 
 
    openserial_printStatus(
@@ -143,10 +151,10 @@ void openqueue_timeout_drop(void){
 
                openserial_statPktTimeout(&(openqueue_vars.queue[i]));
 
-               openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
+              /* openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
                      (errorparameter_t)openqueue_vars.queue[i].owner,
                      (errorparameter_t)openqueue_vars.queue[i].creator);
-
+*/
                openqueue_reset_entry(&(openqueue_vars.queue[i]));
             }
    }
@@ -496,7 +504,7 @@ void openqueue_reset_entry(OpenQueueEntry_t* entry) {
    entry->l2_frameType                 = IEEE154_TYPE_UNDEFINED;
    entry->l2_retriesLeft               = 0;
    entry->l2_IEListPresent             = 0;
-   bzero(entry->l2_track.owner.addr_128b, sizeof(entry->l2_track.owner.addr_128b));    //the longest address
+   bzero(&(entry->l2_track), sizeof(track_t));
    entry->l2_track.owner.type          = ADDR_NONE;
    entry->l2_track.instance            = TRACK_BESTEFFORT;
    bzero(entry->timeout.byte, sizeof(timeout_t));

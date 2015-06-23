@@ -10,6 +10,8 @@
 #include "idmanager.h"
 #include "opentimers.h"
 #include "IEEE802154E.h"
+#include <stdio.h>
+
 
 //=========================== variables =======================================
 
@@ -461,8 +463,13 @@ void sendDAO() {
    // set track for DAO
    memcpy(msg->l2_track.owner.addr_64b, &(icmpv6rpl_vars.dio.DODAGID[8]), 8);
    msg->l2_track.owner.type = ADDR_64B;
-  //   memcpy(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
    msg->l2_track.instance            = (uint16_t)TRACK_IMCPv6RPL;
+
+
+   char str[150];
+   sprintf(str, "DAO tx:");
+   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
+
 
 
    // set DAO destination

@@ -121,7 +121,7 @@ bool debugPrint_schedule() {
    temp.numTxACK                       = \
       schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].numTxACK;
    temp.trackInstance                  = \
-      (uint64_t)schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].track.instance;
+      (uint16_t)schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].track.instance;
    memcpy(
          &temp.trackOwner,
          &schedule_vars.scheduleBuf[schedule_vars.debugPrintRow].track.owner,
