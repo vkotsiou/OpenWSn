@@ -529,19 +529,23 @@ void schedule_getNeighbor(open_addr_t* addrToWrite) {
 
 \returns The number of cells with this track
 */
-uint8_t schedule_getNbCellsWithTrack(track_t track){
+uint8_t schedule_getNbCellsWithTrack(track_t track, open_addr_t *nextHop){
    uint8_t  returnVal = 0;
    uint8_t  i;
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
 
-   //count the nb of usable cells (in tx) for this track
+   // count the nb of usable cells (in tx) for this track
+   // linked with this neighbor (or anycast)
    for (i=0;i<MAXACTIVESLOTS;i++) {
       if (sixtop_track_equal(schedule_vars.scheduleBuf[i].track, track) &&
             (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
                   ||
-            schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX)
+            schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX) &&
+            (packetfunctions_sameAddress(&(schedule_vars.scheduleBuf[i].neighbor), nextHop)
+                  ||
+            schedule_vars.scheduleBuf[i].neighbor.type == ADDR_ANYCAST)
             )
          returnVal++;
    }

@@ -1181,6 +1181,13 @@ port_INLINE void activity_tie5() {
    } else {
       // return packet to the virtual COMPONENT_SIXTOP_TO_IEEE802154E component
       ieee154e_vars.dataToSend->owner = COMPONENT_SIXTOP_TO_IEEE802154E;
+
+
+      char str[150];
+                sprintf(str, "TIE5: creator=");
+                openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->creator, 150);
+      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
    }
    
    // reset local variable
@@ -2198,6 +2205,11 @@ void endSlot() {
       } else {
          // return packet to the virtual COMPONENT_SIXTOP_TO_IEEE802154E component
          ieee154e_vars.dataToSend->owner = COMPONENT_SIXTOP_TO_IEEE802154E;
+
+         char str[150];
+                   sprintf(str, "endslot: creator=");
+                   openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->creator, 150);
+         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
       }
       
       // reset local variable

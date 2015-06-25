@@ -6,7 +6,7 @@
 #include "openqueue.h"
 #include "schedule.h"
 #include "openserial.h"
-
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -34,14 +34,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    uint8_t nbCells_curr, nbCells_req;
 
 
- /*  if (msg->l2_track.instance != TRACK_BESTEFFORT)
-      openserial_printError(
-       COMPONENT_OTF,
-       ERR_GENERIC,
-       (errorparameter_t)sixtop_getState(),
-       (errorparameter_t)msg->l2_track.instance
-   );
-*/
+
 
    //when 6top will have finished, otf will ask for bandwidth for this packet (if reqquired)
     if (sixtop_getState() != SIX_IDLE)
@@ -52,8 +45,16 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
       return(0);
 
    // requested and current allocations
-   nbCells_curr   = schedule_getNbCellsWithTrack(msg->l2_track);
+   nbCells_curr   = schedule_getNbCellsWithTrack(msg->l2_track, &(msg->l2_nextORpreviousHop));
    nbCells_req    = openqueue_count_track(msg->l2_track);
+
+
+   char str[150];
+   sprintf(str, "OTF required=");
+   openserial_ncat_uint32_t(str, (uint32_t)nbCells_req, 150);
+   strncat(str, ", current=", 150);
+   openserial_ncat_uint32_t(str, (uint32_t)nbCells_curr, 150);
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
 
    //the current allocation is correct

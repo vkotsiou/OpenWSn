@@ -15,6 +15,7 @@
 #include "idmanager.h"
 #include "IEEE802154E.h"
 #include "sixtop.h"
+#include <stdio.h>
 
 
 
@@ -38,6 +39,7 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
                     coap_header_iht*  coap_header,
                     coap_option_iht*  coap_options);
 void    cexample_start(void);
+void    cexample_timer_start(void);
 void    cexample_timer_cb(void);
 void    cexample_task_cb(void);
 void    cexample_sendDone(OpenQueueEntry_t* msg, owerror_t error);
@@ -62,10 +64,17 @@ void cexample_init() {
 
    opencoap_register(&cexample_vars.desc);
 
+   //starts to generate packets when I am synchronized
+   uint64_t  next = openrandom_get16b();
+   while (next > 5 * CEXAMPLE_PERIOD)
+      next -= CEXAMPLE_PERIOD;
+
+
    cexample_vars.timerId    = opentimers_start(
-         CEXAMPLE_PERIOD,
-         TIMER_PERIODIC,TIME_MS,
-         cexample_timer_cb);
+         next,
+         TIMER_ONESHOT,
+         TIME_MS,
+         cexample_timer_start);
 
 }
 
@@ -78,6 +87,30 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
                       coap_header_iht* coap_header,
                       coap_option_iht* coap_options) {
    return E_FAIL;
+}
+
+
+//starts generating the packet only once I am synchronized
+void cexample_timer_start(void){
+
+   //next verification between CEXAMPLE_PERIOD and 2 * CEXAMPLE_PERIOD
+   uint64_t  next = openrandom_get16b();
+   while (next > 5 * CEXAMPLE_PERIOD)
+      next -= CEXAMPLE_PERIOD;
+
+   if (ieee154e_isSynch() == FALSE){
+     cexample_vars.timerId    = opentimers_start(
+            next,
+            TIMER_ONESHOT,
+            TIME_MS,
+            cexample_timer_start);
+   }
+   else{
+        cexample_vars.timerId    = opentimers_start(
+            CEXAMPLE_PERIOD,
+            TIMER_PERIODIC,TIME_MS,
+            cexample_timer_cb);
+   }
 }
 
 //timer fired, but we don't want to execute task in ISR mode

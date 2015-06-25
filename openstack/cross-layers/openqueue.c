@@ -151,10 +151,11 @@ void openqueue_timeout_drop(void){
 
                openserial_statPktTimeout(&(openqueue_vars.queue[i]));
 
-              /* openserial_printError(COMPONENT_OPENQUEUE, ERR_OPENQUEUE_TIMEOUT,
-                     (errorparameter_t)openqueue_vars.queue[i].owner,
-                     (errorparameter_t)openqueue_vars.queue[i].creator);
-*/
+               char str[150];
+               sprintf(str, "OQUEUE: remove(timeout), pos=");
+               openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
                openqueue_reset_entry(&(openqueue_vars.queue[i]));
             }
    }
@@ -193,6 +194,13 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
      return NULL;
    }
    
+   // bad creator
+   if (creator == COMPONENT_NULL){
+     ENABLE_INTERRUPTS();
+     return NULL;
+   }
+
+
    // if you get here, I will try to allocate a buffer for you
    
    // walk through queue and find free entry
@@ -205,14 +213,13 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
 
          ENABLE_INTERRUPTS();
 
-      /*   openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
-                                                  (errorparameter_t)123,
-                                                  (errorparameter_t)i);
-         openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
-                                                  (errorparameter_t)456,
-                                                  (errorparameter_t)creator);
 
-*/
+         char str[150];
+         sprintf(str, "OQUEUE: alllocation, pos=");
+         openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+
          return &openqueue_vars.queue[i];
       }
    }
@@ -330,13 +337,13 @@ void openqueue_removeAllCreatedBy(uint8_t creator) {
    for (i=0;i<QUEUELENGTH;i++){
       if (openqueue_vars.queue[i].creator == creator) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
-       /*  openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
-                                        (errorparameter_t)i,
-                                        (errorparameter_t)979);
-         openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
-                                        (errorparameter_t)creator,
-                                        (errorparameter_t)979);
-*/
+
+         char str[150];
+         sprintf(str, "OQUEUE: remove (AllCreatedBy), pos=");
+         openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+
       }
    }
    ENABLE_INTERRUPTS();
@@ -354,6 +361,12 @@ void openqueue_removeAllOwnedBy(uint8_t owner) {
    for (i=0;i<QUEUELENGTH;i++){
       if (openqueue_vars.queue[i].owner==owner) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
+
+         char str[150];
+         sprintf(str, "OQUEUE: remove (AllOwnedBy), pos=");
+         openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
       }
    }
    ENABLE_INTERRUPTS();
@@ -428,10 +441,12 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
             ) {
             ENABLE_INTERRUPTS();
 
-           /* openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
-                                         (errorparameter_t)i,
-                                         (errorparameter_t)980);
-*/
+            char str[150];
+            sprintf(str, "OQUEUE: packet to tx (UNICAST), pos=");
+            openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+
             return &openqueue_vars.queue[i];
          }
       }
@@ -450,11 +465,13 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
              )
             ) {
             ENABLE_INTERRUPTS();
-/*
-            openserial_printCritical(COMPONENT_OPENQUEUE, ERR_GENERIC,
-                                         (errorparameter_t)i,
-                                         (errorparameter_t)981);
-*/
+
+            char str[150];
+            sprintf(str, "OQUEUE: packet to tx (ANYCAST), pos=");
+            openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+
             return &openqueue_vars.queue[i];
          }
       }

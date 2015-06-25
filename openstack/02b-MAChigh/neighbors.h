@@ -10,7 +10,12 @@
 #include "opendefs.h"
 #include "icmpv6rpl.h"
 
+
 //=========================== define ==========================================
+
+//Objective function
+#define RPL_OFFabrice
+//#define   RPL_OF0
 
 #define MAXNUMNEIGHBORS           10
 #define MAXPREFERENCE             2
@@ -21,7 +26,14 @@
 
 #define MAXDAGRANK                0xffff
 #define DEFAULTDAGRANK            MAXDAGRANK
+
+#ifdef RPL_OF0
 #define MINHOPRANKINCREASE        256  //default value in RPL and Minimal 6TiSCH draft
+#endif
+
+#ifdef RPL_OFFabrice
+#define MINHOPRANKINCREASE        64
+#endif
 
 //=========================== typedef =========================================
 
