@@ -12,6 +12,7 @@
 #include "opentcp.h"
 #include "debugpins.h"
 #include "scheduler.h"
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -94,6 +95,8 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
 #ifdef FLOW_LABEL_RPL_DOMAIN
    forwarding_createFlowLabel(&flow_label,0x00);
 #endif
+
+
 
    return forwarding_send_internal_RoutingTable(
       msg,
@@ -371,6 +374,19 @@ owerror_t forwarding_send_internal_RoutingTable(
       uint8_t                fw_SendOrfw_Rcv
    ) {
    
+   //limits the number of packets to enqueue coming from outside (reserve space for 6top, and management)
+#ifdef FORWARDING_LIMIT_QUEUE
+   if (openqueue_overflow())
+      openserial_printError(
+         COMPONENT_FORWARDING,
+         ERR_OPENQUEUE_OVERSIZE,
+         (errorparameter_t)0,
+         (errorparameter_t)0
+      );
+      return E_FAIL;
+#endif
+
+
    // retrieve the next hop from the routing table
    forwarding_getNextHop(&(msg->l3_destinationAdd),&(msg->l2_nextORpreviousHop));
    if (msg->l2_nextORpreviousHop.type==ADDR_NONE) {

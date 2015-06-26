@@ -36,7 +36,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
 
 
 
-   //when 6top will have finished, otf will ask for bandwidth for this packet (if reqquired)
+   //when 6top will have finished, otf will ask for bandwidth for this packet (if required)
     if (sixtop_getState() != SIX_IDLE)
        return(0);
 
@@ -54,6 +54,12 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    openserial_ncat_uint32_t(str, (uint32_t)nbCells_req, 150);
    strncat(str, ", current=", 150);
    openserial_ncat_uint32_t(str, (uint32_t)nbCells_curr, 150);
+   strncat(str, ", track instance=", 150);
+   openserial_ncat_uint32_t(str, (uint32_t)msg->l2_track.instance, 150);
+   strncat(str, ", track owner=", 150);
+   openserial_ncat_uint8_t_hex(str, msg->l2_track.owner.addr_64b[6], 150);
+//   strncat(str, "-", 150);
+   openserial_ncat_uint8_t_hex(str, msg->l2_track.owner.addr_64b[7], 150);
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
 

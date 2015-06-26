@@ -15,7 +15,8 @@
 
 //=========================== define ==========================================
 
-#define QUEUELENGTH  10
+#define QUEUELENGTH           10
+#define QUEUELENGTH_RESERVED  3
 
 //=========================== typedef =========================================
 
@@ -61,6 +62,8 @@ OpenQueueEntry_t*    openqueue_getPacket(uint8_t pos);
 // called by IEEE80215E
 OpenQueueEntry_t*  openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *track);
 OpenQueueEntry_t*  openqueue_macGetAdvPacket(void);
+//management
+bool              openqueue_overflow(void);
 
 /**
 \}

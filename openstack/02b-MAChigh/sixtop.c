@@ -1013,6 +1013,7 @@ void sixtop_notifyReceiveCommand(
    bandwidth_IE_ht*  bandwidth_ie,
    schedule_IE_ht*   schedule_ie,
    open_addr_t*      addr){
+   char str[150];
    
    switch(opcode_ie->opcode){
       case SIXTOP_SOFT_CELL_REQ:
@@ -1023,15 +1024,16 @@ void sixtop_notifyReceiveCommand(
             sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
 
 
-            char str[150];
-            sprintf(str, "LinkREq rcvd: nb=");
+
+            sprintf(str, "LinkREq rcvd: from");
+            openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
+            strncat(str, ", nb=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->numOfLinks, 150);
             strncat(str, ", track=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->track.instance, 150);
             strncat(str, ", nbcells ", 150);
             openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->numberOfcells, 150);
-            strncat(str, ", from ", 150);
-            openserial_ncat_uint32_t(str, (uint32_t)addr->addr_64b[7], 150);
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
          }
@@ -1042,8 +1044,11 @@ void sixtop_notifyReceiveCommand(
            //received uResCommand is reserve link response
            sixtop_notifyReceiveLinkResponse(bandwidth_ie, schedule_ie, addr);
 
-           char str[150];
-           sprintf(str, "LinkRep rcvd: nb=");
+
+           sprintf(str, "LinkRep rcvd: from");
+           openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
+           openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
+           strncat(str, ", nb=", 150);
            openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->numOfLinks, 150);
            strncat(str, ", track=", 150);
            openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->track.instance, 150);

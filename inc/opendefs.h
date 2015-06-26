@@ -257,8 +257,9 @@ enum {
    ERR_SIXTOP_TIMEOUT                  = 0x3d, // a timeout has been fired. We have to flush 6top packets (we have the state {0})
    ERR_OPENQUEUE_TIMEOUT               = 0x3e, // a packet has been removed from the queue (owner {0], creator {1})
    ERR_BAD_TRACKID                     = 0x3f, // the best effort track cannot have an owner (here type {0} and addr {1})
-   ERR_GENERIC                         = 0x40, // generic error {0} {1}
-   ERR_UNKNOWN                         = 0x41, // unknown error, location {0}
+   ERR_OPENQUEUE_OVERSIZE              = 0x40, // not enough space in openqueue for non prioritar packets
+   ERR_GENERIC                         = 0x41, // generic error {0} {1}
+   ERR_UNKNOWN                         = 0x42, // unknown error, location {0}
 };
 
 

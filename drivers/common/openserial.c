@@ -1006,3 +1006,48 @@ char *openserial_ncat_uint32_t(char *str, uint32_t val, uint8_t length){
 
    return(str);
 }
+
+
+
+
+//append a uint32_t at the end of a string (without the non significant zeros)
+char *openserial_ncat_uint8_t_hex(char *str, uint8_t val, uint8_t length){
+   uint8_t  l = strlen(str);
+   uint8_t  c, shift;
+
+   if (l + 2 > length) //at most 2 digits
+      return(str);
+
+
+   shift = 0;
+
+   //first digit
+   c = (val & 0xf0)  >> 4;
+
+
+   if (c < 10)
+      str[l+shift] = '0' + c;
+   else if (c < 16)
+      str[l+shift] = (uint8_t)'a' + c  - 10;
+   else
+      str[l+shift] = 'z';
+   shift++;
+
+
+   //second digit
+   c = val & 0x0f;
+   if (c < 10)
+      str[l+shift] = '0' + c;
+   else if (c < 16)
+      str[l+shift] = 'a' + c  - 9;
+   else
+      str[l+shift] = 'z';
+   shift++;
+
+
+   str[l+shift] = '\0';
+
+   return(str);
+}
+
+

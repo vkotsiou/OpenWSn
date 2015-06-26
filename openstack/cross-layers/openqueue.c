@@ -502,6 +502,21 @@ OpenQueueEntry_t* openqueue_getPacket(uint8_t i) {
 }
 
 
+//not enough space for non prioritar packets
+bool openqueue_overflow(void){
+   uint8_t  nb = 0;
+   uint8_t  i;
+
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+   for (i=0;i<QUEUELENGTH;i++)
+      if (openqueue_vars.queue[i].owner== COMPONENT_NULL)
+         nb++;
+   ENABLE_INTERRUPTS();
+
+   return(nb - QUEUELENGTH < QUEUELENGTH_RESERVED);
+}
+
 
 //=========================== private =========================================
 

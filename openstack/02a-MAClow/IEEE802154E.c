@@ -538,12 +538,15 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       // parse the IEEE802.15.4 header (synchronize, end of frame)
       ieee802154_retrieveHeader(ieee154e_vars.dataReceived,&ieee802514_header);
       
-      // break if invalid IEEE802.15.4 header
+       // break if invalid IEEE802.15.4 header
       if (ieee802514_header.valid==FALSE) {
          // break from the do-while loop and execute the clean-up code below
          break;
       }
       
+      //retrieves the track (associated to this cell in the schedule)
+      schedule_getTrack(&(ieee154e_vars.dataReceived->l2_track));
+
       // store header details in packet buffer
       ieee154e_vars.dataReceived->l2_frameType = ieee802514_header.frameType;
       ieee154e_vars.dataReceived->l2_dsn       = ieee802514_header.dsn;
@@ -1181,13 +1184,6 @@ port_INLINE void activity_tie5() {
    } else {
       // return packet to the virtual COMPONENT_SIXTOP_TO_IEEE802154E component
       ieee154e_vars.dataToSend->owner = COMPONENT_SIXTOP_TO_IEEE802154E;
-
-
-      char str[150];
-                sprintf(str, "TIE5: creator=");
-                openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->creator, 150);
-      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-
    }
    
    // reset local variable
@@ -1298,6 +1294,9 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
          break;
       }
       
+      //retrieves the track (associated to this cell in the schedule)
+      schedule_getTrack(&(ieee154e_vars.ackReceived->l2_track));
+
       // store header details in packet buffer
       ieee154e_vars.ackReceived->l2_frameType  = ieee802514_header.frameType;
       ieee154e_vars.ackReceived->l2_dsn        = ieee802514_header.dsn;
@@ -1331,6 +1330,9 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
       notif_sendDone(ieee154e_vars.dataToSend,E_SUCCESS);
       ieee154e_vars.dataToSend = NULL;
       
+      //we received an ack
+      openserial_statAckRx();
+
       // in any case, execute the clean-up code below (processing of ACK done)
    } while (0);
    
@@ -1516,6 +1518,9 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
          break;
       }
       
+      //retrieves the track (associated to this cell in the schedule)
+      schedule_getTrack(&(ieee154e_vars.dataReceived->l2_track));
+
       // store header details in packet buffer
       ieee154e_vars.dataReceived->l2_frameType      = ieee802514_header.frameType;
       ieee154e_vars.dataReceived->l2_dsn            = ieee802514_header.dsn;
@@ -1599,7 +1604,7 @@ port_INLINE void activity_ri6() {
                             (errorparameter_t)0,
                             (errorparameter_t)0);
 
-      //packet received (serial line)
+      //ack txed (for statistics to openvizualizer)
       openserial_statAckTx();
 
       // indicate we received a packet anyway (we don't want to loose any)
@@ -2026,9 +2031,6 @@ void notif_receive(OpenQueueEntry_t* packetReceived) {
    // COMPONENT_IEEE802154E_TO_SIXTOP so sixtop can knows it's for it
    packetReceived->owner          = COMPONENT_IEEE802154E_TO_SIXTOP;
 
-   //retrieves the track (associated to this cell in the schedule)
-   schedule_getTrack(&(packetReceived->l2_track));
-
    // post RES's Receive task
    scheduler_push_task(task_sixtopNotifReceive,TASKPRIO_SIXTOP_NOTIF_RX);
    // wake up the scheduler
@@ -2205,11 +2207,6 @@ void endSlot() {
       } else {
          // return packet to the virtual COMPONENT_SIXTOP_TO_IEEE802154E component
          ieee154e_vars.dataToSend->owner = COMPONENT_SIXTOP_TO_IEEE802154E;
-
-         char str[150];
-                   sprintf(str, "endslot: creator=");
-                   openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->creator, 150);
-         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
       }
       
       // reset local variable

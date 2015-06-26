@@ -4,6 +4,7 @@
 #include "openrandom.h"
 #include "packetfunctions.h"
 #include "sixtop.h"
+#include "IEEE802154E.h"
 
 //=========================== variables =======================================
 
@@ -271,6 +272,15 @@ owerror_t schedule_addActiveSlot(
    slotContainer->channelOffset             = channelOffset;
    slotContainer->track                     = track;
    memcpy(&slotContainer->neighbor, neighbor, sizeof(open_addr_t));
+
+
+   //ASN = now
+   uint8_t array[5];
+   ieee154e_getAsn(array);
+   slotContainer->lastUsedAsn.bytes0and1  = ((uint16_t)array[1] << 8) | (uint16_t)array[0];
+   slotContainer->lastUsedAsn.bytes2and3  = ((uint16_t)array[3] << 8) | (uint16_t)array[2];
+   slotContainer->lastUsedAsn.byte4       = array[4];
+
 
 
    // insert in circular list
