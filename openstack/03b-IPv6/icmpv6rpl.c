@@ -46,6 +46,8 @@ void icmpv6rpl_init() {
    //=== admin
    
  //  icmpv6rpl_vars.busySending               = FALSE;
+   icmpv6rpl_vars.lastDIO_tx                = NULL;
+   icmpv6rpl_vars.lastDAO_tx                = NULL;
    icmpv6rpl_vars.fDodagidWritten           = 0;
    
    //=== DIO
@@ -158,6 +160,7 @@ uint8_t icmpv6rpl_getRPLIntanceID(){
 \param[in] error Outcome of the sending.
 */
 void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
+   char str[150];
    
    // take ownership over that packet
    msg->owner = COMPONENT_ICMPv6RPL;
@@ -169,11 +172,29 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
                             (errorparameter_t)0);
    }
    
+   // Remove the pointer for this DIO / DAO ni openqueue
+//   icmpv6rpl_vars.busySending = FALSE;
+   if (error == E_SUCCESS && msg != NULL){
+      if (msg == icmpv6rpl_vars.lastDIO_tx){
+
+         icmpv6rpl_vars.lastDIO_tx = NULL;
+
+         sprintf(str, "DIO txed");
+         openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+      }
+      if (msg == icmpv6rpl_vars.lastDAO_tx){
+           icmpv6rpl_vars.lastDAO_tx = NULL;
+
+           sprintf(str, "DAO txed");
+           openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+      }
+   }
+
+
    // free packet
    openqueue_freePacketBuffer(msg);
    
-   // I'm not busy sending anymore
-//   icmpv6rpl_vars.busySending = FALSE;
+
 }
 
 /**
@@ -292,11 +313,12 @@ void sendDIO() {
    // stop if I'm not sync'ed
    if (ieee154e_isSynch()==FALSE) {
       sprintf(str, "DIO failed (!synchro)");
-      openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-
+      openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
       // remove packets genereted by this module (DIO and DAO) from openqueue
       openqueue_removeAllCreatedBy(COMPONENT_ICMPv6RPL);
+      icmpv6rpl_vars.lastDIO_tx = NULL;
+      icmpv6rpl_vars.lastDAO_tx = NULL;
       
       // I'm not busy sending a DIO/DAO
    //   icmpv6rpl_vars.busySending  = FALSE;
@@ -308,23 +330,22 @@ void sendDIO() {
    // do not send DIO if I have the default DAG rank
    if (neighbors_getMyDAGrank()==DEFAULTDAGRANK) {
 
-
       sprintf(str, "DIO failed (no rank)");
-      openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-
+      openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
       return;
    }
    
    // do not send DIO if I'm already busy sending
-/*   if (icmpv6rpl_vars.busySending==TRUE) {
-      // I'm not sync'ed
-      sprintf(str, "DIO failed (busy sending)");
-      openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+   //if (icmpv6rpl_vars.busySending==TRUE) {
+   if (icmpv6rpl_vars.lastDIO_tx != NULL){
+      openqueue_removeEntry(icmpv6rpl_vars.lastDIO_tx);
+      icmpv6rpl_vars.lastDIO_tx = NULL;
 
-      return;
+      sprintf(str, "DIO: previous DIO replaced");
+      openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
    }
-  */
+
    // if you get here, all good to send a DIO
    
    // I'm now busy sending
@@ -343,7 +364,7 @@ void sendDIO() {
 
 
    sprintf(str, "DIO tx:");
-   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
+   openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
 
    // take ownership
@@ -379,6 +400,8 @@ void sendDIO() {
       openqueue_freePacketBuffer(msg);
    } else {
  //     icmpv6rpl_vars.busySending = FALSE;
+      icmpv6rpl_vars.lastDIO_tx = msg;
+
    }
 }
 
@@ -439,10 +462,11 @@ void sendDAO() {
       // I'm not sync'ed 
       sprintf(str, "DAO failed (not synchronized)");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
       
       // delete packets genereted by this module (DIO and DAO) from openqueue
       openqueue_removeAllCreatedBy(COMPONENT_ICMPv6RPL);
+      icmpv6rpl_vars.lastDIO_tx = NULL;
+      icmpv6rpl_vars.lastDAO_tx = NULL;
       
       // I'm not busy sending a DIO/DAO
     //  icmpv6rpl_vars.busySending = FALSE;
@@ -465,14 +489,16 @@ void sendDAO() {
        return;
    }
    
+   //TODO: we will have a warning if we are currently transmitting this packet (154E layer)
    // dont' send a DAO if you're still busy sending the previous one
- /*  if (icmpv6rpl_vars.busySending==TRUE) {
+   if (icmpv6rpl_vars.lastDAO_tx != NULL) {
       // I'm not sync'ed
-      sprintf(str, "DAO failed (the previous did not success)");
+      sprintf(str, "DAO: we replace the last one (in the queue)");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-      return;
+      openqueue_removeEntry(icmpv6rpl_vars.lastDAO_tx);
+      icmpv6rpl_vars.lastDAO_tx = NULL;
    }
-   */
+
    // if you get here, you start construct DAO
    
    // reserve a free packet buffer for DAO
@@ -500,7 +526,7 @@ void sendDAO() {
 
 
    sprintf(str, "DAO tx:");
-   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
+   openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
 
 
@@ -604,7 +630,9 @@ void sendDAO() {
    
    //===== send
    if (icmpv6_send(msg)==E_SUCCESS) {
- //     icmpv6rpl_vars.busySending = TRUE;
+      //icmpv6rpl_vars.busySending = TRUE;
+      icmpv6rpl_vars.lastDAO_tx = msg;
+
    } else {
       openqueue_freePacketBuffer(msg);
    }

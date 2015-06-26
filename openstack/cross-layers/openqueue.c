@@ -154,7 +154,7 @@ void openqueue_timeout_drop(void){
                char str[150];
                sprintf(str, "OQUEUE: remove(timeout), pos=");
                openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+               openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 
                openqueue_reset_entry(&(openqueue_vars.queue[i]));
             }
@@ -215,9 +215,9 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
 
 
          char str[150];
-         sprintf(str, "OQUEUE: alllocation, pos=");
+         sprintf(str, "OQUEUE: allocation, pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+         openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 
 
          return &openqueue_vars.queue[i];
@@ -325,6 +325,17 @@ owerror_t openqueue_freePacketBuffer(OpenQueueEntry_t* pkt) {
    return E_FAIL;
 }
 
+
+/**
+\brief Free this packet entry (called by components for which a packet has been enqueued for a too long time (e.g.))
+
+\param the entry to remove in the queue
+*/
+
+void openqueue_removeEntry(OpenQueueEntry_t* entry){
+   openqueue_reset_entry(entry);
+}
+
 /**
 \brief Free all the packet buffers created by a specific module.
 
@@ -341,7 +352,7 @@ void openqueue_removeAllCreatedBy(uint8_t creator) {
          char str[150];
          sprintf(str, "OQUEUE: remove (AllCreatedBy), pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+         openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 
 
       }
@@ -365,7 +376,7 @@ void openqueue_removeAllOwnedBy(uint8_t owner) {
          char str[150];
          sprintf(str, "OQUEUE: remove (AllOwnedBy), pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+         openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 
       }
    }
@@ -444,7 +455,7 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
             char str[150];
             sprintf(str, "OQUEUE: packet to tx (UNICAST), pos=");
             openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 
 
             return &openqueue_vars.queue[i];
@@ -469,7 +480,7 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
             char str[150];
             sprintf(str, "OQUEUE: packet to tx (ANYCAST), pos=");
             openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 
 
             return &openqueue_vars.queue[i];
@@ -516,6 +527,9 @@ bool openqueue_overflow(void){
 
    return(nb - QUEUELENGTH < QUEUELENGTH_RESERVED);
 }
+
+
+
 
 
 //=========================== private =========================================

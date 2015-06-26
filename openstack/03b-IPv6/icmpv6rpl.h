@@ -136,6 +136,8 @@ END_PACK
 typedef struct {
    // admin
 //   bool                      busySending;             ///< currently sending DIO/DAO.
+   OpenQueueEntry_t*         lastDIO_tx;              // last DIO we transmitted
+   OpenQueueEntry_t*         lastDAO_tx;              // last DAO we transmitted
    uint8_t                   fDodagidWritten;         ///< is DODAGID already written to DIO/DAO?
    // DIO-related
    icmpv6rpl_dio_ht          dio;                     ///< pre-populated DIO packet.
