@@ -20,6 +20,8 @@
 #include <stdio.h>
 
 
+#define _DEBUG_SIXTOP_
+
 //=========================== variables =======================================
 
 sixtop_vars_t sixtop_vars;
@@ -235,7 +237,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    len  = 0;
    len += processIE_prependSheduleIE(pkt, type, frameID, flag, cellList);
    len += processIE_prependBandwidthIE(pkt, frameID, numCells, track);
-   len += processIE_prependOpcodeIE(pkt,SIXTOP_SOFT_CELL_REQ);
+   len += processIE_prependOpcodeIE(pkt, SIXTOP_SOFT_CELL_REQ);
    processIE_prependMLMEIE(pkt,len);
    
    // indicate IEs present
@@ -247,6 +249,28 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    // update state
    sixtop_setState(SIX_WAIT_ADDREQUEST_SENDDONE);
    
+
+#ifdef _DEBUG_SIXTOP_
+   uint8_t  i;
+   char str[150];
+
+   sprintf(str, "LinkREq txed: to ");
+   openserial_ncat_uint8_t_hex(str, neighbor->addr_64b[6], 150);
+   openserial_ncat_uint8_t_hex(str, neighbor->addr_64b[7], 150);
+   strncat(str, ", bw=", 150);
+   openserial_ncat_uint32_t(str, (uint32_t)numCells, 150);
+   strncat(str, ", track=", 150);
+   openserial_ncat_uint32_t(str, (uint32_t)track.instance, 150);
+   strncat(str, ", nbcells ", 150);
+   openserial_ncat_uint32_t(str, (uint32_t)numCells, 150);
+   for(i=0; i<SCHEDULEIEMAXNUMCELLS; i++){
+      strncat(str, ", slot ", 150);
+      openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);
+   }
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
+
    // arm timeout
    opentimers_setPeriod(
       sixtop_vars.timeoutTimerId,
@@ -276,12 +300,14 @@ void sixtop_removeCell(open_addr_t* neighbor){
    }
    
 
+#ifdef _DEBUG_SIXTOP_
    char str[150];
    sprintf(str, "SIXTOP remove cells with ");
    openserial_ncat_uint8_t_hex(str, (uint32_t)neighbor->addr_64b[6], 150);
-//   strncat(str, ", ", 150);
    openserial_ncat_uint8_t_hex(str, (uint32_t)neighbor->addr_64b[7], 150);
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
 
    // generate candidate cell list
    outcome = sixtop_candidateRemoveCellList(
@@ -1022,55 +1048,80 @@ void sixtop_notifyReceiveCommand(
    schedule_IE_ht*   schedule_ie,
    open_addr_t*      addr){
    char str[150];
+   uint8_t  i;
    
    switch(opcode_ie->opcode){
       case SIXTOP_SOFT_CELL_REQ:
-         if(sixtop_vars.six2six_state == SIX_IDLE)
-         {
-            sixtop_setState(SIX_ADDREQUEST_RECEIVED);
-            //received uResCommand is reserve link request
-            sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
+         if(sixtop_vars.six2six_state == SIX_IDLE){
 
-
-
-            sprintf(str, "LinkREq rcvd: from");
+#ifdef _DEBUG_SIXTOP_
+            sprintf(str, "LinkREq rcvd: from ");
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
-            strncat(str, ", nb=", 150);
+            strncat(str, ", bw=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->numOfLinks, 150);
             strncat(str, ", track=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->track.instance, 150);
             strncat(str, ", nbcells ", 150);
             openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->numberOfcells, 150);
+            for(i=0; i<schedule_ie->numberOfcells; i++){
+               strncat(str, ", slot ", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->cellList[i].tsNum, 150);
+            }
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
 
+            sixtop_setState(SIX_ADDREQUEST_RECEIVED);
+            //received uResCommand is reserve link request
+            sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
          }
          break;
       case SIXTOP_SOFT_CELL_RESPONSE:
          if(sixtop_vars.six2six_state == SIX_WAIT_ADDRESPONSE){
-            sixtop_setState(SIX_ADDRESPONSE_RECEIVED);
+
+#ifdef _DEBUG_SIXTOP_
+            sprintf(str, "LinkRep rcvd: from ");
+            openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
+            strncat(str, ", bw=", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->numOfLinks, 150);
+            strncat(str, ", track=", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->track.instance, 150);
+            strncat(str, ", nbcells ", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->numberOfcells, 150);
+            for(i=0; i<schedule_ie->numberOfcells; i++){
+               strncat(str, ", slot ", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->cellList[i].tsNum, 150);
+            }
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+           sixtop_setState(SIX_ADDRESPONSE_RECEIVED);
+
            //received uResCommand is reserve link response
            sixtop_notifyReceiveLinkResponse(bandwidth_ie, schedule_ie, addr);
-
-
-           sprintf(str, "LinkRep rcvd: from");
-           openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
-           openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
-           strncat(str, ", nb=", 150);
-           openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->numOfLinks, 150);
-           strncat(str, ", track=", 150);
-           openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->track.instance, 150);
-           strncat(str, ", nbcells ", 150);
-           openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->numberOfcells, 150);
-           openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-
          }
          break;
+
       case SIXTOP_REMOVE_SOFT_CELL_REQUEST:
          if(sixtop_vars.six2six_state == SIX_IDLE){
+
+#ifdef _DEBUG_SIXTOP_
+            sprintf(str, "LinkRem rcvd: from ");
+            openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
+            strncat(str, ", nbcells ", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->numberOfcells, 150);
+            for(i=0; i<schedule_ie->numberOfcells; i++){
+               strncat(str, ", slot ", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->cellList[i].tsNum, 150);
+            }
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+            //state change
             sixtop_setState(SIX_REMOVEREQUEST_RECEIVED);
-          //received uResComand is remove link request
-             sixtop_notifyReceiveRemoveLinkRequest(schedule_ie, addr);
+
+            //received uResComand is remove link request
+            sixtop_notifyReceiveRemoveLinkRequest(schedule_ie, addr);
         }
         break;
       default:
@@ -1093,19 +1144,6 @@ void sixtop_notifyReceiveLinkRequest(
    bw          = bandwidth_ie->numOfLinks;
    track       = bandwidth_ie->track;
    
-   char str[150];
-   sprintf(str, "LinkREq rcvd: bw=");
-   openserial_ncat_uint32_t(str, (uint32_t)bw, 150);
-   strncat(str, ", numOfcells=", 150);
-   openserial_ncat_uint32_t(str, (uint32_t)numOfcells, 150);
-   strncat(str, ", frameid ", 150);
-   openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->frameID, 150);
-   strncat(str, ", bandwidth_ie->slotframeID ", 150);
-   openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->slotframeID, 150);
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-
-
-
    // need to check whether the links are available to be scheduled.
    if(bw > numOfcells                                                 ||
       schedule_ie->frameID != bandwidth_ie->slotframeID               ||
@@ -1476,28 +1514,29 @@ bool sixtop_areAvailableCellsToBeScheduled(
 
        available = FALSE;
    } else {
+#ifdef _DEBUG_SIXTOP_
+      sprintf(str, "SCHED: ");
+#endif
       do {
          if(schedule_isSlotOffsetAvailable(cellList[i].tsNum) == TRUE){
-
-
-
-            sprintf(str, "SCHED: avail=");
+#ifdef _DEBUG_SIXTOP_
+            strncat(str, " avail=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);
-            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-
+#endif
 
             bw--;
          } else {
-
-            sprintf(str, "SCHED: busy=");
+#ifdef _DEBUG_SIXTOP_
+            strncat(str, " busy=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);
-            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-
-
+#endif
             cellList[i].linkoptions = CELLTYPE_OFF;
          }
          i++;
       }while(i<numOfCells && bw>0);
+#ifdef _DEBUG_SIXTOP_
+      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
       
       if(bw==0){
          //the rest link will not be scheduled, mark them as off type

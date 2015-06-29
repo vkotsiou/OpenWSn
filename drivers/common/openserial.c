@@ -733,10 +733,10 @@ void isr_openserial_tx() {
                openserial_vars.statOutputCurrentR = (1 + openserial_vars.statOutputCurrentR) % OPENSERIAL_NBFRAMES;
 
             //write the next buffer if we are in an OFF_CELL
-            if (openserial_vars.statOutputBufFilled[openserial_vars.statOutputCurrentR])
-               openserial_startOutput();
-            else
-               openserial_stop();
+            //if (openserial_vars.statOutputBufFilled[openserial_vars.statOutputCurrentR])
+            //   openserial_startOutput();
+            //else
+            //   openserial_stop();
          }
          if (openserial_vars.statOutputBufFilled[i]) {
             uart_writeByte(openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxR[i]++]);

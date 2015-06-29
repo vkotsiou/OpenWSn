@@ -531,9 +531,7 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       
       // break if invalid CRC
       if (ieee154e_vars.dataReceived->l1_crc==FALSE) {
-         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_BADCRC,
-                           (errorparameter_t)0,
-                           0);
+         openserial_statRx(ieee154e_vars.dataReceived);
 
          // break from the do-while loop and execute abort code below
          break;
@@ -1288,9 +1286,7 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
    
       // break if invalid CRC
       if (ieee154e_vars.ackReceived->l1_crc==FALSE) {
-         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_BADCRC,
-                           (errorparameter_t)0,
-                           0);
+         openserial_statRx(ieee154e_vars.ackReceived);
 
          // break from the do-while loop and execute the clean-up code below
          break;
@@ -1520,9 +1516,7 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
       
       // if CRC doesn't check, stop
       if (ieee154e_vars.dataReceived->l1_crc==FALSE) {
-         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_BADCRC,
-                           (errorparameter_t)0,
-                           0);
+         openserial_statRx(ieee154e_vars.dataReceived);
 
          // jump to the error code below this do-while loop
          break;
@@ -1635,9 +1629,6 @@ port_INLINE void activity_ri6() {
       endSlot();
       return;
    }
-   
-   //ack txed (for statistics to openvizualizer)
-    openserial_statAckTx();
 
    // declare ownership over that packet
    ieee154e_vars.ackToSend->creator = COMPONENT_IEEE802154E;
@@ -1773,8 +1764,8 @@ port_INLINE void activity_ri9(PORT_RADIOTIMER_WIDTH capturedTime) {
       synchronizePacket(ieee154e_vars.syncCapturedTime);
    }
 
-   //packet received (serial line)
-   openserial_statAckRx();
+   //ack transmitted
+   openserial_statAckTx();
 
    // inform upper layer of reception (after ACK sent)
    notif_receive(ieee154e_vars.dataReceived);

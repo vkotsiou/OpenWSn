@@ -9,7 +9,7 @@
 #include "packetfunctions.h"
 #include <stdio.h>
 
-// #define _DEBUG_OTF_
+#define _DEBUG_OTF_
 
 
 //=========================== variables =======================================

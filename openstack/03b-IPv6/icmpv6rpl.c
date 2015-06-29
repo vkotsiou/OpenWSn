@@ -13,6 +13,8 @@
 #include <stdio.h>
 
 
+#define _DEBUG_DIO_
+
 //=========================== variables =======================================
 
 icmpv6rpl_vars_t             icmpv6rpl_vars;
@@ -160,8 +162,8 @@ uint8_t icmpv6rpl_getRPLIntanceID(){
 \param[in] error Outcome of the sending.
 */
 void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
-   char str[150];
-   
+  char str[150];
+
    // take ownership over that packet
    msg->owner = COMPONENT_ICMPv6RPL;
    
@@ -172,29 +174,24 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
                             (errorparameter_t)0);
    }
    
-   // Remove the pointer for this DIO / DAO ni openqueue
-//   icmpv6rpl_vars.busySending = FALSE;
-   if (msg == NULL){
-      sprintf(str, "RPL - PB - NULL pointer!");
-      openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
-   }
+   // The DIO / DAO was pushed to the MAC layer
    if (msg == icmpv6rpl_vars.lastDIO_tx){
-      sprintf(str, "RPL - DIO txed - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDIO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DIO transmitted");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
+#endif
       icmpv6rpl_vars.lastDIO_tx = NULL;
-
    }
    if (msg == icmpv6rpl_vars.lastDAO_tx){
 
-      sprintf(str, "RPL - DAO txed - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDAO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DAO transmitted to ");
+      openserial_ncat_uint32_t(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
+      openserial_ncat_uint32_t(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
 
       icmpv6rpl_vars.lastDAO_tx = NULL;
-
    }
 
 
@@ -313,19 +310,20 @@ void icmpv6rpl_timer_DIO_task() {
 */
 void sendDIO() {
    OpenQueueEntry_t*    msg;
+#ifdef _DEBUG_DIO_
    char str[150];
+#endif
    
    // stop if I'm not sync'ed
    if (ieee154e_isSynch()==FALSE) {
-      sprintf(str, "RPL - DIO failed (!synchro) - ptr ");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDIO_tx, 150);
+#ifdef _DEBUG_DIO_
+     sprintf(str, "RPL - DIO failed (!synchro) ");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
 
-      // remove enqueued DIO
-     /* if (icmpv6rpl_vars.lastDIO_tx != NULL)
+      if (icmpv6rpl_vars.lastDIO_tx != NULL)
          openqueue_removeEntry(icmpv6rpl_vars.lastDIO_tx);
       icmpv6rpl_vars.lastDIO_tx = NULL;
-*/
 
       // stop here
       return;
@@ -334,19 +332,20 @@ void sendDIO() {
    // do not send DIO if I have the default DAG rank
    if (neighbors_getMyDAGrank() == DEFAULTDAGRANK) {
 
+#ifdef _DEBUG_DIO_
       sprintf(str, "RPL - DIO failed (no rank)");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
+#endif
       return;
    }
    
    // do not send DIO if I'm already busy sending
    //if (icmpv6rpl_vars.busySending==TRUE) {
    if (icmpv6rpl_vars.lastDIO_tx != NULL){
-      sprintf(str, "RPL - DIO: previous DIO replaced - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDIO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DIO: previous DIO replaced");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
+#endif
       openqueue_removeEntry(icmpv6rpl_vars.lastDIO_tx);
       icmpv6rpl_vars.lastDIO_tx = NULL;
 
@@ -395,18 +394,18 @@ void sendDIO() {
    //send
    if (icmpv6_send(msg)!=E_SUCCESS) {
       openqueue_freePacketBuffer(msg);
-
-      sprintf(str, "RPL - DIO: tx failed - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDIO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DIO: tx failed");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
 
    } else {
       icmpv6rpl_vars.lastDIO_tx = msg;
 
-      sprintf(str, "RPL - DIO tx - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDIO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DIO pushed in the queue");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
+#endif
 
    }
 }
@@ -461,20 +460,22 @@ void sendDAO() {
    open_addr_t         address;
    open_addr_t*        prefix;
    
+#ifdef _DEBUG_DIO_
    char str[150];
-
+#endif
 
    if (ieee154e_isSynch()==FALSE) {
       // I'm not sync'ed 
-      sprintf(str, "RPL - DAO failed (not synchronized) - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDAO_tx, 150);
+#ifdef _DEBUG_DIO_
+     sprintf(str, "RPL - DAO failed (not synchronized)");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
       
-      // delete pthe DAO already enqueued
- /*     if (icmpv6rpl_vars.lastDAO_tx != NULL)
+      // delete the DAO already enqueued
+     if (icmpv6rpl_vars.lastDAO_tx != NULL)
          openqueue_removeEntry(icmpv6rpl_vars.lastDAO_tx);
       icmpv6rpl_vars.lastDAO_tx = NULL;
-*/
+
       // stop here
       return;
    }
@@ -486,10 +487,10 @@ void sendDAO() {
    
    // dont' send a DAO if you did not acquire a DAGrank
    if (neighbors_getMyDAGrank()==DEFAULTDAGRANK) {
-      // I'm not sync'ed
-       sprintf(str, "RPL - DAO failed (no dag rank) - ptr=");
-       openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDAO_tx, 150);
+#ifdef _DEBUG_DIO_
+       sprintf(str, "RPL - DAO failed (no dag rank)");
        openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
 
        return;
    }
@@ -498,9 +499,11 @@ void sendDAO() {
    // dont' send a DAO if you're still busy sending the previous one
    if (icmpv6rpl_vars.lastDAO_tx != NULL) {
 
-      sprintf(str, "RPL - DAO: we replace the last one (in the queue) - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDAO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DAO: we replace the last one (in the queue)");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
+
 
       openqueue_removeEntry(icmpv6rpl_vars.lastDAO_tx);
       icmpv6rpl_vars.lastDAO_tx = NULL;
@@ -608,9 +611,10 @@ void sendDAO() {
    if (numTransitParents==0) {
       openqueue_freePacketBuffer(msg);
 
-      sprintf(str, "RPL - DAO stopped (no transit parent) - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDAO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DAO stopped (no transit parent)");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
 
       return;
    }
@@ -637,17 +641,17 @@ void sendDAO() {
    if (icmpv6_send(msg)==E_SUCCESS) {
       icmpv6rpl_vars.lastDAO_tx = msg;
 
-      sprintf(str, "RPL - DAO tx - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDAO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DAO pushed in the queue");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
+#endif
 
    } else {
       openqueue_freePacketBuffer(msg);
 
-      sprintf(str, "RPL - DAO tx failed = icmpv6_send() error - ptr=");
-      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.lastDAO_tx, 150);
+#ifdef _DEBUG_DIO_
+      sprintf(str, "RPL - DAO tx failed = icmpv6_send() error");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
+#endif
    }
 }
