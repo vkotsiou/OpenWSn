@@ -890,7 +890,6 @@ port_INLINE void activity_ti1ORri1() {
             schedule_getNeighbor(&neighbor);
             schedule_getTrack(&track);
             ieee154e_vars.dataToSend = openqueue_macGetDataPacket(&neighbor, &track);
-            //openserial_statTx(ieee154e_vars.dataToSend);
          } else {
             ieee154e_vars.dataToSend = NULL;
          }

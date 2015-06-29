@@ -168,6 +168,7 @@ void               schedule_getNeighbor(open_addr_t* addrToWrite);
 uint8_t            schedule_getNbCellsWithTrack(track_t track, open_addr_t *nextHop);
 void               schedule_getTrack(track_t *track);
 channelOffset_t    schedule_getChannelOffset(void);
+slotOffset_t       schedule_getSlotOffset(void);
 bool               schedule_getOkToSend(void);
 void               schedule_resetBackoff(void);
 void               schedule_indicateRx(asn_t*   asnTimestamp);

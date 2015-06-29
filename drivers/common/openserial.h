@@ -118,6 +118,8 @@ typedef struct{
    uint8_t     track_owner[8];
    uint8_t     length;
    uint8_t     frame_type;
+   slotOffset_t slotOffset;
+   uint8_t     frequency;
    uint8_t     l2Dest[8];
    uint8_t     txPower;
    uint8_t     numTxAttempts;
@@ -133,6 +135,8 @@ typedef struct{
    uint8_t     track_owner[8];
    uint8_t     length;
    uint8_t     frame_type;
+   slotOffset_t slotOffset;
+   uint8_t     frequency;
    uint8_t     l2Src[8];
    uint8_t     rssi;
    uint8_t     lqi;

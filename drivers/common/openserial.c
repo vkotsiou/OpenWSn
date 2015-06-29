@@ -18,6 +18,7 @@
 #include "uart.h"
 #include "opentimers.h"
 #include "openhdlc.h"
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -74,11 +75,6 @@ void openserial_init() {
    openserial_vars.inputEscaping       = FALSE;
    openserial_vars.inputBufFill        = 0;
    
-   // ouput
-/*   openserial_vars.outputBufFilled     = FALSE;
-   openserial_vars.outputBufIdxR       = 0;
-   openserial_vars.outputBufIdxW       = 0;
-  */
    //queue for stats
    openserial_vars.statOutputCurrentW  = 0;
    openserial_vars.statOutputCurrentR  = 0;
@@ -96,22 +92,27 @@ void openserial_init() {
 
 //return the ouput buffer we should now use
 uint8_t openserial_get_output_buffer(uint8_t length){
-   uint8_t  pos;
+   uint8_t  pos, space;
 
    //find the first free position after the current position (if the current buffer is full)
    pos = openserial_vars.statOutputCurrentW;
 
-   if (length * 2 + 2 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
+
+   //the R pointer MUST be before the W pointer (R=read by the other side of the serial line, W=currently written by our module)
+   if (openserial_vars.statOutputBufIdxW[pos] >= openserial_vars.statOutputBufIdxR[pos])
+      space = openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos];
+   else
+      space = (uint8_t)((uint16_t)256 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos]);
+
+
+   if (length * 2 + 2 + space  > SERIAL_OUTPUT_BUFFER_SIZE){
 
       //the next buffer is already pending -> not anymore space
       if (openserial_vars.statOutputCurrentR == openserial_vars.statOutputCurrentW + 1){
 
-         openserial_printError(COMPONENT_OPENSERIAL, ERR_OPENSERIAL_BUFFER_OVERFLOW,
-                                 (errorparameter_t)length,
-                                 (errorparameter_t)0);
+         return(-1);
 
       }
-         //return(-1);
 
       //else, get the next buffer in the cycle
       openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
@@ -345,8 +346,8 @@ owerror_t openserial_printCritical(uint8_t calling_component, uint8_t error_code
    // blink error LED, this is serious
    leds_error_blink();
    
-   // schedule for the mote to reboot in 10s
-   opentimers_start(10000,
+   // schedule for the mote to reboot in 2s
+   opentimers_start(2000,
                     TIMER_ONESHOT,TIME_MS,
                     board_reset);
    
@@ -623,6 +624,11 @@ port_INLINE void statOutputHdlcOpen(uint8_t i) {
 */
 port_INLINE void statOutputHdlcWrite(uint8_t i, uint8_t b) {
    
+   if (openserial_vars.statOutputBufIdxW[i] + 1 == openserial_vars.statOutputBufIdxR[i])
+      openserial_printCritical(COMPONENT_OPENSERIAL, ERR_OPENSERIAL_BUFFER_OVERFLOW,
+            2,
+            1);
+
    // iterate through CRC calculator
    openserial_vars.statOutputCrc[i] = crcIteration(openserial_vars.statOutputCrc[i],b);
    
@@ -888,7 +894,7 @@ void openserial_statAckRx(){
 
     #ifdef OPENSERIAL_STAT
 
-   openserial_printStat(SERTYPE_ACK_TX, COMPONENT_IEEE802154E, NULL, 0);
+   openserial_printStat(SERTYPE_ACK_RX, COMPONENT_IEEE802154E, NULL, 0);
 
    #endif
 }
@@ -906,12 +912,13 @@ void openserial_statRx(OpenQueueEntry_t* msg){
       evt.crc              = msg->l1_crc;
       evt.track_instance   = msg->l2_track.instance;
       evt.frame_type       = msg->l2_frameType;
+      evt.slotOffset       = schedule_getSlotOffset();
+      evt.frequency        = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
       memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
       memcpy(evt.l2Src, msg->l2_nextORpreviousHop.addr_64b, 8);
 
-      openserial_printStat(SERTYPE_PKT_RX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+      openserial_printStat(SERTYPE_PKT_RX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktRx_t));
   #endif
-
 }
 
 //push an event to track transmitted frames
@@ -925,14 +932,17 @@ void openserial_statTx(OpenQueueEntry_t* msg){
       evt.numTxAttempts    = msg->l2_numTxAttempts;
       evt.l4_protocol      = msg->l4_protocol;
       evt.frame_type       = msg->l2_frameType;
+      evt.slotOffset       = schedule_getSlotOffset();
+      evt.frequency        = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
       evt.l4_sourcePortORicmpv6Type = msg->l4_sourcePortORicmpv6Type;
       evt.l4_destination_port       = msg->l4_destination_port;
 
       memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
       memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
 
-     openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+     openserial_printStat(SERTYPE_PKT_TX, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktTx_t));
    #endif
+
 }
 
 
@@ -947,13 +957,15 @@ void openserial_statPktTimeout(OpenQueueEntry_t* msg){
      evt.numTxAttempts    = msg->l2_numTxAttempts;
      evt.l4_protocol      = msg->l4_protocol;
      evt.frame_type       = msg->l2_frameType;
+     evt.slotOffset       = schedule_getSlotOffset();
+     evt.frequency        = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
      evt.l4_sourcePortORicmpv6Type = msg->l4_sourcePortORicmpv6Type;
      evt.l4_destination_port       = msg->l4_destination_port;
 
      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
      memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
 
-    openserial_printStat(SERTYPE_PKT_TIMEOUT, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+    openserial_printStat(SERTYPE_PKT_TIMEOUT, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktTx_t));
   #endif
 }
 
@@ -975,7 +987,7 @@ void openserial_statPktError(OpenQueueEntry_t* msg){
       memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
       memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
 
-     openserial_printStat(SERTYPE_PKT_ERROR, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+     openserial_printStat(SERTYPE_PKT_ERROR, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktTx_t));
    #endif
 }
 

@@ -260,7 +260,7 @@ enum {
    ERR_OPENQUEUE_OVERSIZE              = 0x40, // not enough space in openqueue for non prioritar packets
    ERR_IEEE154_BADCRC                  = 0x41, // received frame with invalid CRC
    ERR_IEEE154_INVALIDHEADER           = 0x42, // invalid IEEE 802.15.4e headers
-   ERR_OPENSERIAL_BUFFER_OVERFLOW      = 0x43, // buffer overflow for output in openserial ({0} bytes had to be written)
+   ERR_OPENSERIAL_BUFFER_OVERFLOW      = 0x43, // buffer overflow for output in openserial (location {0}, length {1})
    ERR_GENERIC                         = 0x43, // generic error {0} {1}
    ERR_UNKNOWN                         = 0x44, // unknown error, location {0}
 };

@@ -605,6 +605,24 @@ channelOffset_t schedule_getChannelOffset() {
    return returnVal;
 }
 
+/**
+\brief Get the slot offset of the current schedule entry.
+
+\returns The slot offset of the current schedule entry.
+*/
+slotOffset_t schedule_getSlotOffset() {
+   slotOffset_t returnVal;
+
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+
+   returnVal = schedule_vars.currentScheduleEntry->slotOffset;
+
+   ENABLE_INTERRUPTS();
+
+   return returnVal;
+}
+
 
 /**
 \brief Check whether I can send on this slot.
