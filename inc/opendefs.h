@@ -286,8 +286,8 @@ enum {
 enum{
 	TRACK_BESTEFFORT                   = 0,   // for best effort traffic
 	TRACK_IMCPv6RPL                    = 1,   // for RPL unicast traffic (DAO)
-	TRACK_CEXAMPLE                     = 2    // for Cexample (application traffic)
-   TRACK_BALANCING                    = 3, // for load balancing
+	TRACK_CEXAMPLE                     = 2,   // for Cexample (application traffic)
+   TRACK_BALANCING                    = 3    // for load balancing
 };
 
 enum{
