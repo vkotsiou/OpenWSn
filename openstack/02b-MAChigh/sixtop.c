@@ -261,6 +261,9 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    openserial_ncat_uint32_t(str, (uint32_t)numCells, 150);
    strncat(str, ", track=", 150);
    openserial_ncat_uint32_t(str, (uint32_t)track.instance, 150);
+   strncat(str, ", owner=", 150);
+   openserial_ncat_uint8_t_hex(str, (uint32_t)track.owner.addr_64b[6], 150);
+   openserial_ncat_uint8_t_hex(str, (uint32_t)track.owner.addr_64b[7], 150);
    strncat(str, ", nbcells ", 150);
    openserial_ncat_uint32_t(str, (uint32_t)numCells, 150);
    for(i=0; i<SCHEDULEIEMAXNUMCELLS; i++){
@@ -1062,6 +1065,9 @@ void sixtop_notifyReceiveCommand(
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->numOfLinks, 150);
             strncat(str, ", track=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->track.instance, 150);
+            strncat(str, ", owner=", 150);
+            openserial_ncat_uint8_t_hex(str, (uint32_t)bandwidth_ie->track.owner.addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, (uint32_t)bandwidth_ie->track.owner.addr_64b[7], 150);
             strncat(str, ", nbcells ", 150);
             openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->numberOfcells, 150);
             for(i=0; i<schedule_ie->numberOfcells; i++){
@@ -1087,6 +1093,9 @@ void sixtop_notifyReceiveCommand(
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->numOfLinks, 150);
             strncat(str, ", track=", 150);
             openserial_ncat_uint32_t(str, (uint32_t)bandwidth_ie->track.instance, 150);
+            strncat(str, ", owner=", 150);
+            openserial_ncat_uint8_t_hex(str, (uint32_t)bandwidth_ie->track.owner.addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, (uint32_t)bandwidth_ie->track.owner.addr_64b[7], 150);
             strncat(str, ", nbcells ", 150);
             openserial_ncat_uint32_t(str, (uint32_t)schedule_ie->numberOfcells, 150);
             for(i=0; i<schedule_ie->numberOfcells; i++){
