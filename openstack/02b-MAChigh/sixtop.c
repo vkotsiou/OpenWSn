@@ -256,7 +256,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    opentimers_restart(sixtop_vars.timeoutTimerId);
 }
 
-void sixtop_removeCell(open_addr_t* neighbor, track_t track){
+void sixtop_removeCell(open_addr_t* neighbor){
    OpenQueueEntry_t* pkt;
    bool              outcome;
    uint8_t           len;
@@ -275,6 +275,14 @@ void sixtop_removeCell(open_addr_t* neighbor, track_t track){
       return;
    }
    
+
+   char str[150];
+   sprintf(str, "SIXTOP remove cells with ");
+   openserial_ncat_uint8_t_hex(str, (uint32_t)neighbor->addr_64b[6], 150);
+//   strncat(str, ", ", 150);
+   openserial_ncat_uint8_t_hex(str, (uint32_t)neighbor->addr_64b[7], 150);
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
    // generate candidate cell list
    outcome = sixtop_candidateRemoveCellList(
       &type, 

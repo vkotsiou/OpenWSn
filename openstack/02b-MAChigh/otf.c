@@ -6,7 +6,11 @@
 #include "openqueue.h"
 #include "schedule.h"
 #include "openserial.h"
+#include "packetfunctions.h"
 #include <stdio.h>
+
+// #define _DEBUG_OTF_
+
 
 //=========================== variables =======================================
 
@@ -48,7 +52,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    nbCells_curr   = schedule_getNbCellsWithTrack(msg->l2_track, &(msg->l2_nextORpreviousHop));
    nbCells_req    = openqueue_count_track(msg->l2_track);
 
-
+#ifdef _DEBUG_OTF_
    char str[150];
    sprintf(str, "OTF required=");
    openserial_ncat_uint32_t(str, (uint32_t)nbCells_req, 150);
@@ -61,7 +65,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
 //   strncat(str, "-", 150);
    openserial_ncat_uint8_t_hex(str, msg->l2_track.owner.addr_64b[7], 150);
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-
+#endif
 
    //the current allocation is correct
    if (nbCells_curr >= nbCells_req)
@@ -101,12 +105,38 @@ void otf_update_agressive(void){
 
 #endif
 
+
+//verifies that all the neighbors in CELL_TX are my parents
+void otf_remove_obsolete_parents(void){
+   scheduleEntry_t  *cell;
+   neighborRow_t    *neigh;
+   uint8_t           i;
+
+   //for each cell in the schedule
+   for (i=0;i<QUEUELENGTH;i++){
+      cell = schedule_getCell(i);
+
+      //if this cell is in TX mode, it must be toward my parent
+      if (cell->type == CELLTYPE_TX) {
+         neigh = neighbors_getNeighborInfo(&(cell->neighbor));
+
+         //it is not anymore a parent!!
+         if (neigh != NULL && neigh->parentPreference < MAXPREFERENCE){
+            sixtop_removeCell(&(neigh->addr_64b));
+            break;
+         }
+      }
+   }
+}
+
+
+
 void otf_update_schedule(void){
-
-
 #ifdef OTF_AGRESSIVE
    otf_update_agressive();
 #endif
+
+   otf_remove_obsolete_parents();
 }
 
 //a packet is pushed to the MAC layer -> OTF notification
@@ -114,6 +144,11 @@ void otf_notif_transmit(OpenQueueEntry_t* msg){
 #ifdef OTF_AGRESSIVE
    otf_reserve_agressive_for(msg);
 #endif
+}
+
+//the parent has changed, must now remove the corresponding cells
+void otf_notif_remove_parent(open_addr_t *parent){
+   sixtop_removeCell(parent);
 }
 
 

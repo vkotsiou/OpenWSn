@@ -28,6 +28,10 @@
 */
 #define SERIAL_OUTPUT_BUFFER_SIZE 256 // leave at 256!
 
+
+//the nb of entries to put simultaneously to the printStatus
+#define SERIAL_NB_SCHEDULE_ENTRY    1
+
 /**
 \brief Number of bytes of the serial input buffer, in bytes.
 
@@ -40,7 +44,7 @@
 enum {
    MODE_OFF    = 0,  ///< The module is off, no serial activity.
    MODE_INPUT  = 1,  ///< The serial is listening or receiving bytes.
-   MODE_STAT   = 2   ///< The serial is transmitting bytes for statistics
+   MODE_OUTPUT = 2 ///< The serial is transmitting bytes
 };
 //MODE_OUTPUT = 2,  ///< The serial is transmitting bytes.
 
@@ -69,7 +73,8 @@ enum{
    SERTYPE_CELL_REMOVE        = 0x05,
    SERTYPE_ACK_TX             = 0x06,
    SERTYPE_ACK_RX             = 0x07,
-   SERTYPE_PKT_TIMEOUT        = 0x08
+   SERTYPE_PKT_TIMEOUT        = 0x08,
+   SERTYPE_PKT_ERROR          = 0x09
 };
 //=========================== typedef =========================================
 

@@ -104,8 +104,14 @@ uint8_t openserial_get_output_buffer(uint8_t length){
    if (length * 2 + 2 + openserial_vars.statOutputBufIdxW[pos] - openserial_vars.statOutputBufIdxR[pos] > SERIAL_OUTPUT_BUFFER_SIZE){
 
       //the next buffer is already pending -> not anymore space
-      if (openserial_vars.statOutputCurrentR == openserial_vars.statOutputCurrentW + 1)
-         return(-1);
+      if (openserial_vars.statOutputCurrentR == openserial_vars.statOutputCurrentW + 1){
+
+         openserial_printError(COMPONENT_OPENSERIAL, ERR_OPENSERIAL_BUFFER_OVERFLOW,
+                                 (errorparameter_t)length,
+                                 (errorparameter_t)0);
+
+      }
+         //return(-1);
 
       //else, get the next buffer in the cycle
       openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
@@ -420,7 +426,9 @@ void openserial_startInput() {
 
 void openserial_startOutput() {
    //schedule a task to get new status in the output buffer
-   uint8_t debugPrintCounter;
+   uint8_t  debugPrintCounter;
+   uint8_t  i;
+   bool     bug = FALSE;
    
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
@@ -455,9 +463,12 @@ void openserial_startOutput() {
             break;
          }
       case STATUS_SCHEDULE:
-         if(debugPrint_schedule()==TRUE) {
-            break;
+         for(i=0; i<SERIAL_NB_SCHEDULE_ENTRY ; i++){
+            if (debugPrint_schedule() == FALSE)
+               bug = TRUE;
          }
+         if (!bug)
+         break;
       case STATUS_BACKOFF:
          if(debugPrint_backoff()==TRUE) {
             break;
@@ -487,7 +498,7 @@ void openserial_startOutput() {
 
 
    //STAT buffer
-   uint8_t i = openserial_vars.statOutputCurrentR;
+   i = openserial_vars.statOutputCurrentR;
 
 
    DISABLE_INTERRUPTS();
@@ -495,7 +506,7 @@ void openserial_startOutput() {
    //STAT OUTPUT buffer
    if (openserial_vars.statOutputBufFilled[i]){
 
-      openserial_vars.mode=MODE_STAT;
+      openserial_vars.mode=MODE_OUTPUT;
 
    #ifdef FASTSIM
       uart_writeCircularBuffer_FASTSIM(
@@ -705,7 +716,7 @@ void isr_openserial_tx() {
          }
          break;
 
-      case MODE_STAT:
+      case MODE_OUTPUT:
          i = openserial_vars.statOutputCurrentR;
 
          if (openserial_vars.statOutputBufIdxW[i]==openserial_vars.statOutputBufIdxR[i]) {
@@ -714,7 +725,13 @@ void isr_openserial_tx() {
             //considers the next buffer only if this one was entirely filled and the written one is the next one
             if (openserial_vars.statOutputCurrentW != openserial_vars.statOutputCurrentR)
                openserial_vars.statOutputCurrentR = (1 + openserial_vars.statOutputCurrentR) % OPENSERIAL_NBFRAMES;
-           }
+
+            //write the next buffer if we are in an OFF_CELL
+            if (openserial_vars.statOutputBufFilled[openserial_vars.statOutputCurrentR])
+               openserial_startOutput();
+            else
+               openserial_stop();
+         }
          if (openserial_vars.statOutputBufFilled[i]) {
             uart_writeByte(openserial_vars.statOutputBuf[i][openserial_vars.statOutputBufIdxR[i]++]);
          }
@@ -765,7 +782,7 @@ void isr_openserial_rx() {
       inputHdlcWrite(rxbyte);
       if (openserial_vars.inputBufFill+1>SERIAL_INPUT_BUFFER_SIZE){
          // input buffer overflow
-         openserial_printError(COMPONENT_OPENSERIAL,ERR_INPUT_BUFFER_OVERFLOW,
+         openserial_printCritical(COMPONENT_OPENSERIAL,ERR_INPUT_BUFFER_OVERFLOW,
                                (errorparameter_t)0,
                                (errorparameter_t)0);
          openserial_vars.inputBufFill       = 0;
@@ -859,7 +876,9 @@ void openserial_statCellremove(scheduleEntry_t* slotContainer){
 //a ack was txed
 void openserial_statAckTx(){
 
-    #ifdef OPENSERIAL_STAT
+   #ifdef OPENSERIAL_STAT
+
+   openserial_printStat(SERTYPE_ACK_TX, COMPONENT_IEEE802154E, NULL, 0);
 
    #endif
 }
@@ -868,6 +887,8 @@ void openserial_statAckTx(){
 void openserial_statAckRx(){
 
     #ifdef OPENSERIAL_STAT
+
+   openserial_printStat(SERTYPE_ACK_TX, COMPONENT_IEEE802154E, NULL, 0);
 
    #endif
 }
@@ -936,6 +957,27 @@ void openserial_statPktTimeout(OpenQueueEntry_t* msg){
   #endif
 }
 
+
+//push an event to track an erroneous frame
+void openserial_statPktError(OpenQueueEntry_t* msg){
+
+   #ifdef OPENSERIAL_STAT
+      evtPktTx_t evt;
+      evt.length           = msg->length;
+      evt.txPower          = msg->l1_txPower;
+      evt.track_instance   = msg->l2_track.instance;
+      evt.numTxAttempts    = msg->l2_numTxAttempts;
+      evt.l4_protocol      = msg->l4_protocol;
+      evt.frame_type       = msg->l2_frameType;
+      evt.l4_sourcePortORicmpv6Type = msg->l4_sourcePortORicmpv6Type;
+      evt.l4_destination_port       = msg->l4_destination_port;
+
+      memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
+      memcpy(evt.l2Dest,      msg->l2_nextORpreviousHop.addr_64b, 8);
+
+     openserial_printStat(SERTYPE_PKT_ERROR, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   #endif
+}
 
 
 //push an event to track generated frames

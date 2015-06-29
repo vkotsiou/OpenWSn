@@ -466,7 +466,7 @@ port_INLINE void activity_synchronize_startOfFrame(PORT_RADIOTIMER_WIDTH capture
 port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedTime) {
    ieee802154_header_iht ieee802514_header;
    uint16_t              lenIE;
-   
+
    // check state
    if (ieee154e_vars.state!=S_SYNCRX) {
       // log the error
@@ -479,7 +479,7 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
    
    // change state
    changeState(S_SYNCPROC);
-   
+
    // get a buffer to put the (received) frame in
    ieee154e_vars.dataReceived = openqueue_getFreePacketBuffer(COMPONENT_IEEE802154E);
    if (ieee154e_vars.dataReceived==NULL) {
@@ -531,6 +531,10 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       
       // break if invalid CRC
       if (ieee154e_vars.dataReceived->l1_crc==FALSE) {
+         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_BADCRC,
+                           (errorparameter_t)0,
+                           0);
+
          // break from the do-while loop and execute abort code below
          break;
       }
@@ -540,6 +544,10 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       
        // break if invalid IEEE802.15.4 header
       if (ieee802514_header.valid==FALSE) {
+         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_INVALIDHEADER,
+                                 (errorparameter_t)0,
+                                 0);
+
          // break from the do-while loop and execute the clean-up code below
          break;
       }
@@ -601,7 +609,7 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       
       // official end of synchronization
       endSlot();
-      
+
       // everything went well, return here not to execute the error code below
       return;
       
@@ -612,7 +620,7 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
    
    // clear local variable
    ieee154e_vars.dataReceived = NULL;
-   
+
    // return to listening state
    changeState(S_SYNCLISTEN);
 }
@@ -1281,6 +1289,10 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
    
       // break if invalid CRC
       if (ieee154e_vars.ackReceived->l1_crc==FALSE) {
+         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_BADCRC,
+                           (errorparameter_t)0,
+                           0);
+
          // break from the do-while loop and execute the clean-up code below
          break;
       }
@@ -1290,6 +1302,10 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
       
       // break if invalid IEEE802.15.4 header
       if (ieee802514_header.valid==FALSE) {
+         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_INVALIDHEADER,
+                                 (errorparameter_t)0,
+                                 0);
+
          // break from the do-while loop and execute the clean-up code below
          break;
       }
@@ -1505,6 +1521,10 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
       
       // if CRC doesn't check, stop
       if (ieee154e_vars.dataReceived->l1_crc==FALSE) {
+         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_BADCRC,
+                           (errorparameter_t)0,
+                           0);
+
          // jump to the error code below this do-while loop
          break;
       }
@@ -1514,6 +1534,10 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
       
       // break if invalid IEEE802.15.4 header
       if (ieee802514_header.valid==FALSE) {
+         openserial_printError(COMPONENT_IEEE802154E,ERR_IEEE154_INVALIDHEADER,
+                                 (errorparameter_t)0,
+                                 0);
+
          // break from the do-while loop and execute the clean-up code below
          break;
       }
@@ -1595,7 +1619,7 @@ port_INLINE void activity_ri6() {
    
    // change state
    changeState(S_TXACKPREPARE);
-   
+
    // get a buffer to put the ack to send in
    ieee154e_vars.ackToSend = openqueue_getFreePacketBuffer(COMPONENT_IEEE802154E);
    if (ieee154e_vars.ackToSend==NULL) {
@@ -1603,9 +1627,6 @@ port_INLINE void activity_ri6() {
       openserial_printError(COMPONENT_IEEE802154E,ERR_NO_FREE_PACKET_BUFFER,
                             (errorparameter_t)0,
                             (errorparameter_t)0);
-
-      //ack txed (for statistics to openvizualizer)
-      openserial_statAckTx();
 
       // indicate we received a packet anyway (we don't want to loose any)
       notif_receive(ieee154e_vars.dataReceived);
@@ -1616,6 +1637,9 @@ port_INLINE void activity_ri6() {
       return;
    }
    
+   //ack txed (for statistics to openvizualizer)
+    openserial_statAckTx();
+
    // declare ownership over that packet
    ieee154e_vars.ackToSend->creator = COMPONENT_IEEE802154E;
    ieee154e_vars.ackToSend->owner   = COMPONENT_IEEE802154E;

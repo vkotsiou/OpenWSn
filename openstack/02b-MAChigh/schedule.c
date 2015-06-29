@@ -96,10 +96,10 @@ status information about several modules in the OpenWSN stack.
 */
 bool debugPrint_schedule() {
    debugScheduleEntry_t temp;
-   
+
    // increment the row just printed
    schedule_vars.debugPrintRow         = (schedule_vars.debugPrintRow+1)%MAXACTIVESLOTS;
-   
+
    // gather status data
    temp.row                            = schedule_vars.debugPrintRow;
    temp.slotOffset                     = \
@@ -140,7 +140,7 @@ bool debugPrint_schedule() {
       (uint8_t*)&temp,
       sizeof(debugScheduleEntry_t)
    );
-   
+
    return TRUE;
 }
 
@@ -331,6 +331,16 @@ owerror_t schedule_addActiveSlot(
 
    return E_SUCCESS;
 }
+
+
+//returns the i^th entry in the schedule
+scheduleEntry_t *schedule_getCell(uint8_t i){
+   if (i < MAXACTIVESLOTS)
+      return(&(schedule_vars.scheduleBuf[i]));
+
+   return(NULL);
+}
+
 
 /**
 \brief Remove an active slot from the schedule.
@@ -725,7 +735,7 @@ void schedule_resetEntry(scheduleEntry_t* e) {
    e->channelOffset          = 0;
 
    e->neighbor.type          = ADDR_NONE;
-   memset(&e->neighbor.addr_64b[0], 0x00, sizeof(e->neighbor.addr_64b));
+   memset(&(e->neighbor.addr_128b[0]), 0x00, 16);      //the 16 bytes
 
    e->numRx                  = 0;
    e->numTx                  = 0;

@@ -5,6 +5,7 @@
 #include "idmanager.h"
 #include "openserial.h"
 #include "IEEE802154E.h"
+#include "otf.h"
 #include <stdio.h>
 
 //=========================== variables =======================================
@@ -493,6 +494,19 @@ void  neighbors_getNeighbor(open_addr_t* address, uint8_t addr_type, uint8_t ind
    }
 }
 
+//returns the whole entry concerning a neighbor
+neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address){
+   uint8_t  i;
+
+   for (i=0;i<MAXNUMNEIGHBORS;i++)
+       if (neighbors_vars.neighbors[i].used==TRUE)
+          if (packetfunctions_sameAddress(&(neighbors_vars.neighbors[i].addr_64b), address))
+                return(&(neighbors_vars.neighbors[i]));
+
+   //unfound
+   return(NULL);
+}
+
 //===== managing routing info
 
 /**
@@ -524,6 +538,10 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
    prefParentFound           = FALSE;
    prefParentIdx             = 0;
    
+   //my current preferred parent
+   open_addr_t pref_parent;
+   neighbors_getPreferredParentEui64(&pref_parent);
+
    // loop through neighbor table, update myDAGrank
    for (i=0;i<MAXNUMNEIGHBORS;i++) {
       if (neighbors_vars.neighbors[i].used==TRUE) {
@@ -589,6 +607,10 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
       neighbors_vars.neighbors[prefParentIdx].stableNeighbor         = TRUE;
       neighbors_vars.neighbors[prefParentIdx].switchStabilityCounter = 0;
    }
+
+   //remove the old cells if the parent has changed
+   if(!packetfunctions_sameAddress(&pref_parent, &(neighbors_vars.neighbors[prefParentIdx].addr_64b)))
+      otf_notif_remove_parent(&pref_parent);
 }
 
 //===== maintenance
