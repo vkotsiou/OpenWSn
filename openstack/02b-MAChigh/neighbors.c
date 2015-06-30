@@ -622,10 +622,12 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
             break;
          }
       }
-   } 
+   }
+   
+ 
    // update my routing information
    neighbors_updateMyDAGrankAndNeighborPreference();
-/*
+
    // update bottlenecks
    neighbors_updateMyBottlenecksSet();
 
@@ -637,7 +639,7 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
 
    // update reserved tracks cells
    neighbors_updateReservedTracks();
-*/ 
+ 
    // stats
    uint8_t SERTYPE_DIO = 6;
    uint8_t counter = 66;
@@ -665,7 +667,6 @@ void  neighbors_getNeighbor(open_addr_t* address, uint8_t addr_type, uint8_t ind
    }
 }
 
-<<<<<<< HEAD
 //returns the whole entry concerning a neighbor
 neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address){
    uint8_t  i;
@@ -678,9 +679,7 @@ neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address){
    //unfound
    return(NULL);
 }
-=======
 
->>>>>>> Adding track forwarding, multiparent, track select, capabilities
 
 //===== managing routing info
 
@@ -732,7 +731,6 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
          if (neighbors_vars.neighbors[i].numTx == 0) {
             rankIncrease = DEFAULTLINKCOST*MINHOPRANKINCREASE;
          } else {
-<<<<<<< HEAD
             //6TiSCH minimal draft using OF0 for rank computation
 #ifdef RPL_OF0
             rankIncrease = (uint16_t)
@@ -774,21 +772,10 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
 
 #endif
 
-         if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
-              tentativeDAGrank<MAXDAGRANK) {
-            // found better parent, lower my DAGrank
-            neighbors_vars.myDAGrank   = tentativeDAGrank;
-=======
-             //6TiSCH minimal draft using OF0 for rank computation
-             rankIncrease = (uint16_t)((((float)neighbors_vars.neighbors[i].numTx)/((float)neighbors_vars.neighbors[i].numTxACK))*2*MINHOPRANKINCREASE);
-         }
-         
-         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank+rankIncrease;
 
          // prefered parent
          if (tentativeDAGrank < minRank && tentativeDAGrank<MAXDAGRANK){
             minRank = tentativeDAGrank;
->>>>>>> Adding track forwarding, multiparent, track select, capabilities
             prefParentFound            = TRUE;
             prefParentIdx              = i;
          }
