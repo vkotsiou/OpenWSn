@@ -158,8 +158,11 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 
 
-uint8_t sixtop_getBtneckCounter(void){
-   return(sixtop_vars.btneckCounter);
+uint8_t sixtop_getBtneckCounter(){
+   if (idmanager_getIsDAGroot()==FALSE)
+      return(sixtop_vars.btneckCounter);
+   else
+      return(1);
 }
 
 //======= scheduling

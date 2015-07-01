@@ -10,7 +10,6 @@
 
 
 
-
 // general
 #include <stdint.h>               // needed for uin8_t, uint16_t
 #include "toolchain_defs.h"

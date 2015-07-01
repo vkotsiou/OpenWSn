@@ -51,9 +51,9 @@ void neighbors_init() {
    }
 
     // init balance factor
-    for (i=0; i<MAX_NUM_BTNECKS; i++){
-        neighbors_vars.balance_factors[i] = 1 / MAX_NUM_BTNECKS; // same amount to each btneck
-    }
+  //for (i=0; i<MAX_NUM_BTNECKS; i++){
+  //    neighbors_vars.balance_factors[i] = 0;
+  //}
 }
 
 //===== getters
@@ -624,13 +624,26 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
       }
    }
    
+<<<<<<< HEAD
  
    // update my routing information
    neighbors_updateMyDAGrankAndNeighborPreference();
+=======
+   if (idmanager_getIsDAGroot() == FALSE){
+      // update bottlenecks
+      //neighbors_updateMyBottlenecksSet();
+
+      // filter too constrained bottlenecks
+      //neighbors_filterBtnecks();
+
+      // update balance factors
+      //neighbors_updateBalanceFactors();
+>>>>>>> morning commit
 
    // update bottlenecks
    neighbors_updateMyBottlenecksSet();
 
+<<<<<<< HEAD
    // update balance factors
    neighbors_updateBalanceFactors();
 
@@ -646,6 +659,15 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
    //uint8_t counter = neighbors_vars.dio->btnecks[0].counter;
    openserial_printStat(SERTYPE_DIO, COMPONENT_NEIGHBORS, (uint8_t*)&counter, 
       sizeof(counter)); 
+=======
+      // update parent set
+      //neighbors_updateMyParentsSet();
+
+      // update reserved tracks cells
+      //neighbors_updateReservedTracks();
+   } 
+
+>>>>>>> morning commit
 }
 
 //===== write addresses
@@ -692,6 +714,8 @@ routing decisions to change. Examples are:
   very low DAGrank, I may want to change by routing parent.
 - I became a DAGroot, so my DAGrank should be 0.
 */
+
+/*
 void neighbors_updateMyDAGrankAndNeighborPreference() {
    uint8_t     i;
    uint16_t    rankIncrease;
@@ -811,6 +835,61 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
    //remove the old cells if the parent has changed
    if(!packetfunctions_sameAddress(&pref_parent, &(neighbors_vars.neighbors[prefParentIdx].addr_64b)))
       otf_notif_remove_parent(&pref_parent);
+}
+*/
+
+void neighbors_updateMyDAGrankAndNeighborPreference() {
+   uint8_t   i;
+   uint16_t  rankIncrease;
+   uint32_t  tentativeDAGrank; // 32-bit since is used to sum
+   uint8_t   prefParentIdx;
+   bool      prefParentFound;
+   
+   // if I'm a DAGroot, my DAGrank is always 0
+   if ((idmanager_getIsDAGroot())==TRUE) {
+      neighbors_vars.myDAGrank=0;
+      return;
+   }
+   
+   // reset my DAG rank to max value. May be lowered below.
+   neighbors_vars.myDAGrank  = MAXDAGRANK;
+   
+   // by default, I haven't found a preferred parent
+   prefParentFound           = FALSE;
+   prefParentIdx             = 0;
+   
+   // loop through neighbor table, update myDAGrank
+   for (i=0;i<MAXNUMNEIGHBORS;i++) {
+      if (neighbors_vars.neighbors[i].used==TRUE) {
+         
+         // reset parent preference
+         neighbors_vars.neighbors[i].parentPreference=0;
+         
+         // calculate link cost to this neighbor
+         if (neighbors_vars.neighbors[i].numTxACK==0) {
+            rankIncrease = DEFAULTLINKCOST*2*MINHOPRANKINCREASE;
+         } else {
+            //6TiSCH minimal draft using OF0 for rank computation
+            rankIncrease = (uint16_t)((((float)neighbors_vars.neighbors[i].numTx)/((float)neighbors_vars.neighbors[i].numTxACK))*2*MINHOPRANKINCREASE);
+         }
+         
+         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank+rankIncrease;
+         if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
+              tentativeDAGrank<MAXDAGRANK) {
+            // found better parent, lower my DAGrank
+            neighbors_vars.myDAGrank   = tentativeDAGrank;
+            prefParentFound            = TRUE;
+            prefParentIdx              = i;
+         }
+      }
+   } 
+   
+   // update preferred parent
+   if (prefParentFound) {
+      neighbors_vars.neighbors[prefParentIdx].parentPreference       = MAXPREFERENCE;
+      neighbors_vars.neighbors[prefParentIdx].stableNeighbor         = TRUE;
+      neighbors_vars.neighbors[prefParentIdx].switchStabilityCounter = 0;
+   }
 }
 
 /**
@@ -972,8 +1051,18 @@ void neighbors_updateReservedTracks(){
                   new_track.instance = TRACK_BALANCING;
 
                   // if this parent does not already have a link with me for this track
+<<<<<<< HEAD
                   if (schedule_getNbCellsWithTrackAndNeihbor(new_track,neighbors_vars.neighbors[i].addr_64b)){
                      sixtop_addCells(neighbors_vars.neighbors[i].addr_64b, TRACK_INIT_CELLS, new_track);
+=======
+                  if (schedule_getNbCellsWithTrackAndNeighbor(new_track,neighbors_vars.neighbors[i].addr_64b)){
+                     sixtop_addCells(&neighbors_vars.neighbors[i].addr_64b, TRACK_INIT_CELLS, new_track);
+                     // stats
+                   //uint8_t SERTYPE_DIO = 6;
+                   //uint8_t counter = 99;
+                   //openserial_printStat(SERTYPE_DIO, COMPONENT_NEIGHBORS, (uint8_t*)&counter, 
+                   //      sizeof(counter)); 
+>>>>>>> morning commit
                   }
                }
             }

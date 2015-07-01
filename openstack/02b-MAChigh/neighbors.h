@@ -26,13 +26,10 @@
 #define DEFAULTLINKCOST           15
 
 #define MAXDAGRANK                0xffff
-<<<<<<< HEAD
 #define DEFAULTDAGRANK            MAXDAGRANK
 
 #ifdef RPL_OF0
-=======
 #define DEFAULTDAGRANK            1
->>>>>>> Correting Preferer to Preferred
 #define MINHOPRANKINCREASE        256  //default value in RPL and Minimal 6TiSCH draft
 #endif
 

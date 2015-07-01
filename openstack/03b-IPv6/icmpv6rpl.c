@@ -7,6 +7,7 @@
 #include "packetfunctions.h"
 #include "openrandom.h"
 #include "scheduler.h"
+#include "sixtop.h"
 #include "idmanager.h"
 #include "opentimers.h"
 #include "IEEE802154E.h"
@@ -164,9 +165,9 @@ uint8_t icmpv6rpl_getRPLIntanceID(){
 \param[in] error Outcome of the sending.
 */
 void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
-//#ifdef _DEBUG_DIO_
+#ifdef _DEBUG_DIO_
    char str[150];
-//#endif
+#endif
 
    // take ownership over that packet
    msg->owner = COMPONENT_ICMPv6RPL;
@@ -177,7 +178,6 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
                             (errorparameter_t)0,
                             (errorparameter_t)0);
    }
-<<<<<<< HEAD
    
    // The DIO / DAO was pushed to the MAC layer
    if (msg == icmpv6rpl_vars.lastDIO_tx){
@@ -207,9 +207,6 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
    }
 
 
-=======
-  
->>>>>>> Adding txAttCounter in DIO messages
    // free packet
    openqueue_freePacketBuffer(msg);
 }
@@ -358,7 +355,7 @@ void sendDIO() {
    // stop if I'm not sync'ed
    if (ieee154e_isSynch()==FALSE) {
 #ifdef _DEBUG_DIO_
-     sprintf(str, "RPL - DIO failed (!synchro) ");
+      sprintf(str, "RPL - DIO failed (!synchro) ");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 #endif
 
@@ -419,7 +416,7 @@ void sendDIO() {
    //===== DIO payload
    // note: DIO is already mostly populated
    icmpv6rpl_vars.dio.rank            = neighbors_getMyDAGrank();
-   neighbors_getAdvBtnecks(icmpv6rpl_vars.dio.btnecks); // populate DIO with advertised bottleneck
+   //neighbors_getAdvBtnecks(icmpv6rpl_vars.dio.btnecks); // populate DIO with advertised bottleneck
    packetfunctions_reserveHeaderSize(msg,sizeof(icmpv6rpl_dio_ht));
    memcpy(
       ((icmpv6rpl_dio_ht*)(msg->payload)),
@@ -452,9 +449,9 @@ void sendDIO() {
    }
 
 	 // stats
-	 //uint8_t SERTYPE_DIO = 6;
-	 //uint8_t txAttCounter = sixtop_getTxAttCounter();
-	 //openserial_printStat(SERTYPE_DIO, COMPONENT_ICMPv6RPL, (uint8_t*)&txAttCounter, sizeof(txAttCounter));
+	 uint8_t SERTYPE_DIO = 7;
+	 uint8_t txAttCounter = sixtop_getBtneckCounter();
+	 openserial_printStat(SERTYPE_DIO, COMPONENT_ICMPv6RPL, (uint8_t*)&txAttCounter, sizeof(txAttCounter));
  
 }
 

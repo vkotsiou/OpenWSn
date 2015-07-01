@@ -30,5 +30,6 @@ path.txt
 projects/common/03oos_tdma/03oos_tdma.os
 projects/common/03oos_tdma/03oos_tdma_obj.os
 projects/common/03oos_tdma_prog
+projects/common/*
 bsp/boards/python/openwsnmodule_obj.c
 bsp/boards/python/openwsnmodule_obj.os
