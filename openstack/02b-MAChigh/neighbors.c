@@ -550,14 +550,14 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
          neighbors_vars.neighbors[i].parentPreference = 0;
          
          // calculate link cost to this neighbor
-         if (neighbors_vars.neighbors[i].numTxACK == 0) {
+         if (neighbors_vars.neighbors[i].numTx == 0) {
             rankIncrease = DEFAULTLINKCOST*MINHOPRANKINCREASE;
          } else {
             //6TiSCH minimal draft using OF0 for rank computation
 #ifdef RPL_OF0
             rankIncrease = (uint16_t)
                   (
-                        ((float)neighbors_vars.neighbors[i].numTx)/((float)neighbors_vars.neighbors[i].numTxACK)*
+                        ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
                         MINHOPRANKINCREASE
                   );
 #endif
@@ -565,8 +565,8 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
 #ifdef RPL_OFFabrice
             rankIncrease = (uint16_t)
                   (
-                        ((float)neighbors_vars.neighbors[i].numTx)/((float)neighbors_vars.neighbors[i].numTxACK)*
-                        ((float)neighbors_vars.neighbors[i].numTx)/((float)neighbors_vars.neighbors[i].numTxACK)*
+                        ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
+                        ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
                         MINHOPRANKINCREASE
                   );
 #endif
