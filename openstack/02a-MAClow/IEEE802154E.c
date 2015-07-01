@@ -170,6 +170,9 @@ This function executes in ISR mode, when the new slot timer fires.
 */
 void isr_ieee154e_newSlot() {
    radio_setTimerPeriod(TsSlotDuration);
+
+   //openserial_printf(COMPONENT_NULL, NULL, 0);
+
    if (ieee154e_vars.isSync==FALSE) {
       if (idmanager_getIsDAGroot()==TRUE) {
          changeIsSync(TRUE);
@@ -399,6 +402,7 @@ bool debugPrint_macStats() {
 //======= SYNCHRONIZING
 
 port_INLINE void activity_synchronize_newSlot() {
+
    // I'm in the middle of receiving a packet
    if (ieee154e_vars.state==S_SYNCRX) {
       return;
@@ -436,7 +440,6 @@ port_INLINE void activity_synchronize_newSlot() {
       //remove timeouted entries in openqueue
       openqueue_timeout_drop();
       openserial_startOutput();
-
    } else if ((ieee154e_vars.asn.bytes0and1&0x000f)==0x0008) {
       openserial_stop();
       openserial_startInput();
@@ -827,7 +830,7 @@ port_INLINE void activity_ti1ORri1() {
       endSlot();
       //remove timeouted entries in openqueue
       openqueue_timeout_drop();
-      //start outputing serial
+      //start output serial
       openserial_startOutput();
       return;
    }

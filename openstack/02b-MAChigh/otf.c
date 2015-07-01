@@ -113,7 +113,6 @@ void otf_remove_obsolete_parents(void){
    uint8_t          i;
    char             str[150];
 
-
    //for each cell in the schedule
    for (i=0;i<QUEUELENGTH;i++){
       cell = schedule_getCell(i);
@@ -131,7 +130,6 @@ void otf_remove_obsolete_parents(void){
             //strncat(str, ", current=", 150);
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
-
             sixtop_removeCell(&(neigh->addr_64b));
             break;
          }
@@ -142,6 +140,8 @@ void otf_remove_obsolete_parents(void){
 
 //updates the schedule
 void otf_update_schedule(void){
+#ifdef TRACK_ACTIVE
+   //I MUST be idle
    if (!sixtop_isIdle())
       return;
 
@@ -150,21 +150,26 @@ void otf_update_schedule(void){
 #endif
 
    otf_remove_obsolete_parents();
+#endif
 }
 
 //a packet is pushed to the MAC layer -> OTF notification
 void otf_notif_transmit(OpenQueueEntry_t* msg){
+#ifdef TRACK_ACTIVE
    if (!sixtop_isIdle())
       return;
 
 #ifdef OTF_AGRESSIVE
    otf_reserve_agressive_for(msg);
 #endif
+#endif
 }
 
 //the parent has changed, must now remove the corresponding cells
 void otf_notif_remove_parent(open_addr_t *parent){
+#ifdef TRACK_ACTIVE
    sixtop_removeCell(parent);
+#endif
 }
 
 

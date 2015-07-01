@@ -11,6 +11,11 @@
 #include "opentimers.h"
 #include "opendefs.h"
 
+
+
+
+#define TRACK_ACTIVE
+
 //=========================== define ==========================================
 
 enum sixtop_CommandID_num{

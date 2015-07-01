@@ -716,7 +716,6 @@ void timer_sixtop_six2six_timeout_fired(void) {
 
    //OTF callback
    otf_update_schedule();
-
 }
 
 
@@ -784,7 +783,10 @@ port_INLINE void sixtop_sendEB() {
    // get a free packet buffer
    adv = openqueue_getFreePacketBuffer(COMPONENT_SIXTOP);
    if (adv==NULL) {
-      openserial_printError(COMPONENT_SIXTOP,ERR_NO_FREE_PACKET_BUFFER,
+      char str[150];
+      sprintf(str, "EB bug");
+      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+      openserial_printError(COMPONENT_SIXTOP, ERR_NO_FREE_PACKET_BUFFER,
                             (errorparameter_t)0,
                             (errorparameter_t)0);
       return;

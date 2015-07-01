@@ -29,8 +29,14 @@
 #define SERIAL_OUTPUT_BUFFER_SIZE 256 // leave at 256!
 
 
-//the nb of entries to put simultaneously to the printStatus
-#define SERIAL_NB_SCHEDULE_ENTRY    1
+/**
+\brief Number of output buffers for the serial.
+
+*/
+
+#define  OPENSERIAL_OUTPUT_NBBUFFERS        8
+
+
 
 /**
 \brief Number of bytes of the serial input buffer, in bytes.
@@ -145,10 +151,6 @@ typedef struct{
 END_PACK
 
 
-#define  OPENSERIAL_OUTPUT_NBBUFFERS        6
-
-
-
 
 //=========================== module variables ================================
 
@@ -166,20 +168,13 @@ typedef struct {
    uint8_t    inputBufFill;
    uint8_t    inputBuf[SERIAL_INPUT_BUFFER_SIZE];
    // output
-/*   bool       outputBufFilled;
-   uint16_t   outputCrc;
-   uint8_t    outputBufIdxW;
-   uint8_t    outputBufIdxR;
-   uint8_t    outputBuf[SERIAL_OUTPUT_BUFFER_SIZE];
- */  //statOutput
- //  uint8_t    statOutputNb;
-   uint8_t    statOutputCurrentR;   //index to push to serial
-   uint8_t    statOutputCurrentW;   //index to write our data
-   bool       statOutputBufFilled[OPENSERIAL_OUTPUT_NBBUFFERS];
-   uint16_t   statOutputCrc[OPENSERIAL_OUTPUT_NBBUFFERS];
-   uint8_t    statOutputBufIdxW[OPENSERIAL_OUTPUT_NBBUFFERS];
-   uint8_t    statOutputBufIdxR[OPENSERIAL_OUTPUT_NBBUFFERS];
-   uint8_t    statOutputBuf[OPENSERIAL_OUTPUT_NBBUFFERS][SERIAL_OUTPUT_BUFFER_SIZE];
+   uint8_t    OutputCurrentR;   //current buffer id to push to serial
+   uint8_t    OutputCurrentW;   //current buffer id write our data
+   bool       OutputBufFilled[OPENSERIAL_OUTPUT_NBBUFFERS];
+   uint16_t   OutputCrc[OPENSERIAL_OUTPUT_NBBUFFERS];
+   uint8_t    OutputBufIdxW[OPENSERIAL_OUTPUT_NBBUFFERS];      //index in a buffer to push to serial (Read by Openvizualizer)
+   uint8_t    OutputBufIdxR[OPENSERIAL_OUTPUT_NBBUFFERS];      //index in a buffer to push to serial (Read by Openvizualizer)
+   uint8_t    OutputBuf[OPENSERIAL_OUTPUT_NBBUFFERS][SERIAL_OUTPUT_BUFFER_SIZE]; //the list of buffers to store data before pushing it to the serial line
 } openserial_vars_t;
 
 //=========================== prototypes ======================================
