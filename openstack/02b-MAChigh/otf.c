@@ -110,7 +110,9 @@ void otf_update_agressive(void){
 void otf_remove_obsolete_parents(void){
    scheduleEntry_t  *cell;
    neighborRow_t    *neigh;
-   uint8_t           i;
+   uint8_t          i;
+   char             str[150];
+
 
    //for each cell in the schedule
    for (i=0;i<QUEUELENGTH;i++){
@@ -120,8 +122,16 @@ void otf_remove_obsolete_parents(void){
       if (cell->type == CELLTYPE_TX) {
          neigh = neighbors_getNeighborInfo(&(cell->neighbor));
 
+
          //it is not anymore a parent!!
          if (neigh != NULL && neigh->parentPreference < MAXPREFERENCE){
+            sprintf(str, "OTF remove=");
+            openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[7], 150);
+            //strncat(str, ", current=", 150);
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+
             sixtop_removeCell(&(neigh->addr_64b));
             break;
          }
@@ -130,8 +140,11 @@ void otf_remove_obsolete_parents(void){
 }
 
 
-
+//updates the schedule
 void otf_update_schedule(void){
+   if (!sixtop_isIdle())
+      return;
+
 #ifdef OTF_AGRESSIVE
    otf_update_agressive();
 #endif
@@ -141,6 +154,9 @@ void otf_update_schedule(void){
 
 //a packet is pushed to the MAC layer -> OTF notification
 void otf_notif_transmit(OpenQueueEntry_t* msg){
+   if (!sixtop_isIdle())
+      return;
+
 #ifdef OTF_AGRESSIVE
    otf_reserve_agressive_for(msg);
 #endif

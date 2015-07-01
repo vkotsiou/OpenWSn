@@ -78,7 +78,7 @@ void openserial_init() {
    //queue for stats
    openserial_vars.statOutputCurrentW  = 0;
    openserial_vars.statOutputCurrentR  = 0;
-   for(i=0; i<OPENSERIAL_NBFRAMES; i++){
+   for(i=0; i<OPENSERIAL_OUTPUT_NBBUFFERS; i++){
       openserial_vars.statOutputBufFilled[i] = FALSE;
       openserial_vars.statOutputBufIdxR[i]       = 0;
       openserial_vars.statOutputBufIdxW[i]       = 0;
@@ -115,7 +115,7 @@ uint8_t openserial_get_output_buffer(uint8_t length){
       }
 
       //else, get the next buffer in the cycle
-      openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_NBFRAMES;
+      openserial_vars.statOutputCurrentW = (1 + openserial_vars.statOutputCurrentW) % OPENSERIAL_OUTPUT_NBBUFFERS;
       pos = openserial_vars.statOutputCurrentW;
    }
 
@@ -136,7 +136,7 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
    DISABLE_INTERRUPTS();
 
    pos = openserial_get_output_buffer(length + 9);
-   if (pos >= OPENSERIAL_NBFRAMES){
+   if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       leds_error_toggle();
       return(E_FAIL);
    }
@@ -171,7 +171,7 @@ owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t len
    uint8_t  asn[5];
 
    pos = openserial_get_output_buffer(length + 3);
-   if (pos >= OPENSERIAL_NBFRAMES){
+   if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       leds_error_toggle();
       return(E_FAIL);
    }
@@ -210,7 +210,7 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
    uint8_t i, pos;
 
    pos = openserial_get_output_buffer(length + 3);
-   if (pos >= OPENSERIAL_NBFRAMES){
+   if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       leds_error_toggle();
       return(E_FAIL);
    }
@@ -246,7 +246,7 @@ owerror_t openserial_printInfoErrorCritical(
    uint8_t pos;
 
    pos = openserial_get_output_buffer(8);
-   if (pos >= OPENSERIAL_NBFRAMES){
+   if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       leds_error_toggle();
       return(E_FAIL);
    }
@@ -281,7 +281,7 @@ owerror_t openserial_printData(uint8_t* buffer, uint8_t length) {
 
 
    pos = openserial_get_output_buffer(length + 8);
-   if (pos >= OPENSERIAL_NBFRAMES){
+   if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       leds_error_toggle();
       return(E_FAIL);
    }
@@ -594,13 +594,15 @@ status information about several modules in the OpenWSN stack.
 \returns TRUE if this function printed something, FALSE otherwise.
 */
 bool debugPrint_outBufferIndexes() {
-   uint16_t temp_buffer[2];
+   uint16_t temp_buffer[4];
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    temp_buffer[0] = openserial_vars.statOutputBufIdxW[openserial_vars.statOutputCurrentR];
    temp_buffer[1] = openserial_vars.statOutputBufIdxR[openserial_vars.statOutputCurrentR];
+   temp_buffer[2] = openserial_vars.statOutputCurrentW;
+   temp_buffer[3] = openserial_vars.statOutputCurrentR;
    ENABLE_INTERRUPTS();
-   openserial_printStatus(STATUS_OUTBUFFERINDEXES,(uint8_t*)temp_buffer,sizeof(temp_buffer));
+   openserial_printStatus(STATUS_OUTBUFFERINDEXES,(uint8_t*)temp_buffer, 8);
    return TRUE;
 }
 
@@ -730,7 +732,7 @@ void isr_openserial_tx() {
 
             //considers the next buffer only if this one was entirely filled and the written one is the next one
             if (openserial_vars.statOutputCurrentW != openserial_vars.statOutputCurrentR)
-               openserial_vars.statOutputCurrentR = (1 + openserial_vars.statOutputCurrentR) % OPENSERIAL_NBFRAMES;
+               openserial_vars.statOutputCurrentR = (1 + openserial_vars.statOutputCurrentR) % OPENSERIAL_OUTPUT_NBBUFFERS;
 
             //write the next buffer if we are in an OFF_CELL
             //if (openserial_vars.statOutputBufFilled[openserial_vars.statOutputCurrentR])

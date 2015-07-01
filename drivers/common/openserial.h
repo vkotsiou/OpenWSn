@@ -145,7 +145,7 @@ typedef struct{
 END_PACK
 
 
-#define  OPENSERIAL_NBFRAMES        4
+#define  OPENSERIAL_OUTPUT_NBBUFFERS        6
 
 
 
@@ -175,11 +175,11 @@ typedef struct {
  //  uint8_t    statOutputNb;
    uint8_t    statOutputCurrentR;   //index to push to serial
    uint8_t    statOutputCurrentW;   //index to write our data
-   bool       statOutputBufFilled[OPENSERIAL_NBFRAMES];
-   uint16_t   statOutputCrc[OPENSERIAL_NBFRAMES];
-   uint8_t    statOutputBufIdxW[OPENSERIAL_NBFRAMES];
-   uint8_t    statOutputBufIdxR[OPENSERIAL_NBFRAMES];
-   uint8_t    statOutputBuf[OPENSERIAL_NBFRAMES][SERIAL_OUTPUT_BUFFER_SIZE];
+   bool       statOutputBufFilled[OPENSERIAL_OUTPUT_NBBUFFERS];
+   uint16_t   statOutputCrc[OPENSERIAL_OUTPUT_NBBUFFERS];
+   uint8_t    statOutputBufIdxW[OPENSERIAL_OUTPUT_NBBUFFERS];
+   uint8_t    statOutputBufIdxR[OPENSERIAL_OUTPUT_NBBUFFERS];
+   uint8_t    statOutputBuf[OPENSERIAL_OUTPUT_NBBUFFERS][SERIAL_OUTPUT_BUFFER_SIZE];
 } openserial_vars_t;
 
 //=========================== prototypes ======================================

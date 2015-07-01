@@ -69,6 +69,7 @@ six2six_state_t sixtop_getState(void);
 bool      sixtop_track_equal(track_t track1, track_t track2);
 bool      sixtop_track_is_besteffort(track_t track);
 // scheduling with track
+bool      sixtop_isIdle(void);
 void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track);
 void      sixtop_removeCell(open_addr_t*  neighbor);
 // from upper layer

@@ -158,6 +158,12 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 //======= scheduling
 
+//is sixtop idle (i.e. no on-going negotiation)
+bool sixtop_isIdle(){
+   return(sixtop_vars.six2six_state == SIX_IDLE);
+}
+
+
 void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    OpenQueueEntry_t* pkt;
    uint8_t           len;
@@ -283,6 +289,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    opentimers_restart(sixtop_vars.timeoutTimerId);
 }
 
+
 void sixtop_removeCell(open_addr_t* neighbor){
    OpenQueueEntry_t* pkt;
    bool              outcome;
@@ -295,22 +302,12 @@ void sixtop_removeCell(open_addr_t* neighbor){
    memset(cellList,0,sizeof(cellList));
    
    // filter parameters
-   if (sixtop_vars.six2six_state!=SIX_IDLE){
+   if (sixtop_vars.six2six_state != SIX_IDLE){
       return;
    }
    if (neighbor==NULL){
       return;
    }
-   
-
-#ifdef _DEBUG_SIXTOP_
-   char str[150];
-   sprintf(str, "SIXTOP remove cells with ");
-   openserial_ncat_uint8_t_hex(str, (uint32_t)neighbor->addr_64b[6], 150);
-   openserial_ncat_uint8_t_hex(str, (uint32_t)neighbor->addr_64b[7], 150);
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-#endif
-
 
    // generate candidate cell list
    outcome = sixtop_candidateRemoveCellList(
@@ -359,6 +356,30 @@ void sixtop_removeCell(open_addr_t* neighbor){
    // indicate IEs present
    pkt->l2_IEListPresent = IEEE154_IELIST_YES;
    
+
+#ifdef _DEBUG_SIXTOP_
+   uint8_t  i;
+    char str[150];
+
+    sprintf(str, "LinkRem txed: to ");
+    openserial_ncat_uint8_t_hex(str, neighbor->addr_64b[6], 150);
+    openserial_ncat_uint8_t_hex(str, neighbor->addr_64b[7], 150);
+    strncat(str, ", bw=", 150);
+    openserial_ncat_uint32_t(str, (uint32_t)1, 150);
+    strncat(str, ", nbcells ", 150);
+    openserial_ncat_uint32_t(str, (uint32_t)1, 150);
+
+    //delete only one cell in each remove request
+    for(i=0; i<1; i++){
+       strncat(str, ", slot ", 150);
+       openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);
+    }
+    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+#endif
+
+
+
    // send packet
    sixtop_send(pkt);
    

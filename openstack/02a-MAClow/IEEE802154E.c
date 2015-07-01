@@ -516,7 +516,9 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
                                    &ieee154e_vars.dataReceived->l1_rssi,
                                    &ieee154e_vars.dataReceived->l1_lqi,
                                    &ieee154e_vars.dataReceived->l1_crc);
-      
+      //retrieves the track (associated to this cell in the schedule)
+      schedule_getTrack(&(ieee154e_vars.dataReceived->l2_track));
+
       // break if packet too short
       if (ieee154e_vars.dataReceived->length<LENGTH_CRC || ieee154e_vars.dataReceived->length>LENGTH_IEEE154_MAX) {
          // break from the do-while loop and execute abort code below
@@ -525,7 +527,7 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
                             ieee154e_vars.dataReceived->length);
          break;
       }
-      
+
       // toss CRC (2 last bytes)
       packetfunctions_tossFooter(   ieee154e_vars.dataReceived, LENGTH_CRC);
       
@@ -549,9 +551,6 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
          // break from the do-while loop and execute the clean-up code below
          break;
       }
-      
-      //retrieves the track (associated to this cell in the schedule)
-      schedule_getTrack(&(ieee154e_vars.dataReceived->l2_track));
 
       // store header details in packet buffer
       ieee154e_vars.dataReceived->l2_frameType = ieee802514_header.frameType;
@@ -1271,6 +1270,9 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
                                    &ieee154e_vars.ackReceived->l1_lqi,
                                    &ieee154e_vars.ackReceived->l1_crc);
       
+      //retrieves the track (associated to this cell in the schedule)
+      schedule_getTrack(&(ieee154e_vars.ackReceived->l2_track));
+
       // break if wrong length
       if (ieee154e_vars.ackReceived->length<LENGTH_CRC || ieee154e_vars.ackReceived->length>LENGTH_IEEE154_MAX) {
          // break from the do-while loop and execute the clean-up code below
@@ -1280,7 +1282,7 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
         
          break;
       }
-      
+
       // toss CRC (2 last bytes)
       packetfunctions_tossFooter(   ieee154e_vars.ackReceived, LENGTH_CRC);
    
@@ -1304,9 +1306,6 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
          // break from the do-while loop and execute the clean-up code below
          break;
       }
-      
-      //retrieves the track (associated to this cell in the schedule)
-      schedule_getTrack(&(ieee154e_vars.ackReceived->l2_track));
 
       // store header details in packet buffer
       ieee154e_vars.ackReceived->l2_frameType  = ieee802514_header.frameType;
@@ -1502,6 +1501,9 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
                                    &ieee154e_vars.dataReceived->l1_lqi,
                                    &ieee154e_vars.dataReceived->l1_crc);
       
+      //retrieves the track (associated to this cell in the schedule)
+      schedule_getTrack(&(ieee154e_vars.dataReceived->l2_track));
+
       // break if wrong length
       if (ieee154e_vars.dataReceived->length<LENGTH_CRC || ieee154e_vars.dataReceived->length>LENGTH_IEEE154_MAX ) {
          // jump to the error code below this do-while loop
@@ -1535,9 +1537,6 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
          break;
       }
       
-      //retrieves the track (associated to this cell in the schedule)
-      schedule_getTrack(&(ieee154e_vars.dataReceived->l2_track));
-
       // store header details in packet buffer
       ieee154e_vars.dataReceived->l2_frameType      = ieee802514_header.frameType;
       ieee154e_vars.dataReceived->l2_dsn            = ieee802514_header.dsn;
@@ -2229,7 +2228,7 @@ void endSlot() {
    
    // clean up dataReceived
    if (ieee154e_vars.dataReceived!=NULL) {
-      //packet received (serial line)
+      //stat: packet received (serial line)
       openserial_statRx(ieee154e_vars.dataReceived);
 
       // assume something went wrong. If everything went well, dataReceived
