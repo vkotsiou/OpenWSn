@@ -9,7 +9,7 @@
 #include "packetfunctions.h"
 #include <stdio.h>
 
-#define _DEBUG_OTF_
+//#define _DEBUG_OTF_
 
 
 //=========================== variables =======================================
@@ -113,6 +113,9 @@ void otf_remove_obsolete_parents(void){
    uint8_t          i;
    char             str[150];
 
+#ifndef SIXTOP_REMOVE_OBSOLETE_PARENTS
+   return;
+#endif
    //for each cell in the schedule
    for (i=0;i<QUEUELENGTH;i++){
       cell = schedule_getCell(i);
@@ -167,6 +170,11 @@ void otf_notif_transmit(OpenQueueEntry_t* msg){
 
 //the parent has changed, must now remove the corresponding cells
 void otf_notif_remove_parent(open_addr_t *parent){
+#ifndef SIXTOP_REMOVE_OBSOLETE_PARENTS
+   return;
+#endif
+
+
 #ifdef TRACK_ACTIVE
    sixtop_removeCell(parent);
 #endif
