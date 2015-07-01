@@ -378,8 +378,6 @@ void sixtop_removeCell(open_addr_t* neighbor){
 
 #endif
 
-
-
    // send packet
    sixtop_send(pkt);
    
@@ -680,6 +678,8 @@ void sixtop_timeout_timer_cb(void) {
 six2six_state_t sixtop_getState(void){
    return(sixtop_vars.six2six_state);
 }
+
+
 //changes the current sixtop state
 void sixtop_setState(six2six_state_t state){
    sixtop_vars.six2six_state = state;
@@ -693,6 +693,10 @@ void sixtop_setState(six2six_state_t state){
             TIME_MS,
             sixtop_timeout_timer_cb
             );
+
+   //otf callback when we come back to the idle state
+   if (state == SIX_IDLE)
+      otf_update_schedule();
 
 }
 
@@ -927,8 +931,9 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
          
          break;
       case SIX_WAIT_REMOVEREQUEST_SENDDONE:
-         if(error == E_SUCCESS && numOfCells > 0){
-            for (i=0;i<numOfCells;i++){
+         //if(error == E_SUCCESS && numOfCells > 0){
+         if(numOfCells > 0){
+           for (i=0;i<numOfCells;i++){
                //TimeSlot 2B
                cellList[i].tsNum       = (*(ptr))<<8;
                cellList[i].tsNum      |= *(ptr+1);
@@ -1318,8 +1323,6 @@ void sixtop_notifyReceiveLinkResponse(
    leds_debug_off();
    sixtop_setState(SIX_IDLE);
   
-   //OTF callback
-   otf_update_schedule();
 
    opentimers_stop(sixtop_vars.timeoutTimerId);
 }

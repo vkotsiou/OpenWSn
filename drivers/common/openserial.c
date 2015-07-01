@@ -135,7 +135,7 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
 
    pos = openserial_get_output_buffer(length + 9);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
-      leds_error_toggle();
+      //leds_error_toggle();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
@@ -169,7 +169,7 @@ owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t len
 
    pos = openserial_get_output_buffer(length + 3);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
-      leds_error_toggle();
+      //leds_error_toggle();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
@@ -208,7 +208,7 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
 
    pos = openserial_get_output_buffer(length + 3);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
-      leds_error_toggle();
+      //leds_error_toggle();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
@@ -244,7 +244,7 @@ owerror_t openserial_printInfoErrorCritical(
 
    pos = openserial_get_output_buffer(8);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
-      leds_error_toggle();
+      //leds_error_toggle();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
@@ -278,7 +278,7 @@ owerror_t openserial_printData(uint8_t* buffer, uint8_t length) {
 
    pos = openserial_get_output_buffer(length + 8);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
-      leds_error_toggle();
+      //leds_error_toggle();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
@@ -340,7 +340,7 @@ owerror_t openserial_printCritical(uint8_t calling_component, uint8_t error_code
                               errorparameter_t arg1,
                               errorparameter_t arg2) {
    // blink error LED, this is serious
-   leds_error_blink();
+   //leds_error_blink();
    
    // schedule for the mote to reboot in 2s
    opentimers_start(2000,

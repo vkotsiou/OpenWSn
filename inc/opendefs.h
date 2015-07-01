@@ -30,7 +30,8 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define CHANNELS_NB                    16 //nb. of channels
 #define SCHEDULING_RANDOM                 //a random slot nb is assigned when OTF asks for a cell
 
-
+//tracks are handled by the 6top
+#define TRACK_ACTIVE
 
 //push statistics to the serial when an event occurs (tx, rx, etc.)
 #define OPENSERIAL_STAT    1
