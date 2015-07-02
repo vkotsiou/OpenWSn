@@ -80,7 +80,8 @@ enum{
    SERTYPE_ACK_TX             = 0x06,
    SERTYPE_ACK_RX             = 0x07,
    SERTYPE_PKT_TIMEOUT        = 0x08,
-   SERTYPE_PKT_ERROR          = 0x09
+   SERTYPE_PKT_ERROR          = 0x09,
+   SERTYPE_PKT_BUFFEROVERFLOW = 0x0a
 };
 //=========================== typedef =========================================
 
@@ -214,6 +215,7 @@ void  openserial_statAckRx(void);
 void  openserial_statRx(OpenQueueEntry_t* msg);
 void  openserial_statTx(OpenQueueEntry_t* msg);
 void  openserial_statPktTimeout(OpenQueueEntry_t* msg);
+void  openserial_statPktBufferOverflow(OpenQueueEntry_t* msg);
 void  openserial_statGen(uint16_t seqnum, track_t track);
 
 // -- tools

@@ -940,7 +940,7 @@ void openserial_statTx(OpenQueueEntry_t* msg){
 }
 
 
-//a ack was txed
+//a ack has timeouted in openqueue
 void openserial_statPktTimeout(OpenQueueEntry_t* msg){
 
 #ifdef OPENSERIAL_STAT
@@ -962,6 +962,33 @@ void openserial_statPktTimeout(OpenQueueEntry_t* msg){
     openserial_printStat(SERTYPE_PKT_TIMEOUT, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktTx_t));
   #endif
 }
+
+
+
+//not enough space in openqueue for this data packet
+void openserial_statPktBufferOverflow(OpenQueueEntry_t* msg){
+
+#ifdef OPENSERIAL_STAT
+   evtPktRx_t evt;
+     evt.length           = msg->length;
+     evt.rssi             = msg->l1_rssi;
+     evt.lqi              = msg->l1_lqi;
+     evt.crc              = msg->l1_crc;
+     evt.track_instance   = msg->l2_track.instance;
+     evt.frame_type       = msg->l2_frameType;
+     evt.slotOffset       = schedule_getSlotOffset();
+     evt.frequency        = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
+     memcpy(evt.track_owner, msg->l2_track.owner.addr_64b, 8);
+     memcpy(evt.l2Src, msg->l2_nextORpreviousHop.addr_64b, 8);
+
+     openserial_printStat(SERTYPE_PKT_BUFFEROVERFLOW, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktRx_t));
+
+  #endif
+}
+
+
+
+
 
 
 //push an event to track an erroneous frame

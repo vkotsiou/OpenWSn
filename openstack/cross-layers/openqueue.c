@@ -8,8 +8,8 @@
 #include "sixtop.h"
 #include <stdio.h>
 
-//_DEBUG_OQ_
-
+#define _DEBUG_OPENQUEUE_
+// #define _DEBUG_OQ_MEM_
 
 //=========================== variables =======================================
 
@@ -153,7 +153,7 @@ void openqueue_timeout_drop(void){
             if (openqueue_timeout_is_greater(now, openqueue_vars.queue[i].timeout)){
 
                openserial_statPktTimeout(&(openqueue_vars.queue[i]));
-#ifdef _DEBUG_OQ_
+#ifdef _DEBUG_OQ_MEM_
                char str[150];
                sprintf(str, "OQUEUE: remove(timeout), pos=");
                openserial_ncat_uint32_t(str, (uint32_t)i, 150);
@@ -218,7 +218,7 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
          ENABLE_INTERRUPTS();
 
 
-#ifdef _DEBUG_OQ_
+#ifdef _DEBUG_OQ_MEM_
          char str[150];
          sprintf(str, "OQUEUE: allocation, pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
@@ -356,7 +356,7 @@ void openqueue_removeAllCreatedBy(uint8_t creator) {
       if (openqueue_vars.queue[i].creator == creator) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
 
-#ifdef _DEBUG_OQ_
+#ifdef _DEBUG_OQ_MEM_
          char str[150];
          sprintf(str, "OQUEUE: remove (AllCreatedBy), pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
@@ -381,7 +381,7 @@ void openqueue_removeAllOwnedBy(uint8_t owner) {
       if (openqueue_vars.queue[i].owner==owner) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
 
-#ifdef _DEBUG_OQ_
+#ifdef _DEBUG_OQ_MEM_
          char str[150];
          sprintf(str, "OQUEUE: remove (AllOwnedBy), pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
@@ -461,7 +461,7 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
             ) {
             ENABLE_INTERRUPTS();
 
-#ifdef _DEBUG_OQ_
+#ifdef _DEBUG_OQ_MEM_
             char str[150];
             sprintf(str, "OQUEUE: packet to tx (UNICAST), pos=");
             openserial_ncat_uint32_t(str, (uint32_t)i, 150);
@@ -487,7 +487,7 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
             ) {
             ENABLE_INTERRUPTS();
 
-#ifdef _DEBUG_OQ_
+#ifdef _DEBUG_OQ_MEM_
             char str[150];
             sprintf(str, "OQUEUE: packet to tx (ANYCAST), pos=");
             openserial_ncat_uint32_t(str, (uint32_t)i, 150);
@@ -525,16 +525,29 @@ OpenQueueEntry_t* openqueue_getPacket(uint8_t i) {
 
 
 //not enough space for non prioritar packets
-bool openqueue_overflow(void){
+bool openqueue_overflow_for_data(void){
    uint8_t  nb = 0;
    uint8_t  i;
 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++)
-      if (openqueue_vars.queue[i].owner== COMPONENT_NULL)
+      if (openqueue_vars.queue[i].owner == COMPONENT_NULL)
          nb++;
    ENABLE_INTERRUPTS();
+
+   //for debug
+#ifdef _DEBUG_OPENQUEUE_
+   if (nb - QUEUELENGTH < QUEUELENGTH_RESERVED){
+      char str[150];
+      sprintf(str, "Buffer Overflow. Only ");
+      openserial_ncat_uint32_t(str, nb, 150);
+      strncat(str, " space left while ", 150);
+      openserial_ncat_uint32_t(str, QUEUELENGTH_RESERVED, 150);
+      strncat(str, " are reserved for management", 150);
+      openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
+   }
+#endif
 
    return(nb - QUEUELENGTH < QUEUELENGTH_RESERVED);
 }

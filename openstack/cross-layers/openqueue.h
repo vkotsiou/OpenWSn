@@ -64,7 +64,7 @@ OpenQueueEntry_t*    openqueue_getPacket(uint8_t pos);
 OpenQueueEntry_t*  openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *track);
 OpenQueueEntry_t*  openqueue_macGetAdvPacket(void);
 //management
-bool              openqueue_overflow(void);
+bool              openqueue_overflow_for_data(void);
 
 /**
 \}

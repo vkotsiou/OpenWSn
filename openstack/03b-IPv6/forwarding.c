@@ -237,6 +237,14 @@ void forwarding_receive(
    } else {
       // this packet is not for me: relay
       
+      //too many packets in the buffer? We should drop this one to save data for management packets (e.g. sixtop)
+      if(openqueue_overflow_for_data()){
+            openserial_statPktBufferOverflow(msg);
+
+            openqueue_freePacketBuffer(msg);
+            return;
+      }
+
       // change the creator of the packet
       msg->creator = COMPONENT_FORWARDING;
       
