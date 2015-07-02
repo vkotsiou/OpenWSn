@@ -8,6 +8,9 @@
 #include "otf.h"
 #include <stdio.h>
 
+
+#define _DEBUG_ICMPv6RPL_RANK_
+
 //=========================== variables =======================================
 
 neighbors_vars_t neighbors_vars;
@@ -573,26 +576,29 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
          }
          
          tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank + rankIncrease;
+
+#ifdef _DEBUG_ICMPv6RPL_RANK_
+         char str[150];
+          sprintf(str, "rank: neighbor ");
+          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+          strncat(str, ", PDR^-1= ", 150);
+          openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTx, 150);
+          strncat(str, " / ", 150);
+          openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTxACK, 150);
+          strncat(str, " - link metric ", 150);
+          openserial_ncat_uint32_t(str, rankIncrease, 150);
+          strncat(str, " - its rank ", 150);
+          openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
+          strncat(str, " - candidate rank  ", 150);
+          openserial_ncat_uint32_t(str, tentativeDAGrank, 150);
+          strncat(str, " - current best rank ", 150);
+          openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
+          openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
+
+#endif
+
          if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
               tentativeDAGrank<MAXDAGRANK) {
-
-            char str[150];
-            sprintf(str, "rank: neighbor ");
-            openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-            strncat(str, ", PDR^-1= ", 150);
-            openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTx, 150);
-            strncat(str, " / ", 150);
-            openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTxACK, 150);
-            strncat(str, " - link metric ", 150);
-            openserial_ncat_uint32_t(str, rankIncrease, 150);
-            strncat(str, " - its rank ", 150);
-            openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
-            strncat(str, " - candidate rank  ", 150);
-            openserial_ncat_uint32_t(str, tentativeDAGrank, 150);
-            strncat(str, " - current best rank ", 150);
-            openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
-            openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-
             // found better parent, lower my DAGrank
             neighbors_vars.myDAGrank   = tentativeDAGrank;
             prefParentFound            = TRUE;

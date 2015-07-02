@@ -106,7 +106,7 @@ uint8_t openserial_get_output_buffer(uint8_t length){
 
 
    //do we have enough space? (pessimistic case: 30% of the chars are escaped)
-   if (length * 1.7 + 2 + space  > SERIAL_OUTPUT_BUFFER_SIZE){
+   if ((uint32_t)length * 2 + 2 + space  > (uint32_t)SERIAL_OUTPUT_BUFFER_SIZE){
 
       //the next buffer is already pending -> not anymore space
       if (openserial_vars.OutputCurrentR == openserial_vars.OutputCurrentW + 1)
@@ -623,8 +623,8 @@ port_INLINE void OutputHdlcWrite(uint8_t i, uint8_t b) {
    
    if (openserial_vars.OutputBufIdxW[i] + 1 == openserial_vars.OutputBufIdxR[i]){
       openserial_printCritical(COMPONENT_OPENSERIAL, ERR_OPENSERIAL_BUFFER_OVERFLOW,
-            2,
-            1);
+            (errorparameter_t)openserial_vars.OutputBufIdxW[i],
+            (errorparameter_t)openserial_vars.OutputBufIdxR[i]);
       return;
    }
 

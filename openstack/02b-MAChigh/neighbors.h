@@ -17,7 +17,7 @@
 #define RPL_OFFabrice
 //#define   RPL_OF0
 
-#define MAXNUMNEIGHBORS           10
+#define MAXNUMNEIGHBORS           15
 #define MAXPREFERENCE             2
 #define BADNEIGHBORMAXRSSI        -80 //dBm
 #define GOODNEIGHBORMINRSSI       -90 //dBm

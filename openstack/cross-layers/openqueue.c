@@ -8,7 +8,7 @@
 #include "sixtop.h"
 #include <stdio.h>
 
-#define _DEBUG_OPENQUEUE_
+// #define _DEBUG_OPENQUEUE_
 // #define _DEBUG_OQ_MEM_
 
 //=========================== variables =======================================
@@ -537,8 +537,19 @@ bool openqueue_overflow_for_data(void){
    ENABLE_INTERRUPTS();
 
    //for debug
-#ifdef _DEBUG_OPENQUEUE_
-//   if (nb <= QUEUELENGTH_RESERVED){
+   // if (nb <= QUEUELENGTH_RESERVED)
+      openserial_printError(
+               COMPONENT_OPENQUEUE,
+               ERR_OPENQUEUE_BUFFER_OVERFLOW,
+               (errorparameter_t)nb,
+               (errorparameter_t)QUEUELENGTH_RESERVED
+            );
+
+ /*
+   #ifdef _DEBUG_OPENQUEUE_
+  // if (nb <= QUEUELENGTH_RESERVED){
+      openserial_print
+
       char str[150];
       sprintf(str, "Buffer Overflow? overflow=");
       openserial_ncat_uint32_t(str, (uint32_t)(QUEUELENGTH <= QUEUELENGTH_RESERVED) , 150);
@@ -550,7 +561,7 @@ bool openqueue_overflow_for_data(void){
       openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 //   }
 #endif
-
+*/
    return(QUEUELENGTH <= QUEUELENGTH_RESERVED);
 }
 
