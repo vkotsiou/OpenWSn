@@ -12,8 +12,10 @@
 
 //=========================== define ==========================================
 
-#define TIMER_DIO_TIMEOUT         1700
-#define TIMER_DAO_TIMEOUT         10000
+#define TIMER_DIO_TIMEOUT         8500
+#define TIMER_DAO_TIMEOUT         50000
+#define TIMER_NB_TRIGGERED        5
+
 
 #define MOP_DIO_A                 1<<5
 #define MOP_DIO_B                 1<<4

@@ -76,7 +76,7 @@ void icmpv6rpl_init() {
    icmpv6rpl_vars.dioDestination.type = ADDR_128B;
    memcpy(&icmpv6rpl_vars.dioDestination.addr_128b[0],all_routers_multicast,sizeof(all_routers_multicast));
    
-   icmpv6rpl_vars.periodDIO                 = TIMER_DIO_TIMEOUT+(openrandom_get16b()&0xff);
+   icmpv6rpl_vars.periodDIO                 = (TIMER_DIO_TIMEOUT+(openrandom_get16b()&0xff)) / TIMER_NB_TRIGGERED;
    icmpv6rpl_vars.timerIdDIO                = opentimers_start(
                                                 icmpv6rpl_vars.periodDIO,
                                                 TIMER_PERIODIC,
@@ -123,7 +123,7 @@ void icmpv6rpl_init() {
    icmpv6rpl_vars.dao_target.flags  = 0;
    icmpv6rpl_vars.dao_target.prefixLength = 0;
    
-   icmpv6rpl_vars.periodDAO                 = TIMER_DAO_TIMEOUT+(openrandom_get16b()&0xff);
+   icmpv6rpl_vars.periodDAO                 = (TIMER_DAO_TIMEOUT+(openrandom_get16b()&0xff)) / TIMER_NB_TRIGGERED;
    icmpv6rpl_vars.timerIdDAO                = opentimers_start(
                                                 icmpv6rpl_vars.periodDAO,
                                                 TIMER_PERIODIC,
@@ -285,7 +285,7 @@ void icmpv6rpl_timer_DIO_cb() {
 void icmpv6rpl_timer_DIO_task() {
    
    // update the delayDIO
-   icmpv6rpl_vars.delayDIO = (icmpv6rpl_vars.delayDIO+1)%5;
+   icmpv6rpl_vars.delayDIO = (icmpv6rpl_vars.delayDIO+1) % TIMER_NB_TRIGGERED;
    
    // check whether we need to send DIO
    if (icmpv6rpl_vars.delayDIO==0) {
@@ -294,7 +294,7 @@ void icmpv6rpl_timer_DIO_task() {
       sendDIO();
       
       // pick a new pseudo-random periodDIO
-      icmpv6rpl_vars.periodDIO = TIMER_DIO_TIMEOUT+(openrandom_get16b()&0xff);
+      icmpv6rpl_vars.periodDIO = (TIMER_DIO_TIMEOUT+(openrandom_get16b()&0xff)) / TIMER_NB_TRIGGERED;
       
       // arm the DIO timer with this new value
       opentimers_setPeriod(
@@ -354,7 +354,7 @@ void sendDIO() {
    // if you get here, all good to send a DIO
 
    // reserve a free packet buffer for DIO
-   msg = openqueue_getFreePacketBuffer_with_timeout(COMPONENT_ICMPv6RPL, icmpv6rpl_vars.periodDIO);
+   msg = openqueue_getFreePacketBuffer(COMPONENT_ICMPv6RPL);
    if (msg==NULL) {
       openserial_printError(COMPONENT_ICMPv6RPL,ERR_NO_FREE_PACKET_BUFFER,
                             (errorparameter_t)0,
@@ -430,13 +430,13 @@ void icmpv6rpl_timer_DAO_cb() {
 void icmpv6rpl_timer_DAO_task() {
    
    // update the delayDAO
-   icmpv6rpl_vars.delayDAO = (icmpv6rpl_vars.delayDAO+1)%5;
+   icmpv6rpl_vars.delayDAO = (icmpv6rpl_vars.delayDAO+1) % TIMER_NB_TRIGGERED;
    
    // check whether we need to send DAO
    if (icmpv6rpl_vars.delayDAO==0) {
       
       // pick a new pseudo-random periodDAO
-       icmpv6rpl_vars.periodDAO = TIMER_DAO_TIMEOUT+(openrandom_get16b()&0xff);
+       icmpv6rpl_vars.periodDAO = (TIMER_DAO_TIMEOUT+(openrandom_get16b()&0xff)) / TIMER_NB_TRIGGERED;
 
       // send DAO
       sendDAO();

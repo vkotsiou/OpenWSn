@@ -403,6 +403,8 @@ bool debugPrint_macStats() {
 
 port_INLINE void activity_synchronize_newSlot() {
 
+
+
    // I'm in the middle of receiving a packet
    if (ieee154e_vars.state==S_SYNCRX) {
       return;
@@ -435,12 +437,12 @@ port_INLINE void activity_synchronize_newSlot() {
    
    // to be able to receive and transmit serial even when not synchronized
    // take turns every 8 slots sending and receiving
-   if        ((ieee154e_vars.asn.bytes0and1&0x000f)==0x0000) {
+   if ((ieee154e_vars.asn.bytes0and1 & 0x000f) == 0x0000) {
       openserial_stop();
       //remove timeouted entries in openqueue
       openqueue_timeout_drop();
       openserial_startOutput();
-   } else if ((ieee154e_vars.asn.bytes0and1&0x000f)==0x0008) {
+   } else if ((ieee154e_vars.asn.bytes0and1 & 0x000f) == 0x0008) {
       openserial_stop();
       openserial_startInput();
    }

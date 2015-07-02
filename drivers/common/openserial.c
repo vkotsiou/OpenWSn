@@ -106,7 +106,7 @@ uint8_t openserial_get_output_buffer(uint8_t length){
 
 
    //do we have enough space? (pessimistic case: 30% of the chars are escaped)
-   if (length * 1.3 + 2 + space  > SERIAL_OUTPUT_BUFFER_SIZE){
+   if (length * 1.7 + 2 + space  > SERIAL_OUTPUT_BUFFER_SIZE){
 
       //the next buffer is already pending -> not anymore space
       if (openserial_vars.OutputCurrentR == openserial_vars.OutputCurrentW + 1)
