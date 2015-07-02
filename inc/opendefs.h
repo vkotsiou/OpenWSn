@@ -338,7 +338,7 @@ END_PACK
 
 BEGIN_PACK
 typedef struct{
-   open_addr_t    addr;                         // the address of the bottleneck
+   uint8_t        addr_64b[8];                  // the address of the bottleneck
    uint8_t        counter;                      // the metric use to compute the bottleneck
    uint16_t       etx;                          // the ETX of the Path to the bottleneck
 } btneck_t;

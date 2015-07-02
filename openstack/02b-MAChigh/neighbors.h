@@ -80,11 +80,12 @@ END_PACK
    
 typedef struct {
    neighborRow_t        neighbors[MAXNUMNEIGHBORS];
-   bool                 amIBottleneck;
    btneck_t             btnecks[MAX_NUM_BTNECKS];
    float                balance_factors[MAX_NUM_BTNECKS]; // percentage of data sent to each btneck 
    dagrank_t            myDAGrank;
    uint8_t              debugRow;
+   uint8_t              dio_counter; // number of received DIO
+   uint8_t              bootstrap_period; // number of recv DIO before calculating balance ratio
    icmpv6rpl_dio_ht*    dio; //keep it global to be able to debug correctly.
 } neighbors_vars_t;
 
@@ -95,6 +96,7 @@ void          neighbors_init(void);
 // getters
 dagrank_t     neighbors_getMyDAGrank(void);
 uint8_t       neighbors_getNumNeighbors(void);
+uint8_t       neighbors_getNumBtnecks(void);
 bool          neighbors_getPreferredTrack(open_addr_t* addressToWrite);
 void          neighbors_getPreferredTrackParent(open_addr_t* track_owner, open_addr_t* addressToWrite);
 bool          neighbors_getPreferredParentEui64(open_addr_t* addressToWrite);

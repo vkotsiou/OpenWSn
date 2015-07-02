@@ -416,6 +416,7 @@ owerror_t sixtop_send(OpenQueueEntry_t *msg) {
    msg->owner        = COMPONENT_SIXTOP;
    msg->l2_frameType = IEEE154_TYPE_DATA;
 
+   /*
    // apply track forwarding mecanism if necessary
       // init addresses
       self_addr = idmanager_getMyID(ADDR_64B);
@@ -431,7 +432,7 @@ owerror_t sixtop_send(OpenQueueEntry_t *msg) {
       // change the next parent according to track
       neighbors_getPreferedTrackParent(&msg->l2_track.owner, dest_addr);
       memcpy(msg->l2_nextORpreviousHop.addr_64b, dest_addr, LENGTH_ADDR64b);
-
+   */
  
    if (msg->l2_IEListPresent == IEEE154_IELIST_NO) {
       return sixtop_send_internal(
@@ -578,14 +579,14 @@ void task_sixtopNotifReceive() {
       case IEEE154_TYPE_DATA:
       case IEEE154_TYPE_CMD:
          if (msg->length>0) {
-            if (msg->l2_track.instance == TRACK_BALANCING){
+           /* if (msg->l2_track.instance == TRACK_BALANCING){
                // forward the packet
                sixtop_send(msg);
             }
-            else {
+            else {*/
                // send to upper layer
                iphc_receive(msg);
-            }
+           // }
          } else {
             // free up the RAM
             openqueue_freePacketBuffer(msg);

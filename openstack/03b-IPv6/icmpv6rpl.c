@@ -7,7 +7,7 @@
 #include "packetfunctions.h"
 #include "openrandom.h"
 #include "scheduler.h"
-#include "sixtop.h"
+//#include "sixtop.h"
 #include "idmanager.h"
 #include "opentimers.h"
 #include "IEEE802154E.h"
@@ -238,6 +238,11 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
             break; // break, don't return
          }
          
+         #ifdef _DEBUG_DIO_
+            char str[100];
+            sprintf(str, "RPL - RX DIO ");
+            openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+         #endif
          // update neighbor table
          neighbors_indicateRxDIO(msg);
          
@@ -416,7 +421,7 @@ void sendDIO() {
    //===== DIO payload
    // note: DIO is already mostly populated
    icmpv6rpl_vars.dio.rank            = neighbors_getMyDAGrank();
-   //neighbors_getAdvBtnecks(icmpv6rpl_vars.dio.btnecks); // populate DIO with advertised bottleneck
+   neighbors_getAdvBtnecks(icmpv6rpl_vars.dio.btnecks); // populate DIO with advertised bottleneck
    packetfunctions_reserveHeaderSize(msg,sizeof(icmpv6rpl_dio_ht));
    memcpy(
       ((icmpv6rpl_dio_ht*)(msg->payload)),
@@ -447,12 +452,6 @@ void sendDIO() {
 #endif
 
    }
-
-	 // stats
-	 uint8_t SERTYPE_DIO = 7;
-	 uint8_t txAttCounter = sixtop_getBtneckCounter();
-	 openserial_printStat(SERTYPE_DIO, COMPONENT_ICMPv6RPL, (uint8_t*)&txAttCounter, sizeof(txAttCounter));
- 
 }
 
 //===== DAO-related
