@@ -538,18 +538,20 @@ bool openqueue_overflow_for_data(void){
 
    //for debug
 #ifdef _DEBUG_OPENQUEUE_
-   if (nb - QUEUELENGTH < QUEUELENGTH_RESERVED){
+//   if (nb <= QUEUELENGTH_RESERVED){
       char str[150];
-      sprintf(str, "Buffer Overflow. Only ");
+      sprintf(str, "Buffer Overflow? overflow=");
+      openserial_ncat_uint32_t(str, (uint32_t)(QUEUELENGTH <= QUEUELENGTH_RESERVED) , 150);
+      strncat(str, " -> ", 150);
       openserial_ncat_uint32_t(str, nb, 150);
       strncat(str, " space left while ", 150);
       openserial_ncat_uint32_t(str, QUEUELENGTH_RESERVED, 150);
       strncat(str, " are reserved for management", 150);
       openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
-   }
+//   }
 #endif
 
-   return(nb - QUEUELENGTH < QUEUELENGTH_RESERVED);
+   return(QUEUELENGTH <= QUEUELENGTH_RESERVED);
 }
 
 

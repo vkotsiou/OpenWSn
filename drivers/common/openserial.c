@@ -136,6 +136,7 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
    pos = openserial_get_output_buffer(length + 9);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
+      ENABLE_INTERRUPTS();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
@@ -167,19 +168,20 @@ owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t len
    uint8_t  i, pos;
    uint8_t  asn[5];
 
-   pos = openserial_get_output_buffer(length + 3);
-   if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
-      //leds_error_toggle();
-      return(E_FAIL);
-   }
-   openserial_vars.OutputBufFilled[pos] = TRUE;
-
-
    INTERRUPT_DECLARATION();
 
    ieee154e_getAsn(asn);// byte01,byte23,byte4
 
    DISABLE_INTERRUPTS();
+
+   pos = openserial_get_output_buffer(length + 3);
+   if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
+      //leds_error_toggle();
+      ENABLE_INTERRUPTS();
+      return(E_FAIL);
+   }
+   openserial_vars.OutputBufFilled[pos] = TRUE;
+
    OutputHdlcOpen(pos);
    OutputHdlcWrite(pos, SERFRAME_MOTE2PC_PRINTF);
    OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
@@ -206,17 +208,17 @@ owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t len
 owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t length) {
    uint8_t i, pos;
 
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+
    pos = openserial_get_output_buffer(length + 3);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
+      ENABLE_INTERRUPTS();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
-
-   INTERRUPT_DECLARATION();
-
-   DISABLE_INTERRUPTS();
    OutputHdlcOpen(pos);
    OutputHdlcWrite(pos, SERFRAME_MOTE2PC_STATUS);
    OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
@@ -242,19 +244,19 @@ owerror_t openserial_printInfoErrorCritical(
    ) {
    uint8_t pos;
 
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+
+
    pos = openserial_get_output_buffer(8);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
+      ENABLE_INTERRUPTS();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
 
-
-   INTERRUPT_DECLARATION();
-
-   
-   DISABLE_INTERRUPTS();
    OutputHdlcOpen(pos);
    OutputHdlcWrite(pos, severity);
    OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
@@ -276,21 +278,22 @@ owerror_t openserial_printData(uint8_t* buffer, uint8_t length) {
    uint8_t  asn[5];
    uint8_t  pos;
 
+   INTERRUPT_DECLARATION();
+
+   // retrieve ASN
+   ieee154e_getAsn(asn);// byte01,byte23,byte4
+
+   DISABLE_INTERRUPTS();
+
+
    pos = openserial_get_output_buffer(length + 8);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
+      ENABLE_INTERRUPTS();
       return(E_FAIL);
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
-
-
-   INTERRUPT_DECLARATION();
-   
-   // retrieve ASN
-   ieee154e_getAsn(asn);// byte01,byte23,byte4
-   
-   DISABLE_INTERRUPTS();
    OutputHdlcOpen(pos);
    OutputHdlcWrite(pos, SERFRAME_MOTE2PC_DATA);
    OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);

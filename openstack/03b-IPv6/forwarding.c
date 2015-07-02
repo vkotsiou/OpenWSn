@@ -72,7 +72,7 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
       openserial_statPktBufferOverflow(msg);
 
       openqueue_freePacketBuffer(msg);
-      return;
+      return(E_FAIL);
    }
 
 
