@@ -174,7 +174,6 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    cellInfo_ht       cellList[SCHEDULEIEMAXNUMCELLS];
    
    frameID    = SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE;
-   
    memset(cellList,0,sizeof(cellList));
    
    // filter parameters
@@ -187,6 +186,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
       );
       return;
    }
+
    if (neighbor==NULL){
       openserial_printError(
             COMPONENT_SIXTOP_RES,
@@ -197,6 +197,17 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
       return;
    }
    
+   if (numCells > SIXTOP_NBCELLS_INREQ){
+      openserial_printError(
+            COMPONENT_SIXTOP_RES,
+            ERR_SIXTOP_TOOMANY_CELLS,
+            (errorparameter_t)numCells,
+            (errorparameter_t)SIXTOP_NBCELLS_INREQ
+      );
+      return;
+   }
+
+
    // generate candidate cell list
    outcome = sixtop_candidateAddCellList(
       &type,
@@ -308,6 +319,7 @@ void sixtop_removeCell(open_addr_t* neighbor){
    if (neighbor==NULL){
       return;
    }
+
 
    // generate candidate cell list
    outcome = sixtop_candidateRemoveCellList(

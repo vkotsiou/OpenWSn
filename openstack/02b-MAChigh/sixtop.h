@@ -15,6 +15,7 @@
 
 
 
+
 //=========================== define ==========================================
 
 enum sixtop_CommandID_num{
@@ -41,6 +42,10 @@ typedef enum {
    // REMOVE: destinations
    SIX_REMOVEREQUEST_RECEIVED          = 0x0a    // I received the remove link request command
 } six2six_state_t;
+
+
+#define SIXTOP_NBCELLS_INREQ     3     //nb cells in the 6top IE (request / reply)
+
 
 //=========================== typedef =========================================
 

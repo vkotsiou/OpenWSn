@@ -79,6 +79,10 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
        (errorparameter_t)nbCells_req
    );
 
+   //upper bound the nb of cells
+   if (nbCells_req - nbCells_curr > SIXTOP_NBCELLS_INREQ)
+      nbCells_req = SIXTOP_NBCELLS_INREQ - nbCells_curr;
+
    //ask 6top the required number of cells
    sixtop_addCells(&(msg->l2_nextORpreviousHop), nbCells_req - nbCells_curr, msg->l2_track);
    return(nbCells_req - nbCells_curr);
