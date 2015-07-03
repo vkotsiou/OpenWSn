@@ -7,6 +7,8 @@
 #include "openserial.h"
 #include "IEEE802154E.h"
 #include "otf.h"
+#include "sixtop.h"
+#include "schedule.h"
 #include <stdio.h>
 
 
@@ -225,6 +227,10 @@ void neighbors_getAdvBtnecks(btneck_t * advBtnecks){
       memcpy(advBtnecks[0].addr_64b, idmanager_getMyID(ADDR_64B)->addr_64b, LENGTH_ADDR64b); 
       advBtnecks[0].counter = sixtop_getBtneckCounter();
       advBtnecks[0].etx = 0;
+
+      char str[100];
+      sprintf(str, "NEIGH - Self advertisement ");
+      openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
    }
 }
 
@@ -691,11 +697,14 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
          // filter too constrained bottlenecks
          neighbors_filterBtnecks();
 
+         // update parent set
+         neighbors_updateMyParentsSet();
+
          // update my routing information
          neighbors_updateMyDAGrankAndNeighborPreference();
 
-         // update parent set
-         neighbors_updateMyParentsSet();
+         // update my DAG rank    
+         neighbors_updateMyDAGrankWorst();
 
          // update reserved tracks cells
          neighbors_updateReservedTracks();
@@ -755,10 +764,7 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
    uint32_t    tentativeDAGrank; // 32-bit since is used to sum
    uint8_t     prefParentIdx;
    bool        prefParentFound;
-   uint8_t     RPL_OF; // RPL Objective Funtion
    uint8_t     minRank, maxRank;
-
-    RPL_OF = 1; // Compute rank using worst parent (greedy approach)
 
    // if I'm a DAGroot, my DAGrank is always 0
    if ((idmanager_getIsDAGroot())==TRUE) {
@@ -840,20 +846,10 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
             maxRank = tentativeDAGrank;
          }
 
-         // rank
-         if (RPL_OF == 0){
-            if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
-                 tentativeDAGrank<MAXDAGRANK) {
-             // found better parent, lower my DAGrank
-             neighbors_vars.myDAGrank   = tentativeDAGrank;
-            }
-         }
-         else{
-            if ( tentativeDAGrank>neighbors_vars.myDAGrank &&
-                 tentativeDAGrank<MAXDAGRANK) {
-             // found worst parent, lower my DAGrank
-             neighbors_vars.myDAGrank   = tentativeDAGrank;
-            }
+         if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
+               tentativeDAGrank<MAXDAGRANK) {
+            // found better parent, lower my DAGrank
+            neighbors_vars.myDAGrank   = tentativeDAGrank;
          }
       }
    } 
@@ -868,6 +864,44 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
    //remove the old cells if the parent has changed
    if(!packetfunctions_sameAddress(&pref_parent, &(neighbors_vars.neighbors[prefParentIdx].addr_64b)))
       otf_notif_remove_parent(&pref_parent);
+}
+
+
+/**
+\brief Update the node rank using the worst parent announcing the selected bottlenecks
+
+**/
+void neighbors_updateMyDAGrankWorst(){
+   uint8_t i;
+   dagrank_t max_rank;
+   uint16_t rankIncrease;
+   uint16_t tentativeDAGrank;
+
+   max_rank = 0;
+
+   // loop through parent in parent set
+   for (i=0; i<MAXNUMPARENTS; i++){
+      if (neighbors_vars.neighbors[i].inParentSet == TRUE){
+         // compute offered rank
+         rankIncrease = (uint16_t)
+            (
+             ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
+             ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
+             MINHOPRANKINCREASE
+            );
+         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank + rankIncrease;
+
+         // save parent offering highest rank
+         if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
+               tentativeDAGrank<MAXDAGRANK) {
+            max_rank = neighbors_vars.neighbors[i].DAGrank;
+         }
+      }
+   }
+
+   // update my rank
+   neighbors_vars.myDAGrank = max_rank;
+
 }
 
 /**
@@ -948,6 +982,8 @@ void neighbors_filterBtnecks(){
          if (neighbors_vars.balance_factors[i] < 5){
             memset(&neighbors_vars.btnecks[i],0,sizeof(btneck_t));
             ratioAcceptable = FALSE;
+            sprintf(str, "NEIGH ----- Remove Btneck");
+            openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
             break;
          }
       }
@@ -955,54 +991,48 @@ void neighbors_filterBtnecks(){
 }
 
 /**
-\brief Update my Parents set
+\brief Select the parents that advertise the btnecks I  have selected
 
 **/
 void  neighbors_updateMyParentsSet(){
-    uint8_t i,j,k;
-    uint8_t parentset_ids[MAXNUMNEIGHBORS];
-    uint8_t parentset_ranks[MAXNUMNEIGHBORS];
-    uint8_t min_rank_id, min_rank_val;
+   uint8_t i,j,k,l;
 
    char str[100];
    sprintf(str, "NEIGH - update parent set");
    openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
 
-    // init parent set  
-    for (i=0; i<MAXNUMNEIGHBORS; i++) {
-    if (neighbors_vars.neighbors[i].used==TRUE && neighbors_vars.neighbors[i].inParentSet==TRUE){
-            neighbors_vars.neighbors[i].inParentSet = FALSE;
-        }
-        parentset_ids[i] = 0;
-        parentset_ranks[i] = 0;
-    }
+   // init parent set 
+   for (i=0; i<MAXNUMNEIGHBORS; i++) {
+      neighbors_vars.neighbors[i].inParentSet = FALSE;
+   }
 
-    // select parent with minimal rank  
-    for (i=0; i<MAXNUMNEIGHBORS; i++) {
-    if (neighbors_vars.neighbors[i].used==TRUE){
-            uint8_t curr_parent_rank = neighbors_vars.neighbors[i].DAGrank;
-            // get parent with smaller rank in parent set
-            for (j=0; j<MAXNUMPARENTS; j++){
-                if ( parentset_ranks[j] < min_rank_val){
-                    min_rank_val = parentset_ranks[j]; 
-                    min_rank_id = j;
-                }
+   // select parents that advertise the bottlenecks I have selected
+   for (j=0;j <MAX_NUM_BTNECKS;j++){
+      if (neighbors_vars.btnecks[j].counter != 0){
+         for (k=0; k<MAXNUMNEIGHBORS; k++){
+            if (neighbors_vars.neighbors[k].used==TRUE 
+                  && neighbors_vars.neighbors[k].DAGrank < neighbors_vars.myDAGrank
+                  && neighbors_vars.neighbors[k].inParentSet!=TRUE){
+               for (l=0; l<MAX_NUM_BTNECKS; l++){
+                  if (neighbors_vars.neighbors[k].btnecks[l].counter != 0){
+                     if (packetfunctions_sameAddress64(
+                              &(neighbors_vars.btnecks[j].addr_64b),
+                              &(neighbors_vars.neighbors[k].btnecks[l].addr_64b))
+                        ){
+                        neighbors_vars.neighbors[k].inParentSet = TRUE;
+                        break;
+                     }
+                  }
+               }
             }
-            // replace the parent in the set if the neighbor have a smaller rank
-            if( curr_parent_rank < min_rank_val){
-                parentset_ranks[min_rank_id] = curr_parent_rank;
-                parentset_ids[min_rank_id] = i;
-            }
-        }
-    }
-    
-    // update neighbors values 
-    for (k=0; k<MAXNUMPARENTS; k++){
-        neighbors_vars.neighbors[parentset_ids[k]].inParentSet = TRUE;
-    }
-
+         }
+      }
+   }
 }
 
+/**
+\brief Compute the traffic ratio to send to each selected bottleneck
+**/
 void neighbors_updateBalanceFactors() {
    uint8_t i,j;
    uint16_t sum_counters;
@@ -1050,8 +1080,7 @@ void neighbors_updateReservedTracks(){
 
    // for each selected parent
    for (i=0;i<MAXNUMNEIGHBORS;i++) {
-      if (neighbors_vars.neighbors[i].used==TRUE
-      && neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank) {
+      if (neighbors_vars.neighbors[i].inParentSet == TRUE){
          // for eacth of the selected parent's advertise bottleneck
          for (j=0; j<MAX_NUM_BTNECKS; j++){
             if(neighbors_vars.neighbors[i].btnecks[j].counter != 0){
@@ -1110,12 +1139,12 @@ status information about several modules in the OpenWSN stack.
 \returns TRUE if this function printed something, FALSE otherwise.
 */
 bool debugPrint_neighbors() {
-   /*
    debugNeighborEntry_t temp;
    neighbors_vars.debugRow=(neighbors_vars.debugRow+1)%MAXNUMNEIGHBORS;
    temp.row=neighbors_vars.debugRow;
    temp.neighborEntry=neighbors_vars.neighbors[neighbors_vars.debugRow];
-   openserial_printStatus(STATUS_NEIGHBORS,(uint8_t*)&temp,sizeof(debugNeighborEntry_t));*/
+   //openserial_printStatus(STATUS_NEIGHBORS,(uint8_t*)&temp,sizeof(debugNeighborEntry_t));
+   openserial_printStatus(STATUS_NEIGHBORS,(uint8_t*)&temp,35);
    return TRUE;
 }
 

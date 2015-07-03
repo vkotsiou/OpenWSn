@@ -48,7 +48,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
       return(0);
 
    // requested and current allocations
-   nbCells_curr   = schedule_getNbCellsWithTrack(msg->l2_track, &(msg->l2_nextORpreviousHop));
+   nbCells_curr   = schedule_getNbCellsWithTrackAndNeighbor(msg->l2_track, msg->l2_nextORpreviousHop);
    nbCells_req    = openqueue_count_track(msg->l2_track);
 
 #ifdef _DEBUG_OTF_

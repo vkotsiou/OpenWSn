@@ -166,7 +166,7 @@ frameLength_t      schedule_getFrameLength(void);
 cellType_t         schedule_getType(void);
 void               schedule_getNeighbor(open_addr_t* addrToWrite);
 uint8_t            schedule_getNbCellsWithTrack(track_t track);
-uint8_t            schedule_getNbCellsWithTrackAndNeihbor(track_t track, open_addr_t neighbor_addr);
+uint8_t            schedule_getNbCellsWithTrackAndNeighbor(track_t track, open_addr_t neighbor_addr);
 void               schedule_getTrack(track_t *track);
 channelOffset_t    schedule_getChannelOffset(void);
 slotOffset_t       schedule_getSlotOffset(void);

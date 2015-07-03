@@ -86,9 +86,6 @@ void          sixtop_notifyReceiveRemoveLinkRequest(
    schedule_IE_ht*      schedule_ie,
    open_addr_t*         addr
 );
-void          sixtop_trackForward(
-   OpenQueueEntry_t*    msg
-);
 
 //=== helper functions
 
@@ -1394,16 +1391,6 @@ void sixtop_notifyReceiveRemoveLinkRequest(
 
    sixtop_removeCellsByState(frameID, numOfCells, cellList, addr);
    sixtop_setState(SIX_IDLE);
-}
-
-void sixtop_trackForward(OpenQueueEntry_t* msg){
-   open_addr_t* next_addr;
-   
-   // get next hop address from track
-   neighbors_getPreferedTrackParent(&msg->l2_track.owner,next_addr);
-
-   // save next hop addr
-   memcpy(msg->l2_nextORpreviousHop.addr_64b, next_addr, LENGTH_ADDR64b);
 }
 
 //======= helper functions

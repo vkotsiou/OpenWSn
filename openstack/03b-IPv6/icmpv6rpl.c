@@ -14,7 +14,7 @@
 #include <stdio.h>
 
 
-//#define _DEBUG_DIO_
+#define _DEBUG_DIO_
 
 //=========================== variables =======================================
 

@@ -569,7 +569,7 @@ void schedule_getNeighbor(open_addr_t* addrToWrite) {
 
 \returns The number of cells with this track
 */
-uint8_t schedule_getNbCellsWithTrack(track_t track, open_addr_t *nextHop){
+uint8_t schedule_getNbCellsWithTrack(track_t track){
    uint8_t  returnVal = 0;
    uint8_t  i;
 
@@ -582,8 +582,7 @@ uint8_t schedule_getNbCellsWithTrack(track_t track, open_addr_t *nextHop){
       if (sixtop_track_equal(schedule_vars.scheduleBuf[i].track, track) &&
             (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
                   ||
-            schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX) &&
-            (packetfunctions_sameAddress(&(schedule_vars.scheduleBuf[i].neighbor), nextHop)
+            schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX 
                   ||
             schedule_vars.scheduleBuf[i].neighbor.type == ADDR_ANYCAST)
             )
@@ -600,7 +599,7 @@ uint8_t schedule_getNbCellsWithTrack(track_t track, open_addr_t *nextHop){
 
 \returns The number of cells with this parent and track
 **/
-uint8_t schedule_getNbCellsWithTrackAndNeihbor(track_t track, open_addr_t neighbor_addr){
+uint8_t schedule_getNbCellsWithTrackAndNeighbor(track_t track, open_addr_t neighbor_addr){
    uint8_t  returnVal = 0;
    uint8_t  i;
 
