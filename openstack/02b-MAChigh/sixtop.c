@@ -310,7 +310,7 @@ void sixtop_removeCell(open_addr_t* neighbor){
    uint8_t           flag;
    cellInfo_ht       cellList[SCHEDULEIEMAXNUMCELLS];
    
-   memset(cellList,0,sizeof(cellList));
+   memset(cellList, 0, sizeof(cellList));
    
    // filter parameters
    if (sixtop_vars.six2six_state != SIX_IDLE){
@@ -709,7 +709,6 @@ void sixtop_setState(six2six_state_t state){
    //otf callback when we come back to the idle state
    if (state == SIX_IDLE)
       otf_update_schedule();
-
 }
 
 void timer_sixtop_six2six_timeout_fired(void) {
@@ -1098,7 +1097,7 @@ void sixtop_notifyReceiveCommand(
          if(sixtop_vars.six2six_state == SIX_IDLE){
 
 #ifdef _DEBUG_SIXTOP_
-            sprintf(str, "LinkREq rcvd: from ");
+            sprintf(str, "LinkReq rcvd: from ");
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
             strncat(str, ", bw=", 150);
@@ -1434,25 +1433,51 @@ bool sixtop_candidateRemoveCellList(
    ){
    uint8_t              i;
    uint8_t              numCandCells;
-   slotinfo_element_t   info;
+   //slotinfo_element_t   info;
    
    *type           = 1;
    *frameID        = SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE;
    *flag           = 1;
   
+   scheduleEntry_t *cell;
+
    numCandCells    = 0;
    for(i=0;i<MAXACTIVESLOTS;i++){
-      schedule_getSlotInfo(i,neighbor,&info);
+
+      cell = schedule_getCell(i);
+
+      if ((cell->type == CELLTYPE_TX) && (packetfunctions_sameAddress(neighbor, &(cell->neighbor)))){
+
+         cellList[numCandCells].tsNum       = cell->slotOffset;
+         cellList[numCandCells].choffset    = cell->channelOffset;
+         cellList[numCandCells].linkoptions = CELLTYPE_TX;
+         numCandCells++;
+         break; // only delete one cell
+      }
+ /*
+  * BUG: i in schedule_getSlotInfo() is the slotOffset. It may be > MAXACTIVESLOTS)
+  * CORRECTION: walk directly in the schedule. Avoids a double loop
+  *
+      schedule_getSlotInfo(i, neighbor, &info);
       if(info.link_type == CELLTYPE_TX){
+
          cellList[numCandCells].tsNum       = i;
          cellList[numCandCells].choffset    = info.channelOffset;
          cellList[numCandCells].linkoptions = CELLTYPE_TX;
          numCandCells++;
          break; // only delete one cell
       }
+      */
    }
    
    if(numCandCells==0){
+      openserial_printError(
+          COMPONENT_SIXTOP,
+          ERR_GENERIC,
+          (errorparameter_t)1,
+          (errorparameter_t)2
+      );
+
       return FALSE;
    }else{
       return TRUE;

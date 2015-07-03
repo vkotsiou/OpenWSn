@@ -247,7 +247,7 @@ bool               debugPrint_asn(void);
 bool               debugPrint_isSync(void);
 bool               debugPrint_macStats(void);
 //tools
-uint8_t           calculateFrequency(uint8_t channelOffset, cellType_t cellType);
+uint8_t            calculateFrequency(uint8_t channelOffset, cellType_t cellType);
 /**
 \}
 \}

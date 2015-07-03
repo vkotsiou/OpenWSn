@@ -31,7 +31,13 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define SCHEDULING_RANDOM                 //a random slot nb is assigned when OTF asks for a cell
 
 //tracks are handled by the 6top
-#define TRACK_ACTIVE
+#define TRACK_ACTIVE                      // applications use tracks
+#define SIXTOP_REMOVE_OBSOLETE_PARENTS    // when a node is removed from the parent list, its associated cells are removed
+#define SIXTOP_REMOVE_UNUSED_CELLS        // a cell is removed when it is not used for XXX time
+#define SIXTOP_CELL_TIMEOUT_RX         25000
+#define SIXTOP_CELL_TIMEOUT_TX         20000
+
+
 
 //push statistics to the serial when an event occurs (tx, rx, etc.)
 #define OPENSERIAL_STAT    1

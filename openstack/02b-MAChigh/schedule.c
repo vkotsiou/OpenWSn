@@ -5,6 +5,7 @@
 #include "packetfunctions.h"
 #include "sixtop.h"
 #include "IEEE802154E.h"
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -204,11 +205,12 @@ void  schedule_getSlotInfo(
    // find an empty schedule entry container
    slotContainer = &schedule_vars.scheduleBuf[0];
    while (slotContainer<=&schedule_vars.scheduleBuf[MAXACTIVESLOTS-1]) {
-       //check that this entry for that neighbour and timeslot is not already scheduled.
+
+        //check that this entry for that neighbour and timeslot is not already scheduled.
        if (packetfunctions_sameAddress(neighbor,&(slotContainer->neighbor))&& (slotContainer->slotOffset==slotOffset)){
                //it exists so this is an update.
                info->link_type                 = slotContainer->type;
-               info->shared                    =slotContainer->shared;
+               info->shared                    = slotContainer->shared;
                info->channelOffset             = slotContainer->channelOffset;
                return; //as this is an update. No need to re-insert as it is in the same position on the list.
         }
@@ -762,4 +764,7 @@ void schedule_resetEntry(scheduleEntry_t* e) {
    e->lastUsedAsn.bytes2and3 = 0;
    e->lastUsedAsn.byte4      = 0;
    e->next                   = NULL;
+
+   e->track.instance = 0;
+   bzero(&(e->track.owner), sizeof(e->track.owner));
 }

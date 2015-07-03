@@ -7,6 +7,7 @@
 #include "schedule.h"
 #include "openserial.h"
 #include "packetfunctions.h"
+#include "IEEE802154E.h"
 #include <stdio.h>
 
 //#define _DEBUG_OTF_
@@ -36,8 +37,6 @@ void otf_init(void) {
 //returns the number of cells asked to 6top
 uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    uint8_t nbCells_curr, nbCells_req;
-
-
 
 
    //when 6top will have finished, otf will ask for bandwidth for this packet (if required)
@@ -120,52 +119,109 @@ void otf_remove_obsolete_parents(void){
 #ifndef SIXTOP_REMOVE_OBSOLETE_PARENTS
    return;
 #endif
+
+
    //for each cell in the schedule
-   for (i=0;i<QUEUELENGTH;i++){
+   for (i=0;i<MAXACTIVESLOTS;i++){
       cell = schedule_getCell(i);
 
       //if this cell is in TX mode, it must be toward my parent
       if (cell->type == CELLTYPE_TX) {
          neigh = neighbors_getNeighborInfo(&(cell->neighbor));
 
-
-         //it is not anymore a parent!!
-         if (neigh != NULL && neigh->parentPreference < MAXPREFERENCE){
-            sprintf(str, "OTF remove=");
+         //it is not anymore a parent (or even not anymore a neighbor)
+         if (neigh == NULL || neigh->parentPreference < MAXPREFERENCE){
+            sprintf(str, "OTF LinkRem=");
             openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[6], 150);
             openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[7], 150);
-            //strncat(str, ", current=", 150);
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
-            sixtop_removeCell(&(neigh->addr_64b));
+            sixtop_removeCell(&(cell->neighbor));
             break;
          }
       }
    }
 }
 
+void otf_remove_unused_cells(void){
 
-//updates the schedule
-void otf_update_schedule(void){
-#ifdef TRACK_ACTIVE
+#ifndef SIXTOP_REMOVE_UNUSED_CELLS
+   return;
+#endif
    //I MUST be idle
    if (!sixtop_isIdle())
       return;
+
+   scheduleEntry_t  *cell;
+   uint8_t           i;
+   uint16_t          timeout;
+   char              str[150];
+
+   //for each cell in the schedule
+   for (i=0;i<MAXACTIVESLOTS;i++){
+      cell = schedule_getCell(i);
+
+      //different timeouts depending on the cell type (RX > TX to avoid inconsistencies)
+      switch (cell->type){
+         case CELLTYPE_TX:
+            timeout = SIXTOP_CELL_TIMEOUT_TX;
+            break;
+         case CELLTYPE_RX:
+            timeout = SIXTOP_CELL_TIMEOUT_RX;
+            break;
+         default:
+            break;
+
+      }
+      switch (cell->type){
+         case CELLTYPE_TX:
+         case CELLTYPE_RX:
+
+            //ASN in nb of slots, timeout in ms, slotduration in us
+            if (ieee154e_asnDiff(&(cell->lastUsedAsn)) > 1000 * timeout / TsSlotDuration){
+               sprintf(str, "OTF LinkRem(unused)=");
+               openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[6], 150);
+               openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[7], 150);
+               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+               sixtop_removeCell(&(cell->neighbor));
+            }
+            break;
+
+         default:
+            break;
+
+      }
+
+   //TODO: remove also entries in the future -> means a reboot of the DAG and a resynchronization probably
+   }
+
+}
+
+
+//updates the schedule
+void otf_update_schedule(void){
+   //I MUST be idle
+   if (!sixtop_isIdle())
+      return;
+
+#ifdef TRACK_ACTIVE
 
 #ifdef OTF_AGRESSIVE
    otf_update_agressive();
 #endif
 
    otf_remove_obsolete_parents();
+   otf_remove_unused_cells();
 #endif
 }
 
 //a packet is pushed to the MAC layer -> OTF notification
 void otf_notif_transmit(OpenQueueEntry_t* msg){
-#ifdef TRACK_ACTIVE
    if (!sixtop_isIdle())
       return;
 
+#ifdef TRACK_ACTIVE
 #ifdef OTF_AGRESSIVE
    otf_reserve_agressive_for(msg);
 #endif
@@ -177,7 +233,6 @@ void otf_notif_remove_parent(open_addr_t *parent){
 #ifndef SIXTOP_REMOVE_OBSOLETE_PARENTS
    return;
 #endif
-
 
 #ifdef TRACK_ACTIVE
    sixtop_removeCell(parent);

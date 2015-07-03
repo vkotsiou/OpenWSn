@@ -841,16 +841,16 @@ port_INLINE void activity_ti1ORri1() {
    cellType = schedule_getType();
    
    //otf to update the schedule
-      switch(cellType){
-         case CELLTYPE_ADV:
-         case CELLTYPE_TX:
-         case CELLTYPE_TXRX:
-             otf_update_schedule();
-             break;
-         default:
-            break;
-      }
-
+/*   switch(cellType){
+      case CELLTYPE_ADV:
+      case CELLTYPE_TX:
+      case CELLTYPE_TXRX:
+          otf_update_schedule();
+          break;
+      default:
+         break;
+   }
+*/
    switch (cellType) {
       case CELLTYPE_ADV:
         // stop using serial
@@ -2260,6 +2260,19 @@ void endSlot() {
       ieee154e_vars.ackReceived = NULL;
    }
    
+   //otf verification
+   cellType_t cellType = schedule_getType();
+
+   //otf to update the schedule
+   switch(cellType){
+        case CELLTYPE_ADV:
+        case CELLTYPE_TX:
+        case CELLTYPE_TXRX:
+            otf_update_schedule();
+            break;
+        default:
+           break;
+     }
    
    // change state
    changeState(S_SLEEP);
