@@ -34,13 +34,9 @@ owerror_t openserial_printInfoErrorCritical(
    errorparameter_t arg2
 );
 // HDLC output
-void outputHdlcOpen(void);
-void outputHdlcWrite(uint8_t b);
-void outputHdlcClose(void);
-// HDLC stat output
-void OutputHdlcOpen(uint8_t i);
-void OutputHdlcWrite(uint8_t i, uint8_t b);
-void OutputHdlcClose(uint8_t i);
+void outputHdlcOpen(uint8_t i);
+void outputHdlcWrite(uint8_t location, uint8_t i, uint8_t b);
+void outputHdlcClose(uint8_t location, uint8_t i);
 // HDLC input
 void inputHdlcOpen(void);
 void inputHdlcWrite(uint8_t b);
@@ -105,8 +101,8 @@ uint8_t openserial_get_output_buffer(uint8_t length){
       space = (uint8_t)256 - openserial_vars.OutputBufIdxR[pos] + openserial_vars.OutputBufIdxW[pos];
 
 
-   //do we have enough space? (pessimistic case: 30% of the chars are escaped)
-   if ((uint32_t)length * 2 + 2 + space  > (uint32_t)SERIAL_OUTPUT_BUFFER_SIZE){
+   //do we have enough space? (pessimistic case: 100% of the chars are escaped + flags (end/start))
+   if ((uint32_t)length + length + 2 + space  > (uint32_t)SERIAL_OUTPUT_BUFFER_SIZE){
 
       //the next buffer is already pending -> not anymore space
       if (openserial_vars.OutputCurrentR == openserial_vars.OutputCurrentW + 1)
@@ -133,7 +129,7 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
 
    DISABLE_INTERRUPTS();
 
-   pos = openserial_get_output_buffer(length + 9);
+   pos = openserial_get_output_buffer(length + 10);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
       ENABLE_INTERRUPTS();
@@ -141,21 +137,21 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
-   OutputHdlcOpen(pos);
-   OutputHdlcWrite(pos, SERFRAME_MOTE2PC_STAT);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-   OutputHdlcWrite(pos, calling_component);
-   OutputHdlcWrite(pos, asn[0]);
-   OutputHdlcWrite(pos, asn[1]);
-   OutputHdlcWrite(pos, asn[2]);
-   OutputHdlcWrite(pos, asn[3]);
-   OutputHdlcWrite(pos, asn[4]);
-   OutputHdlcWrite(pos, type);
+   outputHdlcOpen(pos);
+   outputHdlcWrite(0, pos, SERFRAME_MOTE2PC_STAT);
+   outputHdlcWrite(0, pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   outputHdlcWrite(0, pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   outputHdlcWrite(0, pos, calling_component);
+   outputHdlcWrite(0, pos, asn[0]);
+   outputHdlcWrite(0, pos, asn[1]);
+   outputHdlcWrite(0, pos, asn[2]);
+   outputHdlcWrite(0, pos, asn[3]);
+   outputHdlcWrite(0, pos, asn[4]);
+   outputHdlcWrite(0, pos, type);
    for (i=0;i<length;i++){
-      OutputHdlcWrite(pos, buffer[i]);
+      outputHdlcWrite(0, pos, buffer[i]);
    }
-   OutputHdlcClose(pos);
+   outputHdlcClose(0, pos);
    ENABLE_INTERRUPTS();
 
 #endif
@@ -174,7 +170,7 @@ owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t len
 
    DISABLE_INTERRUPTS();
 
-   pos = openserial_get_output_buffer(length + 3);
+   pos = openserial_get_output_buffer(length + 9);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
       ENABLE_INTERRUPTS();
@@ -182,21 +178,21 @@ owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t len
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
-   OutputHdlcOpen(pos);
-   OutputHdlcWrite(pos, SERFRAME_MOTE2PC_PRINTF);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-   OutputHdlcWrite(pos, calling_component);
-   OutputHdlcWrite(pos, asn[0]);
-   OutputHdlcWrite(pos, asn[1]);
-   OutputHdlcWrite(pos, asn[2]);
-   OutputHdlcWrite(pos, asn[3]);
-   OutputHdlcWrite(pos, asn[4]);
+   outputHdlcOpen(pos);
+   outputHdlcWrite(1, pos, SERFRAME_MOTE2PC_PRINTF);
+   outputHdlcWrite(1, pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   outputHdlcWrite(1, pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   outputHdlcWrite(1, pos, calling_component);
+   outputHdlcWrite(1, pos, asn[0]);
+   outputHdlcWrite(1, pos, asn[1]);
+   outputHdlcWrite(1, pos, asn[2]);
+   outputHdlcWrite(1, pos, asn[3]);
+   outputHdlcWrite(1, pos, asn[4]);
 
    for (i=0;i<length;i++){
-      OutputHdlcWrite(pos, buffer[i]);
+      outputHdlcWrite(1, pos, buffer[i]);
    }
-   OutputHdlcClose(pos);
+   outputHdlcClose(1, pos);
    ENABLE_INTERRUPTS();
 
 #endif
@@ -211,7 +207,7 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
 
-   pos = openserial_get_output_buffer(length + 3);
+   pos = openserial_get_output_buffer(length + 4);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
       ENABLE_INTERRUPTS();
@@ -219,15 +215,15 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
-   OutputHdlcOpen(pos);
-   OutputHdlcWrite(pos, SERFRAME_MOTE2PC_STATUS);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-   OutputHdlcWrite(pos, statusElement);
+   outputHdlcOpen(pos);
+   outputHdlcWrite(2, pos, SERFRAME_MOTE2PC_STATUS);
+   outputHdlcWrite(2, pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   outputHdlcWrite(2, pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   outputHdlcWrite(2, pos, statusElement);
    for (i=0;i<length;i++){
-      OutputHdlcWrite(pos, buffer[i]);
+      outputHdlcWrite(2, pos, buffer[i]);
    }
-   OutputHdlcClose(pos);
+   outputHdlcClose(2, pos);
    ENABLE_INTERRUPTS();
 
    return E_SUCCESS;
@@ -248,7 +244,7 @@ owerror_t openserial_printInfoErrorCritical(
    DISABLE_INTERRUPTS();
 
 
-   pos = openserial_get_output_buffer(8);
+   pos = openserial_get_output_buffer(9);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
       ENABLE_INTERRUPTS();
@@ -257,17 +253,17 @@ owerror_t openserial_printInfoErrorCritical(
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
 
-   OutputHdlcOpen(pos);
-   OutputHdlcWrite(pos, severity);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-   OutputHdlcWrite(pos, calling_component);
-   OutputHdlcWrite(pos, error_code);
-   OutputHdlcWrite(pos, (uint8_t)((arg1 & 0xff00)>>8));
-   OutputHdlcWrite(pos, (uint8_t) (arg1 & 0x00ff));
-   OutputHdlcWrite(pos, (uint8_t)((arg2 & 0xff00)>>8));
-   OutputHdlcWrite(pos, (uint8_t) (arg2 & 0x00ff));
-   OutputHdlcClose(pos);
+   outputHdlcOpen(pos);
+   outputHdlcWrite(3, pos, severity);
+   outputHdlcWrite(3, pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   outputHdlcWrite(3, pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   outputHdlcWrite(3, pos, calling_component);
+   outputHdlcWrite(3, pos, error_code);
+   outputHdlcWrite(3, pos, (uint8_t)((arg1 & 0xff00)>>8));
+   outputHdlcWrite(3, pos, (uint8_t) (arg1 & 0x00ff));
+   outputHdlcWrite(3, pos, (uint8_t)((arg2 & 0xff00)>>8));
+   outputHdlcWrite(3, pos, (uint8_t) (arg2 & 0x00ff));
+   outputHdlcClose(3, pos);
    ENABLE_INTERRUPTS();
    
    return E_SUCCESS;
@@ -294,19 +290,19 @@ owerror_t openserial_printData(uint8_t* buffer, uint8_t length) {
    }
    openserial_vars.OutputBufFilled[pos] = TRUE;
 
-   OutputHdlcOpen(pos);
-   OutputHdlcWrite(pos, SERFRAME_MOTE2PC_DATA);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-   OutputHdlcWrite(pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
-   OutputHdlcWrite(pos, asn[0]);
-   OutputHdlcWrite(pos, asn[1]);
-   OutputHdlcWrite(pos, asn[2]);
-   OutputHdlcWrite(pos, asn[3]);
-   OutputHdlcWrite(pos, asn[4]);
+   outputHdlcOpen(pos);
+   outputHdlcWrite(4, pos, SERFRAME_MOTE2PC_DATA);
+   outputHdlcWrite(4, pos, idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   outputHdlcWrite(4, pos, idmanager_getMyID(ADDR_16B)->addr_16b[0]);
+   outputHdlcWrite(4, pos, asn[0]);
+   outputHdlcWrite(4, pos, asn[1]);
+   outputHdlcWrite(4, pos, asn[2]);
+   outputHdlcWrite(4, pos, asn[3]);
+   outputHdlcWrite(4, pos, asn[4]);
    for (i=0;i<length;i++){
-      OutputHdlcWrite(pos, buffer[i]);
+      outputHdlcWrite(4, pos, buffer[i]);
    }
-   OutputHdlcClose(pos);
+   outputHdlcClose(4, pos);
    ENABLE_INTERRUPTS();
    
    return E_SUCCESS;
@@ -609,7 +605,7 @@ bool debugPrint_outBufferIndexes() {
 /**
 \brief Start an HDLC frame in the output buffer.
 */
-port_INLINE void OutputHdlcOpen(uint8_t i) {
+port_INLINE void outputHdlcOpen(uint8_t i) {
    // initialize the value of the CRC
    openserial_vars.OutputCrc[i]                          = HDLC_CRCINIT;
    
@@ -619,12 +615,12 @@ port_INLINE void OutputHdlcOpen(uint8_t i) {
 /**
 \brief Add a byte to the outgoing HDLC frame being built.
 */
-port_INLINE void OutputHdlcWrite(uint8_t i, uint8_t b) {
+port_INLINE void outputHdlcWrite(uint8_t location, uint8_t i, uint8_t b) {
    
    if (openserial_vars.OutputBufIdxW[i] + 1 == openserial_vars.OutputBufIdxR[i]){
       openserial_printCritical(COMPONENT_OPENSERIAL, ERR_OPENSERIAL_BUFFER_OVERFLOW,
             (errorparameter_t)openserial_vars.OutputBufIdxW[i],
-            (errorparameter_t)openserial_vars.OutputBufIdxR[i]);
+            (errorparameter_t)location);
       return;
    }
 
@@ -642,15 +638,15 @@ port_INLINE void OutputHdlcWrite(uint8_t i, uint8_t b) {
 /**
 \brief Finalize the outgoing HDLC frame.
 */
-port_INLINE void OutputHdlcClose(uint8_t i) {
+port_INLINE void outputHdlcClose(uint8_t location, uint8_t i) {
    uint16_t   finalCrc;
     
    // finalize the calculation of the CRC
    finalCrc   = ~openserial_vars.OutputCrc[i];
    
    // write the CRC value
-   OutputHdlcWrite(i, (finalCrc>>0)&0xff);
-   OutputHdlcWrite(i, (finalCrc>>8)&0xff);
+   outputHdlcWrite(location, i, (finalCrc>>0)&0xff);
+   outputHdlcWrite(location, i, (finalCrc>>8)&0xff);
    
    // write the closing HDLC flag
    openserial_vars.OutputBuf[i][openserial_vars.OutputBufIdxW[i]++]   = HDLC_FLAG;

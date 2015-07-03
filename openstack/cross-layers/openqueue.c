@@ -8,8 +8,9 @@
 #include "sixtop.h"
 #include <stdio.h>
 
-// #define _DEBUG_OPENQUEUE_
-// #define _DEBUG_OQ_MEM_
+
+
+//#define _DEBUG_OQ_MEM_
 
 //=========================== variables =======================================
 
@@ -155,7 +156,7 @@ void openqueue_timeout_drop(void){
                openserial_statPktTimeout(&(openqueue_vars.queue[i]));
 #ifdef _DEBUG_OQ_MEM_
                char str[150];
-               sprintf(str, "OQUEUE: remove(timeout), pos=");
+               sprintf(str, "rem(timeout), pos=");
                openserial_ncat_uint32_t(str, (uint32_t)i, 150);
                openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
@@ -220,9 +221,9 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
 
 #ifdef _DEBUG_OQ_MEM_
          char str[150];
-         sprintf(str, "OQUEUE: allocation, pos=");
+         sprintf(str, "alloc, pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-         strncat(str, "component=", 150);
+         strncat(str, "creator=", 150);
          openserial_ncat_uint32_t(str, (uint32_t)creator, 150);
          openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
@@ -313,6 +314,17 @@ owerror_t openqueue_freePacketBuffer(OpenQueueEntry_t* pkt) {
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++) {
       if (&openqueue_vars.queue[i]==pkt) {
+
+#ifdef _DEBUG_OQ_MEM_
+         char str[150];
+         sprintf(str, "remove, pos=");
+         openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+         strncat(str, "creator=", 150);
+         openserial_ncat_uint32_t(str, (uint32_t)openqueue_vars.queue[i].creator, 150);
+         openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
+#endif
+
+
          if (openqueue_vars.queue[i].owner==COMPONENT_NULL) {
             // log the error
             openserial_printCritical(COMPONENT_OPENQUEUE,ERR_FREEING_UNUSED,
@@ -358,7 +370,7 @@ void openqueue_removeAllCreatedBy(uint8_t creator) {
 
 #ifdef _DEBUG_OQ_MEM_
          char str[150];
-         sprintf(str, "OQUEUE: remove (AllCreatedBy), pos=");
+         sprintf(str, "remove (AllCreatedBy), pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
          openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
@@ -383,7 +395,7 @@ void openqueue_removeAllOwnedBy(uint8_t owner) {
 
 #ifdef _DEBUG_OQ_MEM_
          char str[150];
-         sprintf(str, "OQUEUE: remove (AllOwnedBy), pos=");
+         sprintf(str, "remove (AllOwnedBy), pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
          openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
@@ -463,7 +475,7 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
 
 #ifdef _DEBUG_OQ_MEM_
             char str[150];
-            sprintf(str, "OQUEUE: packet to tx (UNICAST), pos=");
+            sprintf(str, "get, pos=");
             openserial_ncat_uint32_t(str, (uint32_t)i, 150);
             openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
@@ -489,7 +501,7 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *t
 
 #ifdef _DEBUG_OQ_MEM_
             char str[150];
-            sprintf(str, "OQUEUE: packet to tx (ANYCAST), pos=");
+            sprintf(str, "get (ANYCAST), pos=");
             openserial_ncat_uint32_t(str, (uint32_t)i, 150);
             openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
@@ -537,7 +549,7 @@ bool openqueue_overflow_for_data(void){
    ENABLE_INTERRUPTS();
 
    //for debug
-   // if (nb <= QUEUELENGTH_RESERVED)
+   if (nb <= QUEUELENGTH_RESERVED)
       openserial_printError(
                COMPONENT_OPENQUEUE,
                ERR_OPENQUEUE_BUFFER_OVERFLOW,
@@ -545,24 +557,7 @@ bool openqueue_overflow_for_data(void){
                (errorparameter_t)QUEUELENGTH_RESERVED
             );
 
- /*
-   #ifdef _DEBUG_OPENQUEUE_
-  // if (nb <= QUEUELENGTH_RESERVED){
-      openserial_print
-
-      char str[150];
-      sprintf(str, "Buffer Overflow? overflow=");
-      openserial_ncat_uint32_t(str, (uint32_t)(QUEUELENGTH <= QUEUELENGTH_RESERVED) , 150);
-      strncat(str, " -> ", 150);
-      openserial_ncat_uint32_t(str, nb, 150);
-      strncat(str, " space left while ", 150);
-      openserial_ncat_uint32_t(str, QUEUELENGTH_RESERVED, 150);
-      strncat(str, " are reserved for management", 150);
-      openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
-//   }
-#endif
-*/
-   return(QUEUELENGTH <= QUEUELENGTH_RESERVED);
+   return(nb <= QUEUELENGTH_RESERVED);
 }
 
 

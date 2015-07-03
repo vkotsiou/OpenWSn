@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 
-#define _DEBUG_ICMPv6RPL_RANK_
+//#define _DEBUG_ICMPv6RPL_RANK_
 
 //=========================== variables =======================================
 
