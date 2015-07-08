@@ -355,9 +355,9 @@ void sendDIO() {
    OpenQueueEntry_t*    msg;
 #ifdef _DEBUG_DIO_
    char str[150];
-   sprintf(str, "RPL - DIO period:");
-   openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.periodDIO, 150);
-   openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+   //sprintf(str, "RPL - DIO period:");
+   //openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.periodDIO, 150);
+   //openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 #endif
    
    // stop if I'm not sync'ed

@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 
-#define _DEBUG_SIXTOP_
+//#define _DEBUG_SIXTOP_
 
 //=========================== variables =======================================
 
@@ -406,31 +406,10 @@ void sixtop_removeCell(open_addr_t* neighbor){
 //======= from upper layer
 
 owerror_t sixtop_send(OpenQueueEntry_t *msg) {
-    open_addr_t* self_addr;
-    open_addr_t* dest_addr;
-   
    // set metadata
    msg->owner        = COMPONENT_SIXTOP;
    msg->l2_frameType = IEEE154_TYPE_DATA;
 
-   /*
-   // apply track forwarding mecanism if necessary
-      // init addresses
-      self_addr = idmanager_getMyID(ADDR_64B);
-      memset(&dest_addr,0,sizeof(open_addr_t));
-
-      // if I am the track owner, replace by new track
-      if (packetfunctions_sameAddress(&msg->l2_track.owner, self_addr)){
-         // modify track owner
-         neighbors_getPreferedTrack(dest_addr);
-         memcpy(msg->l2_track.owner.addr_64b, dest_addr, LENGTH_ADDR64b);
-      }
-
-      // change the next parent according to track
-      neighbors_getPreferedTrackParent(&msg->l2_track.owner, dest_addr);
-      memcpy(msg->l2_nextORpreviousHop.addr_64b, dest_addr, LENGTH_ADDR64b);
-   */
- 
    if (msg->l2_IEListPresent == IEEE154_IELIST_NO) {
       return sixtop_send_internal(
          msg,
@@ -576,14 +555,20 @@ void task_sixtopNotifReceive() {
       case IEEE154_TYPE_DATA:
       case IEEE154_TYPE_CMD:
          if (msg->length>0) {
-           /* if (msg->l2_track.instance == TRACK_BALANCING){
-               // forward the packet
+            // forward the packet if I am not the destination
+            if (msg->l2_track.instance == TRACK_BALANCING &&
+                  packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE
+               ){
+               // send to lower layers
                sixtop_send(msg);
+               char str[150];
+               sprintf(str, "Track forward");
+               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
             }
-            else {*/
+            else {
                // send to upper layer
                iphc_receive(msg);
-           // }
+            }
          } else {
             // free up the RAM
             openqueue_freePacketBuffer(msg);
@@ -1129,14 +1114,14 @@ void sixtop_notifyReceiveCommand(
    bandwidth_IE_ht*  bandwidth_ie,
    schedule_IE_ht*   schedule_ie,
    open_addr_t*      addr){
-   char str[150];
-   uint8_t  i;
    
    switch(opcode_ie->opcode){
       case SIXTOP_SOFT_CELL_REQ:
          if(sixtop_vars.six2six_state == SIX_IDLE){
 
 #ifdef _DEBUG_SIXTOP_
+   char str[150];
+   uint8_t  i;
             sprintf(str, "LinkReq rcvd: from ");
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
