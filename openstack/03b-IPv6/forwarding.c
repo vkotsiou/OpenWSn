@@ -410,16 +410,15 @@ owerror_t forwarding_send_internal_RoutingTable(
       return E_FAIL;
 #endif
 
-
    // retrieve the next hop from the routing table
    forwarding_getNextHop(&(msg->l3_destinationAdd),&(msg->l2_nextORpreviousHop));
    if (msg->l2_nextORpreviousHop.type==ADDR_NONE) {
       openserial_printError(
-         COMPONENT_FORWARDING,
-         ERR_NO_NEXTHOP,
-         (errorparameter_t)0,
-         (errorparameter_t)0
-      );
+            COMPONENT_FORWARDING,
+            ERR_NO_NEXTHOP,
+            (errorparameter_t)0,
+            (errorparameter_t)0
+            );
       return E_FAIL;
    }
 

@@ -157,7 +157,7 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 uint8_t sixtop_getBtneckCounter(){
    if (idmanager_getIsDAGroot()==FALSE)
-      return(sixtop_vars.btneckCounter);
+      return(sixtop_vars.btneckCounter +1);
    else
       return(1);
 }
@@ -555,15 +555,15 @@ void task_sixtopNotifReceive() {
       case IEEE154_TYPE_DATA:
       case IEEE154_TYPE_CMD:
          if (msg->length>0) {
-            // forward the packet if I am not the destination
+            // forward the packet if I am not the destination and track exists
             if (msg->l2_track.instance == TRACK_BALANCING &&
-                  packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE
+                  packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE &&
+                  schedule_getNbCellsWithTrack(msg->l2_track) != 0
                ){
-               // send to lower layers
-               sixtop_send(msg);
-               char str[150];
-               sprintf(str, "Track forward");
-               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+                  sixtop_send(msg);
+                  char str[150];
+                  sprintf(str, "Track forward");
+                  openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
             }
             else {
                // send to upper layer
@@ -666,6 +666,25 @@ owerror_t sixtop_send_internal(
    uint8_t iePresent, 
    uint8_t frameVersion) {
 
+   // forward the packet if I am not the destination and track exists
+   if (msg->l2_track.instance == TRACK_BALANCING){
+      if (msg->l2_track.owner.type == 0){
+         neighbors_getPreferredTrack(&(msg->l2_track.owner));
+      }
+
+      // if I am not the destination and track exists
+      if (packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE &&
+         schedule_getNbCellsWithTrack(msg->l2_track) != 0
+      ){
+         // get next hop
+         neighbors_getPreferredTrackParent(msg->l2_track.owner,&(msg->l2_nextORpreviousHop)); 
+
+         char str[150];
+         sprintf(str, "Track send");
+         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+      }
+   }
+
    //todo-debug
    if (msg->l2_nextORpreviousHop.type == 0){
       openserial_printCritical(COMPONENT_SIXTOP, ERR_GENERIC,
@@ -680,6 +699,7 @@ owerror_t sixtop_send_internal(
    } else {
       msg->l2_retriesLeft = TXRETRIES;
    }
+
    // record this packet's dsn (for matching the ACK)
    msg->l2_dsn = sixtop_vars.dsn++;
    // this is a new packet which I never attempted to send
@@ -1596,8 +1616,6 @@ bool sixtop_areAvailableCellsToBeScheduled(
    bw         = bandwidth;
    available  = FALSE;
 
-   char str[150];
-
    if(bw == 0 || bw>SCHEDULEIEMAXNUMCELLS || numOfCells>SCHEDULEIEMAXNUMCELLS){
       // log wrong parameter error TODO
       openserial_printError(
@@ -1610,6 +1628,7 @@ bool sixtop_areAvailableCellsToBeScheduled(
        available = FALSE;
    } else {
 #ifdef _DEBUG_SIXTOP_
+      char str[150];
       sprintf(str, "SCHED: ");
 #endif
       do {
