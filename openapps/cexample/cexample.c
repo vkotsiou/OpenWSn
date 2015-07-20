@@ -60,6 +60,7 @@ void cexample_init() {
 #ifdef TRACK_ACTIVE
    //I am the owner of this track (8 bytes address)
    memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
+   memset(&(cexample_vars.track.owner.addr_64b),1,8);
    cexample_vars.track.instance            = (uint16_t)TRACK_BALANCING;
 #else
    bzero(&(cexample_vars.track.owner), sizeof(open_addr_t));
@@ -129,9 +130,9 @@ void cexample_task_cb() {
    uint8_t              i;
 
 
-//   char                 msg[15];
-//   snprintf(msg, 15, "generation");
-//   openserial_printf(COMPONENT_CEXAMPLE, (uint8_t*)msg, strlen(msg));
+   char                 msg[15];
+   snprintf(msg, 15, "generation");
+   openserial_printf(COMPONENT_CEXAMPLE, msg, strlen(msg));
    
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) return;

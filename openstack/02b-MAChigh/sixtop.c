@@ -21,6 +21,7 @@
 
 
 //#define _DEBUG_SIXTOP_
+#define _DEBUG_SIXTOP_DETAIL_
 
 //=========================== variables =======================================
 
@@ -184,12 +185,13 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    
    // filter parameters
    if(sixtop_vars.six2six_state != SIX_IDLE){
+      /*
       openserial_printError(
             COMPONENT_SIXTOP_RES,
             ERR_SIXTOP_WRONG_STATE,
             (errorparameter_t)sixtop_vars.six2six_state,
             (errorparameter_t)SIX_IDLE
-      );
+      );*/
       return;
    }
 
@@ -665,25 +667,46 @@ owerror_t sixtop_send_internal(
    OpenQueueEntry_t* msg, 
    uint8_t iePresent, 
    uint8_t frameVersion) {
+   bool track_found = FALSE;
+   bool parent_found = FALSE;
 
    // forward the packet if I am not the destination and track exists
    if (msg->l2_track.instance == TRACK_BALANCING){
-      if (msg->l2_track.owner.type == 0){
-         neighbors_getPreferredTrack(&(msg->l2_track.owner));
-      }
+#ifdef _DEBUG_SIXTOP_DETAIL_
+   char str[150];
+   sprintf(str, "Track send tentative");
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
 
-      // if I am not the destination and track exists
-      if (packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE &&
-         schedule_getNbCellsWithTrack(msg->l2_track) != 0
-      ){
-         // get next hop
-         neighbors_getPreferredTrackParent(msg->l2_track.owner,&(msg->l2_nextORpreviousHop)); 
+      track_found = neighbors_getPreferredTrack(&(msg->l2_track.owner));
 
-         char str[150];
-         sprintf(str, "Track send");
-         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+      // if track is found
+      if (track_found){
+#ifdef _DEBUG_SIXTOP_DETAIL_
+   char str[150];
+   sprintf(str, "Track found");
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+         // if I am not the destination and track exists
+         if (packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE &&
+               schedule_getNbCellsWithTrack(msg->l2_track) != 0
+            ){
+            // get next hop
+            parent_found = neighbors_getPreferredTrackParent(msg->l2_track.owner,&(msg->l2_nextORpreviousHop)); 
+
+#ifdef _DEBUG_SIXTOP_DETAIL_
+            char str[150];
+            sprintf(str, "Track send ? ");
+            openserial_ncat_uint32_t(str, (uint32_t)parent_found, 150);
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+         } 
       }
    }
+
+   // if track send failed, use best effort
+   if (!parent_found)
+      msg->l2_track.instance = TRACK_BESTEFFORT;
 
    //todo-debug
    if (msg->l2_nextORpreviousHop.type == 0){
@@ -1516,11 +1539,14 @@ bool sixtop_candidateRemoveCellList(
    }
    
    if(numCandCells==0){
-      openserial_printError(COMPONENT_SIXTOP, ERR_GENERIC,
+   /*
+      openserial_printError(
+          COMPONENT_SIXTOP,
+          ERR_GENERIC,
           (errorparameter_t)1,
           (errorparameter_t)2
       );
-
+   */
       return FALSE;
    }else{
       return TRUE;

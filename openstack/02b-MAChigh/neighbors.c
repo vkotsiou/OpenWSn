@@ -14,7 +14,7 @@
 
 //#define _DEBUG_ICMPv6RPL_RANK_
 //#define _DEBUG_NEIGHBORS_
-#define _DEBUG_NEIGHBORS_DETAIL_
+//#define _DEBUG_NEIGHBORS_DETAIL_
 
 //=========================== variables =======================================
 
@@ -54,10 +54,10 @@ void neighbors_init() {
       neighbors_vars.myDAGrank=DEFAULTDAGRANK;
    }
 
-    // init balance factor
+    // init balance factor and bottleneck set
     for (i=0; i<MAX_NUM_BTNECKS; i++){
         neighbors_vars.balance_factors[i] = 0;
-        neighbors_vars.btnecks[i].counter = 0;
+        memset(&(neighbors_vars.btnecks[i]),0,sizeof(btneck_t));
     }
 
    neighbors_vars.bootstrap_period = TRUE;
@@ -115,28 +115,28 @@ bool neighbors_getPreferredTrack(open_addr_t* addressToWrite){
    uint8_t cursor;
    uint8_t rand;
 
-    cursor = 0;
-    track_found = FALSE;
+   cursor = 0;
+   track_found = FALSE;
 
-    // get random number
-    rand = openrandom_get16b() % 99;
+   // get random number
+   rand = openrandom_get16b() % 99;
 
-    // get the corresponding track
-    for (i=0; i<MAX_NUM_BTNECKS; i++) {
-       if(neighbors_vars.btnecks[i].counter != 0){
-          if (neighbors_vars.balance_factors[i] != 0){
-             if (rand >= cursor && rand < cursor + neighbors_vars.balance_factors[i]){
-                // copy address of preferred track
-                memcpy(addressToWrite->addr_64b,&(neighbors_vars.btnecks[i].addr_64b),LENGTH_ADDR64b);
-                addressToWrite->type = ADDR_64B;
-                track_found = TRUE;         
-                break;
-             } 
-             cursor += neighbors_vars.balance_factors[i];
-          }
-       }
-    }
-    return track_found;
+   // get the corresponding track
+   for (i=0; i<MAX_NUM_BTNECKS; i++) {
+      if(neighbors_vars.btnecks[i].counter != 0){
+         if (neighbors_vars.balance_factors[i] != 0){
+            if (rand >= cursor && rand < cursor + neighbors_vars.balance_factors[i]){
+               // copy address of preferred track
+               memcpy(addressToWrite->addr_64b,&(neighbors_vars.btnecks[i].addr_64b),LENGTH_ADDR64b);
+               addressToWrite->type = ADDR_64B;
+               track_found = TRUE;         
+               break;
+            } 
+            cursor += neighbors_vars.balance_factors[i];
+         }
+      }
+   }
+   return track_found;
 }
 
  
@@ -214,7 +214,7 @@ void neighbors_getAdvBtnecks(btneck_t * advBtnecks){
 
          // for each parent get the btneck path ETX and add the last hop ETX
          for (j=0;j<MAXNUMNEIGHBORS;j++) {
-            if (neighbors_vars.neighbors[i].inParentSet==TRUE){
+            if (neighbors_vars.neighbors[j].inParentSet==TRUE){
                for (k=0; k<MAX_NUM_BTNECKS; k++){
                   if(neighbors_vars.btnecks[k].counter != 0){
                      // if parent advertise the bottleneck, record the path ETX
@@ -240,13 +240,13 @@ void neighbors_getAdvBtnecks(btneck_t * advBtnecks){
    }
 
    if (btneck_found == FALSE){
+      // empty local list
+      memset(advBtnecks,0,sizeof(btneck_t)*MAX_NUM_BTNECKS);
+
+      // self announcement
       memcpy(advBtnecks[0].addr_64b, idmanager_getMyID(ADDR_64B)->addr_64b, LENGTH_ADDR64b); 
       advBtnecks[0].counter = sixtop_getBtneckCounter();
       advBtnecks[0].etx = 0;
-
-    //char str[100];
-    //sprintf(str, "NEIGH - Self advertisement ");
-    //openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
    }
 }
 
@@ -378,6 +378,39 @@ open_addr_t* neighbors_getKANeighbor(uint16_t kaPeriod) {
       return NULL;
    }
 }
+
+uint16_t neighbors_getNeighborMinBtneckCounter(uint8_t index){
+   uint8_t i;
+   uint16_t min_counter;
+
+   min_counter = 0xffff;
+
+   for (i=0; i<MAX_NUM_BTNECKS; i++){
+      if (neighbors_vars.neighbors[index].btnecks[i].counter != 0
+            && neighbors_vars.neighbors[index].btnecks[i].counter < min_counter)
+         min_counter = neighbors_vars.neighbors[index].btnecks[i].counter;
+   }
+
+   return min_counter;
+}
+uint16_t neighbors_getMinBtneckCounter(){
+   uint8_t i;
+   uint16_t min_counter;
+
+   min_counter = 0xffff;
+
+   for (i=0; i<MAX_NUM_BTNECKS; i++){
+      if (neighbors_vars.btnecks[i].counter != 0
+            && neighbors_vars.btnecks[i].counter < min_counter)
+         min_counter = neighbors_vars.btnecks[i].counter;
+   }
+
+   if (min_counter == 0xffff)
+      return 0;
+   else
+      return min_counter;
+}
+
 
 //===== interrogators
 
@@ -876,7 +909,7 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
 
 **/
 void neighbors_updateMyDAGrankWorst(){
-   uint8_t i,j;
+   uint8_t i;
    dagrank_t max_rank;
    uint16_t rankIncrease;
    uint16_t tentativeDAGrank;
@@ -900,7 +933,7 @@ void neighbors_updateMyDAGrankWorst(){
              MINHOPRANKINCREASE
             );
          // blacklisting policy: if ETX too high, ignore neighbor
-         if (rankIncrease < (9*MINHOPRANKINCREASE) ){
+         if (rankIncrease < (6*MINHOPRANKINCREASE) ){
             tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank + rankIncrease;
 
             // save parent offering highest rank
@@ -909,6 +942,7 @@ void neighbors_updateMyDAGrankWorst(){
                max_rank = tentativeDAGrank;
             }
          }
+#ifdef _DEBUG_NEIGHBORS_
          char str[150];
          sprintf(str, "rank: neighbor ");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
@@ -925,6 +959,7 @@ void neighbors_updateMyDAGrankWorst(){
          strncat(str, " - current max rank ", 150);
          openserial_ncat_uint32_t(str, max_rank, 150);
          openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
+#endif
       }
    }
 
@@ -939,15 +974,6 @@ void neighbors_updateMyDAGrankWorst(){
          openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
       #endif
 
-      for (j=0; j<MAXNUMNEIGHBORS; j++){
-         if (neighbors_vars.neighbors[j].inParentSet){
-            if (neighbors_vars.neighbors[j].DAGrank < neighbors_vars.neighbors[j].myDAGrank){
-               // empty btneck set
-               for (k=0; k<MAX_NUM_BTNECKS; k++)
-                  memset(&(neighbors_vars.btnecks[k]),0,sizeof(btneck_t));
-            }
-         }
-      }
    }
 }
 
@@ -956,7 +982,7 @@ void neighbors_updateMyDAGrankWorst(){
 
 **/
 void neighbors_updateMyBottlenecksSet(){
-   uint8_t i,j,k;
+   uint8_t h,i,j,k;
    uint8_t max_counter, max_id;
    uint8_t empty_id; 
    bool btneck_exists;
@@ -968,13 +994,19 @@ void neighbors_updateMyBottlenecksSet(){
    openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
 #endif
 
-   // For each used neighbor with higher rank, save less constrained bottlenecks
+   // empty btneck set
+   for (h=0; h<MAX_NUM_BTNECKS; h++){
+      memset(&(neighbors_vars.btnecks[h]),0,sizeof(btneck_t));
+   }
+
+   // For each used neighbor with lower rank, save less constrained bottlenecks
    for (i=0;i<MAXNUMNEIGHBORS;i++) {
-      if (neighbors_vars.neighbors[i].used==TRUE){
-          //&& neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank) {
-         // for each DIO btneck
+      if (neighbors_vars.neighbors[i].used==TRUE
+            && (neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank)
+         ){ 
+         // for each neighbor btneck, insert, replace or update local btnecks
          for (j=0; j<MAX_NUM_BTNECKS; j++){
-            if (neighbors_vars.dio->btnecks[j].counter != 0){
+            if (neighbors_vars.neighbors[i].btnecks[j].counter != 0){
                // init
                btneck_exists = FALSE;
                empty_found = FALSE;
@@ -987,23 +1019,22 @@ void neighbors_updateMyBottlenecksSet(){
                   if (neighbors_vars.btnecks[k].counter != 0){
                      // update existing bottleneck
                      if (packetfunctions_sameAddress64(&(neighbors_vars.btnecks[k].addr_64b),
-                              &(neighbors_vars.dio->btnecks[j].addr_64b))){
-                        neighbors_vars.btnecks[k].counter = neighbors_vars.dio->btnecks[j].counter;
+                              &(neighbors_vars.neighbors[i].btnecks[j].addr_64b))){
+                        neighbors_vars.btnecks[k].counter = neighbors_vars.neighbors[i].btnecks[j].counter;
                         btneck_exists = TRUE;
 #ifdef _DEBUG_NEIGHBORS_DETAIL_
                         char strd[100];
                         sprintf(strd, "NEIGH - update btneck - ");
-                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.dio->btnecks[j].addr_64b[6], 150);
-                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.dio->btnecks[j].addr_64b[7], 150);
+                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.neighbors[i].btnecks[j].addr_64b[6], 150);
+                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.neighbors[i].btnecks[j].addr_64b[7], 150);
                         openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
 #endif
                         break;
-                     } else { 
-                        // save most contrained btneck 
-                        if (neighbors_vars.btnecks[k].counter > max_counter){
-                           max_counter = neighbors_vars.dio->btnecks[k].counter;
-                           max_id = k;
-                        }
+                     } 
+                     // save most contrained btneck 
+                     if (neighbors_vars.btnecks[k].counter > max_counter){
+                        max_counter = neighbors_vars.btnecks[k].counter;
+                        max_id = k;
                      }
                   } else {
                      empty_found = TRUE;
@@ -1012,21 +1043,21 @@ void neighbors_updateMyBottlenecksSet(){
                }
 
                if (btneck_exists == FALSE){
-                  if (empty_found){ // no btneck found
-                        memcpy(&neighbors_vars.btnecks[empty_id], &neighbors_vars.dio->btnecks[j], sizeof(btneck_t));
+                  if (empty_found){
+                        memcpy(&neighbors_vars.btnecks[empty_id], &neighbors_vars.neighbors[i].btnecks[j], sizeof(btneck_t));
 #ifdef _DEBUG_NEIGHBORS_DETAIL_
                         char strd[100];
                         sprintf(strd, "NEIGH - Insert fisrt btneck - ");
-                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.dio->btnecks[j].addr_64b[6], 150);
-                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.dio->btnecks[j].addr_64b[7], 150);
+                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.neighbors[i].btnecks[j].addr_64b[6], 150);
+                        openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.neighbors[i].btnecks[j].addr_64b[7], 150);
                         openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
 #endif
 
                   } else{                     
-                     // update bottlenecks list if advertized bottleneck is less constrained
-                     if (neighbors_vars.dio->btnecks[j].counter < max_counter){
+                     // replace local max constrained bottleneck
+                     if (neighbors_vars.neighbors[i].btnecks[j].counter < max_counter){
                         // copy bottleneck to local list
-                        memcpy(&neighbors_vars.btnecks[max_id], &neighbors_vars.dio->btnecks[j], sizeof(btneck_t));
+                        memcpy(&neighbors_vars.btnecks[max_id], &neighbors_vars.neighbors[i].btnecks[j], sizeof(btneck_t));
 
 #ifdef _DEBUG_NEIGHBORS_DETAIL_
                         char strd[100];
@@ -1161,6 +1192,14 @@ void neighbors_updateBalanceFactors() {
             if ( (diff_ratio / 2) > 5 && (diff_ratio / 2) < 5) // don't change difference if < 5% (absolute value)
                neighbors_vars.balance_factors[j] += diff_ratio / 2; // gradual increase
          }
+#ifdef _DEBUG_NEIGHBORS_DETAIL
+         char strd[100];
+         sprintf(strd, "NEIGH - balance factor i= ");
+         openserial_ncat_uint8_t_hex(strd, (uint32_t)j, 150);
+         strncat(str, " - alpha = ", 150);
+         openserial_ncat_uint8_t_hex(strd, (uint32_t)neighbors_vars.balance_factors[j], 150);
+         openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
+#endif
       }
    }
 }
@@ -1188,10 +1227,11 @@ void neighbors_updateReservedTracks(){
                for (k=0; k<MAX_NUM_BTNECKS; k++){
                   if(neighbors_vars.btnecks[k].counter != 0){
                      // if this parent advertise a bottleneck I choose to advertise
-                     if (packetfunctions_sameAddress64(&neighbors_vars.neighbors[i].btnecks[j].addr_64b,
+                     if (packetfunctions_sameAddress64(
+                              &neighbors_vars.neighbors[i].btnecks[j].addr_64b,
                               &neighbors_vars.btnecks[k].addr_64b)){
                         // create track
-                        memcpy(&new_track.owner.addr_64b, &neighbors_vars.btnecks[j].addr_64b, LENGTH_ADDR64b);
+                        memcpy(&new_track.owner.addr_64b, &neighbors_vars.btnecks[k].addr_64b, LENGTH_ADDR64b);
                         new_track.owner.type = ADDR_64B;
                         new_track.instance = TRACK_BALANCING;
 
@@ -1200,6 +1240,7 @@ void neighbors_updateReservedTracks(){
                            sixtop_addCells(&neighbors_vars.neighbors[i].addr_64b, TRACK_INIT_CELLS, new_track);
 
                         #ifdef _DEBUG_NEIGHBORS_DETAIL
+                           char strd[100];
                            sprintf(strd, "NEIGH - add cell");
                            openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
                         #endif

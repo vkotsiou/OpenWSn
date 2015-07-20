@@ -13,13 +13,13 @@ app:
 
 submit:
 	../cli-tools-1.6.0/experiment-cli submit -n trackBalancing -d 7 \
-		-l grenoble,m3,40+44+45+50,projects/common/03oos_openwsn.elf \
+		-l grenoble,m3,32-35+37-40+42-45+48-50,projects/common/03oos_openwsn.elf \
 		-l grenoble,m3,60,projects/common/03oos_openwsn_dagroot.elf 
 
 submitapp:
 	../cli-tools-1.6.0/experiment-cli submit -n trackBalancing -d 7 \
-		-l grenoble,m3,40,projects/common/03oos_openwsn_app.elf \
-		-l grenoble,m3,44+45+50,projects/common/03oos_openwsn.elf \
+		-l grenoble,m3,32,projects/common/03oos_openwsn_app.elf \
+		-l grenoble,m3,34+35+38+40+42+44+45+50,projects/common/03oos_openwsn.elf \
 		-l grenoble,m3,60,projects/common/03oos_openwsn_dagroot.elf 
 rsync:
 	 rsync -av --delete-after --exclude '.sconsign.dblite' --exclude 'build' --exclude 'projects/common'  ../exp-iotlab/openwsn/openwsn-fw/ ../exp-iotlab/openwsn/openwsn-fw-sink/
