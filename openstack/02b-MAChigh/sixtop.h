@@ -83,6 +83,7 @@ bool      sixtop_track_is_besteffort(track_t track);
 bool      sixtop_isIdle(void);
 void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track);
 void      sixtop_removeCell(open_addr_t*  neighbor);
+void      sixtop_removeNeighborTracks(open_addr_t*  neighbor, uint8_t track_instance);
 // from upper layer
 owerror_t sixtop_send(OpenQueueEntry_t *msg);
 uint8_t 	sixtop_getBtneckCounter(void);

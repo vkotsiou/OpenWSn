@@ -18,11 +18,11 @@
 //#define   RPL_OF0
 
 #define MAXNUMNEIGHBORS           15
-#define MAXNUMPARENTS           	3
+#define MAXNUMPARENTS           	 3
 #define MAXPREFERENCE             2
-#define BADNEIGHBORMAXRSSI        -80 //dBm
-#define GOODNEIGHBORMINRSSI       -90 //dBm
-#define SWITCHSTABILITYTHRESHOLD  3
+#define BADNEIGHBORMAXRSSI        -70 //dBm
+#define GOODNEIGHBORMINRSSI       -80 //dBm
+#define SWITCHSTABILITYTHRESHOLD  2
 #define DEFAULTLINKCOST           15
 
 #define MAXDAGRANK                0xffff
@@ -76,6 +76,14 @@ typedef struct {
 } netDebugNeigborEntry_t;
 END_PACK
 
+BEGIN_PACK
+typedef struct {
+   uint8_t         row;
+   btneck_t        btneck;
+   uint16_t        ratio;
+} debugBtneckEntry_t;
+END_PACK
+
 //=========================== module variables ================================
    
 typedef struct {
@@ -84,8 +92,10 @@ typedef struct {
    float                balance_factors[MAX_NUM_BTNECKS]; // percentage of data sent to each btneck 
    dagrank_t            myDAGrank;
    uint8_t              debugRow;
+   uint8_t              debugBtRow;
    uint8_t              dio_counter; // number of received DIO
    uint8_t              bootstrap_period; // number of recv DIO before calculating balance ratio
+   uint8_t              DAGroot_id;
    icmpv6rpl_dio_ht*    dio; //keep it global to be able to debug correctly.
 } neighbors_vars_t;
 
@@ -113,6 +123,7 @@ bool          neighbors_isStableNeighbor(open_addr_t* address);
 bool          neighbors_isPreferredParent(open_addr_t* address);
 bool          neighbors_isNeighborWithLowerDAGrank(uint8_t index);
 bool          neighbors_isNeighborWithHigherDAGrank(uint8_t index);
+bool          neighbors_isDAGroot(uint8_t (*address_1)[LENGTH_ADDR64b]);
 
 // updating neighbor information
 void          neighbors_indicateRx(
@@ -142,11 +153,13 @@ void          neighbors_filterBtnecks(void);
 void          neighbors_updateMyParentsSet(void);
 void          neighbors_updateBalanceFactors(void);
 void          neighbors_updateReservedTracks(void);
+void          neighbors_removeUnadvertisedBtnecks(void);
 
 // maintenance
 void          neighbors_removeOld(void);
 // debug
 bool          debugPrint_neighbors(void);
+bool          debugPrint_btnecks(void);
 
 /**
 \}

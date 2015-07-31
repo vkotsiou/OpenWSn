@@ -405,6 +405,14 @@ void sixtop_removeCell(open_addr_t* neighbor){
    sixtop_setState(SIX_WAIT_REMOVEREQUEST_SENDDONE);
 }
 
+/**
+ \brief Remove all cells with a specific neighbor and track instance
+**/
+void sixtop_removeNeighborTracks(open_addr_t*  neighbor, uint8_t track_instance){
+
+}
+
+
 //======= from upper layer
 
 owerror_t sixtop_send(OpenQueueEntry_t *msg) {
@@ -557,18 +565,14 @@ void task_sixtopNotifReceive() {
       case IEEE154_TYPE_DATA:
       case IEEE154_TYPE_CMD:
          if (msg->length>0) {
-            // forward the packet if I am not the destination and track exists
-            if (msg->l2_track.instance == TRACK_BALANCING &&
-                  packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE &&
-                  schedule_getNbCellsWithTrack(msg->l2_track) != 0
-               ){
+            // track forward the packet if I am not the DAG root
+            if (msg->l2_track.instance == TRACK_BALANCING && idmanager_getIsDAGroot() == FALSE){
                   sixtop_send(msg);
+
                   char str[150];
                   sprintf(str, "Track forward");
                   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-            }
-            else {
-               // send to upper layer
+            } else {
                iphc_receive(msg);
             }
          } else {
@@ -670,7 +674,7 @@ owerror_t sixtop_send_internal(
    bool track_found = FALSE;
    bool parent_found = FALSE;
 
-   // forward the packet if I am not the destination and track exists
+   // find on which track to send the packet and assign next hop
    if (msg->l2_track.instance == TRACK_BALANCING){
 #ifdef _DEBUG_SIXTOP_DETAIL_
    char str[150];
@@ -687,26 +691,30 @@ owerror_t sixtop_send_internal(
    sprintf(str, "Track found");
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
-         // if I am not the destination and track exists
-         if (packetfunctions_sameAddress(&(msg->l2_track.owner), idmanager_getMyID(ADDR_64B)) == FALSE &&
-               schedule_getNbCellsWithTrack(msg->l2_track) != 0
-            ){
+         // if track is reserved
+         if (schedule_getNbCellsWithTrack(msg->l2_track) > 0){
             // get next hop
             parent_found = neighbors_getPreferredTrackParent(msg->l2_track.owner,&(msg->l2_nextORpreviousHop)); 
 
 #ifdef _DEBUG_SIXTOP_DETAIL_
             char str[150];
-            sprintf(str, "Track send ? ");
-            openserial_ncat_uint32_t(str, (uint32_t)parent_found, 150);
+            sprintf(str, "Track send ");
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
+         } else {
+#ifdef _DEBUG_SIXTOP_DETAIL_
+            char str[150];
+            sprintf(str, "Track not reserved ");
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
          } 
       }
-   }
 
-   // if track send failed, use best effort
-   if (!parent_found)
-      msg->l2_track.instance = TRACK_BESTEFFORT;
+      // if track send failed, use best effort
+      if (!parent_found)
+         msg->l2_track.instance = TRACK_BESTEFFORT;
+   }
 
    //todo-debug
    if (msg->l2_nextORpreviousHop.type == 0){

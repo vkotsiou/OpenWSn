@@ -59,7 +59,8 @@ void cexample_init() {
 
 #ifdef TRACK_ACTIVE
    //I am the owner of this track (8 bytes address)
-   memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
+   //memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
+   cexample_vars.track.owner.type = ADDR_64B;
    memset(&(cexample_vars.track.owner.addr_64b),1,8);
    cexample_vars.track.instance            = (uint16_t)TRACK_BALANCING;
 #else
