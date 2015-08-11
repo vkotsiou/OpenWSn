@@ -18,7 +18,6 @@
 //#define   RPL_OF0
 
 #define MAXNUMNEIGHBORS           15
-#define MAXNUMPARENTS           	 3
 #define MAXPREFERENCE             2
 #define BADNEIGHBORMAXRSSI        -70 //dBm
 #define GOODNEIGHBORMINRSSI       -80 //dBm
@@ -89,7 +88,7 @@ END_PACK
 typedef struct {
    neighborRow_t        neighbors[MAXNUMNEIGHBORS];
    btneck_t             btnecks[MAX_NUM_BTNECKS];
-   float                balance_factors[MAX_NUM_BTNECKS]; // percentage of data sent to each btneck 
+   uint8_t              traffic_ratios[MAX_NUM_BTNECKS]; // percentage of data sent to each btneck 
    dagrank_t            myDAGrank;
    uint8_t              debugRow;
    uint8_t              debugBtRow;

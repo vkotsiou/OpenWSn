@@ -925,7 +925,6 @@ port_INLINE void activity_ti1ORri1() {
          }
          else if (ieee154e_vars.dataToSend!=NULL) {   // I have a packet to send
 
-
             // change state
             changeState(S_TXDATAOFFSET);
             // change owner

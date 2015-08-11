@@ -25,7 +25,7 @@
 #define  PAYLOADLEN           40
 #define  CEXAMPLE_PERIOD      10000
 
-const uint16_t cexample_timeout = 4000;
+const uint16_t cexample_timeout = 10000;
 const uint8_t cexample_path0[] = "ex";
 
 //=========================== variables =======================================
@@ -60,8 +60,8 @@ void cexample_init() {
 #ifdef TRACK_ACTIVE
    //I am the owner of this track (8 bytes address)
    //memcpy(&(cexample_vars.track.owner), idmanager_getMyID(ADDR_64B), sizeof(open_addr_t));
-   cexample_vars.track.owner.type = ADDR_64B;
    memset(&(cexample_vars.track.owner.addr_64b),1,8);
+   cexample_vars.track.owner.type = ADDR_64B;
    cexample_vars.track.instance            = (uint16_t)TRACK_BALANCING;
 #else
    bzero(&(cexample_vars.track.owner), sizeof(open_addr_t));
@@ -73,7 +73,7 @@ void cexample_init() {
    //starts to generate packets when I am synchronized
    uint64_t  next = openrandom_get16b();
    while (next > 5 * CEXAMPLE_PERIOD)
-      next -= CEXAMPLE_PERIOD/3;
+      next -= CEXAMPLE_PERIOD;
 
 
    cexample_vars.timerId    = opentimers_start(

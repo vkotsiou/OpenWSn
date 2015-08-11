@@ -508,6 +508,19 @@ void task_sixtopNotifSendDone() {
          iphc_sendDone(msg,msg->l2_sendDoneError);
          break;
    }
+
+      // update the counters
+      // -- we use only 1B for currentSlotFrame because we only care about differencing slotframe
+      uint8_t currentSlotFrame = (uint8_t)(msg->l2_asn.bytes0and1 
+                              + 65356*msg->l2_asn.bytes2and3 
+                              + 4294967296*msg->l2_asn.byte4)
+                              / SUPERFRAME_LENGTH;
+      if ( sixtop_vars.currentSlotFrame == currentSlotFrame )
+         sixtop_vars.btneckCounter+= msg->l2_numTxAttempts;
+      else { 
+         sixtop_vars.currentSlotFrame = currentSlotFrame;
+         sixtop_vars.btneckCounter = msg->l2_numTxAttempts; // restart counter
+      }
 }
 
 
@@ -593,20 +606,6 @@ void task_sixtopNotifReceive() {
          );
          break;
    }
-
-
-      // update the counters
-      // -- we use only 1B for currentSlotFrame because we only care about differencing slotframe
-      uint8_t currentSlotFrame = (uint8_t)(msg->l2_asn.bytes0and1 
-                              + 65356*msg->l2_asn.bytes2and3 
-                              + 4294967296*msg->l2_asn.byte4)
-                              / SUPERFRAME_LENGTH;
-      if ( sixtop_vars.currentSlotFrame == currentSlotFrame )
-         sixtop_vars.btneckCounter+= msg->l2_numTxAttempts;
-      else { 
-         sixtop_vars.currentSlotFrame = currentSlotFrame;
-         sixtop_vars.btneckCounter = msg->l2_numTxAttempts; // restart counter
-      }
 }
 
 //======= debugging
@@ -687,9 +686,12 @@ owerror_t sixtop_send_internal(
       // if track is found
       if (track_found){
 #ifdef _DEBUG_SIXTOP_DETAIL_
-   char str[150];
-   sprintf(str, "Track found");
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            char str[150];
+            sprintf(str, "Track found ");
+            strncat(str, ", owner=", 150);
+            openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_track.owner.addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_track.owner.addr_64b[7], 150);
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
          // if track is reserved
          if (schedule_getNbCellsWithTrack(msg->l2_track) > 0){
@@ -699,6 +701,11 @@ owerror_t sixtop_send_internal(
 #ifdef _DEBUG_SIXTOP_DETAIL_
             char str[150];
             sprintf(str, "Track send ");
+            strncat(str, ", nexthop=", 150);
+            openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
+            strncat(str, ", parent found=", 150);
+            openserial_ncat_uint8_t(str, (uint8_t)parent_found, 150);
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
          } else {
@@ -707,13 +714,16 @@ owerror_t sixtop_send_internal(
             sprintf(str, "Track not reserved ");
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
-
          } 
       }
 
       // if track send failed, use best effort
-      if (!parent_found)
+      if (!parent_found){
          msg->l2_track.instance = TRACK_BESTEFFORT;
+         sixtop_setState(SIX_IDLE);
+         openqueue_freePacketBuffer(msg);
+         return E_FAIL;
+      }
    }
 
    //todo-debug
@@ -1170,7 +1180,7 @@ void sixtop_notifyReceiveCommand(
       case SIXTOP_SOFT_CELL_REQ:
          if(sixtop_vars.six2six_state == SIX_IDLE){
 
-#ifdef _DEBUG_SIXTOP_
+#ifdef _DEBUG_SIXTOP_DETAIL_
    char str[150];
    uint8_t  i;
             sprintf(str, "LinkReq rcvd: from ");
@@ -1200,7 +1210,9 @@ void sixtop_notifyReceiveCommand(
       case SIXTOP_SOFT_CELL_RESPONSE:
          if(sixtop_vars.six2six_state == SIX_WAIT_ADDRESPONSE){
 
-#ifdef _DEBUG_SIXTOP_
+#ifdef _DEBUG_SIXTOP_DETAIL_
+   char str[150];
+   uint8_t  i;
             sprintf(str, "LinkRep rcvd: from ");
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
@@ -1230,6 +1242,8 @@ void sixtop_notifyReceiveCommand(
          if(sixtop_vars.six2six_state == SIX_IDLE){
 
 #ifdef _DEBUG_SIXTOP_
+   char str[150];
+   uint8_t  i;
             sprintf(str, "LinkRem rcvd: from ");
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[6], 150);
             openserial_ncat_uint8_t_hex(str, addr->addr_64b[7], 150);
@@ -1378,12 +1392,13 @@ void sixtop_notifyReceiveLinkResponse(
    bw          = bandwidth_ie->numOfLinks;
    track       = bandwidth_ie->track;
   
-
+char              str[150];
 
    if(bw == 0){
       // link request failed
       // todo- should inform some one
-
+sprintf(str, "Link rep bw = 0");
+openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
    } else {
       // need to check whether the links are still available to be scheduled.
       if(bw != numOfcells                                                ||
@@ -1393,6 +1408,8 @@ void sixtop_notifyReceiveLinkResponse(
                                                schedule_ie->cellList, 
                                                bw) == FALSE){
          // link request failed,inform uplayer
+sprintf(str, "Link rep err");
+openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
 
       } else {
@@ -1404,6 +1421,8 @@ void sixtop_notifyReceiveLinkResponse(
                                 schedule_ie->cellList,
                                 addr,
                                 sixtop_vars.six2six_state);
+sprintf(str, "Link rep OK");
+openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
       }
    }

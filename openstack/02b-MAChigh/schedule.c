@@ -608,12 +608,12 @@ uint8_t schedule_getNbCellsWithTrackAndNeighbor(track_t track, open_addr_t neigh
 
    //count the nb of usable cells (in tx) for this track
    for (i=0;i<MAXACTIVESLOTS;i++) {
-      if (sixtop_track_equal(schedule_vars.scheduleBuf[i].track, track) &&
-          packetfunctions_sameAddress(&neighbor_addr,&schedule_vars.scheduleBuf[i].neighbor) &&
-            (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
-                  ||
-            schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX)
-            )
+      if (sixtop_track_equal(schedule_vars.scheduleBuf[i].track, track) 
+            && packetfunctions_sameAddress(&neighbor_addr,&schedule_vars.scheduleBuf[i].neighbor) 
+            && (schedule_vars.scheduleBuf[i].type == CELLTYPE_TX
+               ||
+               schedule_vars.scheduleBuf[i].type == CELLTYPE_TXRX)
+         )
          returnVal++;
    }
 

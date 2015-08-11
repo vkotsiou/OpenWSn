@@ -603,7 +603,7 @@ void sendDAO() {
    msg->l4_sourcePortORicmpv6Type           = IANA_ICMPv6_RPL;
    
    // set track for DAO
-#ifdef TRACK_ACTIVE
+#ifndef TRACK_ACTIVE
    memcpy(msg->l2_track.owner.addr_64b, &(icmpv6rpl_vars.dio.DODAGID[8]), 8);
    msg->l2_track.owner.type = ADDR_64B;
    msg->l2_track.instance            = (uint16_t)TRACK_IMCPv6RPL;

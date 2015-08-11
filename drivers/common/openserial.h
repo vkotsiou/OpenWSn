@@ -228,6 +228,7 @@ void  openserial_statDAOtx(uint8_t *parent);
 
 // -- tools
 //append a uint8_t at the end of a string
+char *openserial_ncat_uint8_t(char *str, uint8_t val, uint8_t length);
 char *openserial_ncat_uint32_t(char *str, uint32_t val, uint8_t length);
 char *openserial_ncat_uint8_t_hex(char *str, uint8_t val, uint8_t length);
 
