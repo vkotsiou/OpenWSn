@@ -363,10 +363,12 @@ void forwarding_getNextHop(open_addr_t* destination128b, open_addr_t* addressToW
       for (i=0;i<8;i++) {
          addressToWrite64b->addr_64b[i] = 0xff;
       }
-   } else if (neighbors_isStableNeighbor(destination128b)) {
-      // IP destination is 1-hop neighbor, send directly
-      packetfunctions_ip128bToMac64b(destination128b,&temp_prefix64btoWrite,addressToWrite64b);
-   } else {
+   }
+   //else if (neighbors_isStableNeighbor(destination128b)) {
+   //   // IP destination is 1-hop neighbor, send directly
+   //   packetfunctions_ip128bToMac64b(destination128b,&temp_prefix64btoWrite,addressToWrite64b);
+   //}
+   else {
       // destination is remote, send to preferred parent
       neighbors_getPreferredParentEui64(addressToWrite64b);
    }
