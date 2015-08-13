@@ -899,7 +899,6 @@ port_INLINE void activity_ti1ORri1() {
 
             if (ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == 0){
 
-
                char str[150];
                sprintf(str, "ERR 154E TX: typeaddr=");
                openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type, 150);
@@ -921,7 +920,7 @@ port_INLINE void activity_ti1ORri1() {
                openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_track.instance, 150);
                openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
-               openserial_statTx(ieee154e_vars.dataToSend);
+               //openserial_statTx(ieee154e_vars.dataToSend);
 
             }
 

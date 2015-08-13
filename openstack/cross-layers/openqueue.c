@@ -313,13 +313,13 @@ owerror_t openqueue_freePacketBuffer(OpenQueueEntry_t* pkt) {
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++) {
-      if (&openqueue_vars.queue[i]==pkt) {
+      if ((&openqueue_vars.queue[i] == pkt) && (openqueue_vars.queue[i].creator != COMPONENT_NULL)) {
 
 #ifdef _DEBUG_OQ_MEM_
          char str[150];
-         sprintf(str, "remove, pos=");
+         sprintf(str, "remove,pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-         strncat(str, "creator=", 150);
+         strncat(str, ",creator=", 150);
          openserial_ncat_uint32_t(str, (uint32_t)openqueue_vars.queue[i].creator, 150);
          openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
