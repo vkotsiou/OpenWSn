@@ -157,8 +157,10 @@ bool neighbors_getPreferredTrackParent(open_addr_t track_owner, open_addr_t* add
    uint8_t min_etx;
    uint8_t link_etx;
    uint16_t total_etx;
+   uint8_t self_counter;
 
    min_etx = 0xFF; // init to max value
+   self_counter = sixtop_getBtneckCounter();
 
    // get parents (in parent set) announcing given track and choose the best one (smaller ETX for a path)
    for (i=0; i<MAXNUMNEIGHBORS; i++) {
@@ -173,7 +175,7 @@ bool neighbors_getPreferredTrackParent(open_addr_t track_owner, open_addr_t* add
                // if neighbor announces the track
                if (packetfunctions_sameAddress64(&neighbors_vars.neighbors[i].btnecks[j].addr_64b,
                         &(track_owner.addr_64b))){
-                  if (neighbors_vars.isBottleneck){
+                  if (neighbors_vars.isBottleneck && neighbors_vars.neighbors[i].btnecks[j].counter < self_counter){
                      if (link_etx < min_etx){
                         min_etx = link_etx;
                         memcpy(addressToWrite, &(neighbors_vars.neighbors[i].addr_64b), sizeof(open_addr_t));

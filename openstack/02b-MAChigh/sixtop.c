@@ -723,11 +723,15 @@ owerror_t sixtop_send_internal(
          } 
       }
 
-      // if track send failed, use best effort
+      // if track send failed
       if (!parent_found){
-         msg->l2_track.instance = TRACK_BESTEFFORT;
-         sixtop_setState(SIX_IDLE);
-         openqueue_freePacketBuffer(msg);
+         // if number of retries expired failed, use best effort
+         if (msg->l2_retriesLeft-- <= 0){ 
+            msg->l2_track.instance = TRACK_BESTEFFORT;
+            sixtop_setState(SIX_IDLE);
+         } else {
+            openqueue_freePacketBuffer(msg);
+         }
          return E_FAIL;
       }
    }

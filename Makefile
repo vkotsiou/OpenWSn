@@ -31,5 +31,8 @@ submitappsmall:
 		-l grenoble,m3,42+45+48+50+55,projects/common/03oos_openwsn.elf \
 		-l grenoble,m3,60,projects/common/03oos_openwsn_dagroot.elf 
 rsync:
-	 rsync -av --delete-after --exclude '.sconsign.dblite' --exclude 'build' --exclude 'projects/common'  ../exp-iotlab/openwsn/openwsn-fw/ ../exp-iotlab/openwsn/openwsn-fw-sink/
+	rsync -av --delete-after --exclude '.sconsign.dblite' --exclude 'build' --exclude 'projects/common'  ../exp-iotlab/openwsn/openwsn-fw/ ../exp-iotlab/openwsn/openwsn-fw-sink/
 
+clean:
+	find * -name '*.o' | xargs rm -rf
+	rm -r build/iot*
