@@ -580,8 +580,10 @@ void task_sixtopNotifReceive() {
          if (msg->length>0) {
             // track forward the packet if I am not the DAG root
             if (msg->l2_track.instance == TRACK_BALANCING && idmanager_getIsDAGroot() == FALSE){
+                  msg->l2_IEListPresent = IEEE154_IELIST_NO;
                   sixtop_send(msg);
-
+                  //changes the current state
+                  sixtop_setState(SIX_FORWARD_SENDDONE);
                   char str[150];
                   sprintf(str, "Track forward");
                   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
@@ -670,6 +672,7 @@ owerror_t sixtop_send_internal(
    OpenQueueEntry_t* msg, 
    uint8_t iePresent, 
    uint8_t frameVersion) {
+   open_addr_t addressToWrite;
    bool track_found = FALSE;
    bool parent_found = FALSE;
 
@@ -696,18 +699,21 @@ owerror_t sixtop_send_internal(
          // if track is reserved
          if (schedule_getNbCellsWithTrack(msg->l2_track) > 0){
             // get next hop
-            parent_found = neighbors_getPreferredTrackParent(msg->l2_track.owner,&(msg->l2_nextORpreviousHop)); 
+            parent_found = neighbors_getPreferredTrackParent(msg->l2_track.owner,&addressToWrite); 
 
-#ifdef _DEBUG_SIXTOP_DETAIL_
-            char str[150];
-            sprintf(str, "Track send ");
-            strncat(str, ", nexthop=", 150);
-            openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
-            openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
-            strncat(str, ", parent found=", 150);
-            openserial_ncat_uint8_t(str, (uint8_t)parent_found, 150);
-            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            if (parent_found){
+               memcpy(&msg->l2_nextORpreviousHop,&addressToWrite, sizeof(open_addr_t));
+#ifdef _DEBUG_SIXTOP_DETAIL_PLUS
+               char str[150];
+               sprintf(str, "Track send ");
+               strncat(str, ", nexthop=", 150);
+               openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
+               openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
+               strncat(str, ", parent found=", 150);
+               openserial_ncat_uint8_t(str, (uint8_t)parent_found, 150);
+               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
+            }
          } else {
 #ifdef _DEBUG_SIXTOP_DETAIL_
             char str[150];

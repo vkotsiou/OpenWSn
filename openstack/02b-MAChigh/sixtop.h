@@ -40,7 +40,9 @@ typedef enum {
    SIX_SENDING_REMOVEREQUEST           = 0x08,   // generating resLinkRespone command packet
    SIX_WAIT_REMOVEREQUEST_SENDDONE     = 0x09,   // waiting for SendDone confirmation
    // REMOVE: destinations
-   SIX_REMOVEREQUEST_RECEIVED          = 0x0a    // I received the remove link request command
+   SIX_REMOVEREQUEST_RECEIVED          = 0x0a,   // I received the remove link request command
+   // REMOVE: destinations
+   SIX_FORWARD_SENDDONE                = 0x0b    // I track forwarded the packet
 } six2six_state_t;
 
 

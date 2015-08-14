@@ -95,6 +95,7 @@ typedef struct {
    uint8_t              dio_counter; // number of received DIO
    uint8_t              bootstrap_period; // number of recv DIO before calculating balance ratio
    uint8_t              DAGroot_id;
+   bool                 isBottleneck; // indicate if I advertise myself as a bottleneck
    icmpv6rpl_dio_ht*    dio; //keep it global to be able to debug correctly.
 } neighbors_vars_t;
 
@@ -122,7 +123,6 @@ bool          neighbors_isStableNeighbor(open_addr_t* address);
 bool          neighbors_isPreferredParent(open_addr_t* address);
 bool          neighbors_isNeighborWithLowerDAGrank(uint8_t index);
 bool          neighbors_isNeighborWithHigherDAGrank(uint8_t index);
-bool          neighbors_isDAGroot(uint8_t (*address_1)[LENGTH_ADDR64b]);
 
 // updating neighbor information
 void          neighbors_indicateRx(
