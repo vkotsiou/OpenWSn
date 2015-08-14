@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 
-#define _DEBUG_DIO_
+//#define _DEBUG_DIO_
 
 //=========================== variables =======================================
 
@@ -162,9 +162,9 @@ uint8_t icmpv6rpl_getRPLIntanceID(){
 \param[in] error Outcome of the sending.
 */
 void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
-#ifdef _DEBUG_DIO_
+//#ifdef _DEBUG_DIO_
    char str[150];
-#endif
+//#endif
 
    // take ownership over that packet
    msg->owner = COMPONENT_ICMPv6RPL;
@@ -186,12 +186,12 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
    }
    if (msg == icmpv6rpl_vars.lastDAO_tx){
 
-#ifdef _DEBUG_DIO_
+//#ifdef _DEBUG_DIO_
       sprintf(str, "RPL - DAO transmitted to ");
       openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
       openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-#endif
+//#endif
 
       icmpv6rpl_vars.lastDAO_tx = NULL;
    }
@@ -649,10 +649,10 @@ void sendDAO() {
    if (icmpv6_send(msg) == E_SUCCESS) {
       icmpv6rpl_vars.lastDAO_tx = msg;
 
-//#ifdef _DEBUG_DIO_
+#ifdef _DEBUG_DIO_
       sprintf(str, "RPL - DAO pushed in the queue");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-//#endif
+#endif
 
    } else {
       openqueue_freePacketBuffer(msg);

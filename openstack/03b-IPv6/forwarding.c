@@ -256,6 +256,12 @@ void forwarding_receive(
       // change the creator of the packet
       msg->creator = COMPONENT_FORWARDING;
       
+//timeout when a packet is forwarded
+#ifdef TIMEOUT_FORWARDING
+      openqueue_set_timeout(QUEUE_TIMEOUT_DEFAULT);
+#endif
+
+
       if (ipv6_header->next_header!=IANA_IPv6ROUTE) {
          // no source routing header present
          //check if flow label rpl header

@@ -122,7 +122,7 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
 /**
 \brief Retreieve the IEEE802.15.4 MAC header from a (just received) packet.
 
-Note We are writing the fields from the begnning of the header to the end.
+Note We are writing the fields from the beginning of the header to the end.
 
 \param[in,out] msg            The message just received.
 \param[out] ieee802514_header The internal header to write the data to.

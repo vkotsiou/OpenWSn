@@ -240,7 +240,7 @@ void otf_notif_remove_parent(open_addr_t *parent){
 
    //cannot remove an old parent if we have an on-going 6top negociation
    if (!sixtop_isIdle())
-        return();
+        return;
 
 
 #ifdef TRACK_ACTIVE

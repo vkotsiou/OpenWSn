@@ -38,14 +38,17 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define SIXTOP_CELL_TIMEOUT_TX         20000
 
 
-
 //push statistics to the serial when an event occurs (tx, rx, etc.)
 #define OPENSERIAL_STAT    1
 #define OPENSERIAL_PRINTF  1
 
-
 //to delimit the implementation of draft-thubert-6man-flow-label-for-rpl-03
 #define FLOW_LABEL_RPL_DOMAIN 1
+
+//to fix a timeout in openqueue for all the frames received by IEEE802154e
+#define OPENQUEUE_TIMEOUT_FOR_IEEE8014E_RX   1
+
+
 
 #ifndef TRUE
 #define TRUE 1

@@ -228,6 +228,8 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
          openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
 
+
+
          return &openqueue_vars.queue[i];
       }
    }
@@ -249,14 +251,21 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
          it could not be allocated (buffer full or not synchronized).
 */
 OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const uint16_t duration_ms) {
+
+   // a new entry in the queue
    OpenQueueEntry_t* entry;
+   entry = openqueue_getFreePacketBuffer(creator);
+
+   openqueue_set_timeout(entry, duration_ms);
+   return(entry);
+}
+
+//set a timeout for this entry
+void openqueue_set_timeout(OpenQueueEntry_t* entry, const uint16_t duration_ms){
    timeout_t     now;
    uint8_t       remainder, i;
    uint64_t      diff;
    timeout_t     duration_asn;
-
-   // a new entry in the queue
-   entry = openqueue_getFreePacketBuffer(creator);
 
 
    INTERRUPT_DECLARATION();
@@ -265,7 +274,7 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
    //no packet is available
    if (entry == NULL){
       ENABLE_INTERRUPTS();
-      return(NULL);
+      return;
    }
 
    //*1000 since ms have to be converted in us
@@ -293,7 +302,7 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, co
 
 
    ENABLE_INTERRUPTS();
-   return(entry);
+   return;
 }
 
 
@@ -327,7 +336,7 @@ owerror_t openqueue_freePacketBuffer(OpenQueueEntry_t* pkt) {
 
          if (openqueue_vars.queue[i].creator==COMPONENT_NULL) {
             // log the error
-            openserial_printCritical(COMPONENT_OPENQUEUE,ERR_FREEING_UNUSED,
+            openserial_printCritical(COMPONENT_OPENQUEUE, ERR_FREEING_UNUSED,
                                   (errorparameter_t)0,
                                   (errorparameter_t)0);
          }

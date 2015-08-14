@@ -17,6 +17,10 @@
 
 #define QUEUELENGTH           15
 #define QUEUELENGTH_RESERVED  4     //DAO + DIO + 2 * SIXTOP
+#define QUEUE_TIMEOUT_DEFAULT (uint16_t) 4000
+
+
+
 
 //=========================== typedef =========================================
 
@@ -50,6 +54,7 @@ void               openqueue_timeout_drop(void);
 // called by any component
 OpenQueueEntry_t*  openqueue_getFreePacketBuffer(uint8_t creator);
 OpenQueueEntry_t*  openqueue_getFreePacketBuffer_with_timeout(uint8_t creator, const uint16_t duration_ms);
+void               openqueue_set_timeout(OpenQueueEntry_t* entry, const uint16_t duration_ms);
 owerror_t          openqueue_freePacketBuffer(OpenQueueEntry_t* pkt);
 void               openqueue_removeEntry(OpenQueueEntry_t* entry);
 void               openqueue_removeAllCreatedBy(uint8_t creator);
