@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 
-//#define _DEBUG_DIO_
+#define _DEBUG_DIO_
 
 //=========================== variables =======================================
 
@@ -646,13 +646,13 @@ void sendDAO() {
    packetfunctions_calculateChecksum(msg,(uint8_t*)&(((ICMPv6_ht*)(msg->payload))->checksum)); //call last
    
    //===== send
-   if (icmpv6_send(msg)==E_SUCCESS) {
+   if (icmpv6_send(msg) == E_SUCCESS) {
       icmpv6rpl_vars.lastDAO_tx = msg;
 
-#ifdef _DEBUG_DIO_
+//#ifdef _DEBUG_DIO_
       sprintf(str, "RPL - DAO pushed in the queue");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-#endif
+//#endif
 
    } else {
       openqueue_freePacketBuffer(msg);

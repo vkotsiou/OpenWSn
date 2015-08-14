@@ -15,7 +15,7 @@
 
 //=========================== define ==========================================
 
-#define QUEUELENGTH           10
+#define QUEUELENGTH           15
 #define QUEUELENGTH_RESERVED  4     //DAO + DIO + 2 * SIXTOP
 
 //=========================== typedef =========================================

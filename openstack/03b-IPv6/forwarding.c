@@ -348,7 +348,7 @@ void forwarding_receive(
 */
 void forwarding_getNextHop(open_addr_t* destination128b, open_addr_t* addressToWrite64b) {
    uint8_t         i;
-   open_addr_t     temp_prefix64btoWrite;
+  // open_addr_t     temp_prefix64btoWrite;
    
    //todo-debug
     if (destination128b->type == 0)

@@ -131,9 +131,11 @@ void otf_remove_obsolete_parents(void){
 
          //it is not anymore a parent (or even not anymore a neighbor)
          if (neigh == NULL || neigh->parentPreference < MAXPREFERENCE){
-            sprintf(str, "OTF LinkRem=");
+            sprintf(str, "OTF LinkRem(oldParent)=");
             openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[6], 150);
             openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[7], 150);
+            sprintf(str, ",slotOffset=");
+            openserial_ncat_uint8_t_hex(str, (uint32_t)cell->slotOffset, 150);
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
             sixtop_removeCell(&(cell->neighbor));
@@ -182,6 +184,8 @@ void otf_remove_unused_cells(void){
                sprintf(str, "OTF LinkRem(unused)=");
                openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[6], 150);
                openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[7], 150);
+               sprintf(str, ",slotOffset=");
+               openserial_ncat_uint8_t_hex(str, (uint32_t)cell->slotOffset, 150);
                openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
                sixtop_removeCell(&(cell->neighbor));
@@ -233,6 +237,11 @@ void otf_notif_remove_parent(open_addr_t *parent){
 #ifndef SIXTOP_REMOVE_OBSOLETE_PARENTS
    return;
 #endif
+
+   //cannot remove an old parent if we have an on-going 6top negociation
+   if (!sixtop_isIdle())
+        return();
+
 
 #ifdef TRACK_ACTIVE
    sixtop_removeCell(parent);

@@ -895,34 +895,37 @@ port_INLINE void activity_ti1ORri1() {
          } else {
             ieee154e_vars.dataToSend = NULL;
          }
-         if (ieee154e_vars.dataToSend!=NULL) {   // I have a packet to send
+         //bug: the next hop address is null
+         if ((ieee154e_vars.dataToSend!=NULL) && (ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == 0)){
 
-            if (ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == 0){
+            char str[150];
+            sprintf(str, "ERR 154E TX: typeaddr=");
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type, 150);
+            strncat(str, ", creator=", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->creator, 150);
+            strncat(str, ", owner ", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->owner, 150);
+            strncat(str, ", timeout=", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[0], 150);
+            strncat(str, ",", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[1], 150);
+            strncat(str, ",", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[2], 150);
+            strncat(str, ",", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[3], 150);
+            strncat(str, ",", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[4], 150);
+            strncat(str, ", track=", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_track.instance, 150);
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
-               char str[150];
-               sprintf(str, "ERR 154E TX: typeaddr=");
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_nextORpreviousHop.type, 150);
-               strncat(str, ", creator=", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->creator, 150);
-               strncat(str, ", owner ", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->owner, 150);
-               strncat(str, ", timeout=", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[0], 150);
-               strncat(str, ",", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[1], 150);
-               strncat(str, ",", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[2], 150);
-               strncat(str, ",", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[3], 150);
-               strncat(str, ",", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->timeout.byte[4], 150);
-               strncat(str, ", track=", 150);
-               openserial_ncat_uint32_t(str, (uint32_t)ieee154e_vars.dataToSend->l2_track.instance, 150);
-               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            //drop it and terminates the current slot
+            openqueue_freePacketBuffer(ieee154e_vars.dataToSend);
+            endSlot();
 
-               //openserial_statTx(ieee154e_vars.dataToSend);
+         }
+         else if (ieee154e_vars.dataToSend!=NULL) {   // I have a packet to send
 
-            }
 
             // change state
             changeState(S_TXDATAOFFSET);

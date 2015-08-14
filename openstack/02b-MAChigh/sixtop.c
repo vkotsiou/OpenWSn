@@ -1446,7 +1446,7 @@ bool sixtop_candidateRemoveCellList(
 
       cell = schedule_getCell(i);
 
-      if ((cell->type == CELLTYPE_TX) && (packetfunctions_sameAddress(neighbor, &(cell->neighbor)))){
+      if ((cell->type == CELLTYPE_TX || cell->type == CELLTYPE_RX) && (packetfunctions_sameAddress(neighbor, &(cell->neighbor)))){
 
          cellList[numCandCells].tsNum       = cell->slotOffset;
          cellList[numCandCells].choffset    = cell->channelOffset;

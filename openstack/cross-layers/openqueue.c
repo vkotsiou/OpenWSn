@@ -149,7 +149,7 @@ void openqueue_timeout_drop(void){
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++) {
 
-      if (openqueue_vars.queue[i].owner != COMPONENT_NULL)
+      if (openqueue_vars.queue[i].creator != COMPONENT_NULL)
          if (!openqueue_timeout_is_zero(openqueue_vars.queue[i].timeout))
             if (openqueue_timeout_is_greater(now, openqueue_vars.queue[i].timeout)){
 
@@ -210,7 +210,7 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
    
    // walk through queue and find free entry
    for (i=0;i<QUEUELENGTH;i++) {
-      if (openqueue_vars.queue[i].owner==COMPONENT_NULL) {
+      if (openqueue_vars.queue[i].creator==COMPONENT_NULL) {
 
          bzero(openqueue_vars.queue[i].timeout.byte, sizeof(timeout_t));
          openqueue_vars.queue[i].creator  = creator;
@@ -221,9 +221,9 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
 
 #ifdef _DEBUG_OQ_MEM_
          char str[150];
-         sprintf(str, "alloc, pos=");
+         sprintf(str, "alloc,pos=");
          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-         strncat(str, "creator=", 150);
+         strncat(str, ",creator=", 150);
          openserial_ncat_uint32_t(str, (uint32_t)creator, 150);
          openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
@@ -325,7 +325,7 @@ owerror_t openqueue_freePacketBuffer(OpenQueueEntry_t* pkt) {
 #endif
 
 
-         if (openqueue_vars.queue[i].owner==COMPONENT_NULL) {
+         if (openqueue_vars.queue[i].creator==COMPONENT_NULL) {
             // log the error
             openserial_printCritical(COMPONENT_OPENQUEUE,ERR_FREEING_UNUSED,
                                   (errorparameter_t)0,
@@ -544,7 +544,7 @@ bool openqueue_overflow_for_data(void){
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    for (i=0;i<QUEUELENGTH;i++)
-      if (openqueue_vars.queue[i].owner == COMPONENT_NULL)
+      if (openqueue_vars.queue[i].creator == COMPONENT_NULL)
          nb++;
    ENABLE_INTERRUPTS();
 
