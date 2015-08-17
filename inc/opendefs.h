@@ -46,7 +46,7 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define FLOW_LABEL_RPL_DOMAIN 1
 
 //to fix a timeout in openqueue for all the frames received by IEEE802154e
-#define OPENQUEUE_TIMEOUT_FOR_IEEE8014E_RX   1
+//#define OPENQUEUE_TIMEOUT_FOR_IEEE8014E_RX   1
 
 
 

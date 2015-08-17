@@ -13,9 +13,9 @@
 //=========================== define ==========================================
 
 #define TIMER_DIO_TIMEOUT         8500
-#define TIMER_DIO_JITTER          0.10      //DIO period \in [(1 - JITTER) * PERIOD , (1 + JITTER) PERIOD ]
+#define TIMER_DIO_JITTER          0.20      //DIO period \in [(1 - JITTER) * PERIOD , (1 + JITTER) PERIOD ]
 #define TIMER_DAO_TIMEOUT         50000
-#define TIMER_DAO_JITTER          0.10      //DAO period \in [(1 - JITTER) * PERIOD , (1 + JITTER) PERIOD ]
+#define TIMER_DAO_JITTER          0.20      //DAO period \in [(1 - JITTER) * PERIOD , (1 + JITTER) PERIOD ]
 #define TIMER_NB_TRIGGERED        5
 
 

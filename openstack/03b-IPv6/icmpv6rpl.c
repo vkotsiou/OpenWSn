@@ -300,9 +300,9 @@ void icmpv6rpl_timer_DIO_task() {
    else
       icmpv6rpl_vars.periodDIO = TIMER_DIO_TIMEOUT + jitter;
 
-/*#ifdef _DEBUG_DIO_
+#ifdef _DEBUG_DIO_
       char str[150];
-      sprintf(str, "RPL = jitter=");
+      sprintf(str, "RPL DIO = jitter=");
       openserial_ncat_uint32_t(str, (uint32_t)jitter, 150);
       strncat(str, ", max=", 150);
       openserial_ncat_uint32_t(str, (uint32_t)TIMER_DIO_TIMEOUT * TIMER_DIO_JITTER, 150);
@@ -314,7 +314,7 @@ void icmpv6rpl_timer_DIO_task() {
       openserial_ncat_uint32_t(str, (uint32_t)bool, 150);
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 #endif
-*/
+
    // arm the DIO timer with this new value
    opentimers_setPeriod(
       icmpv6rpl_vars.timerIdDIO,
@@ -453,9 +453,24 @@ void icmpv6rpl_timer_DAO_task() {
    while(jitter > TIMER_DAO_TIMEOUT * TIMER_DAO_JITTER)
       jitter -= TIMER_DAO_TIMEOUT * TIMER_DAO_JITTER;
    if (bool > 0)
-      icmpv6rpl_vars.periodDIO = TIMER_DAO_TIMEOUT - jitter;
+      icmpv6rpl_vars.periodDAO = TIMER_DAO_TIMEOUT - jitter;
    else
-      icmpv6rpl_vars.periodDIO = TIMER_DAO_TIMEOUT + jitter;
+      icmpv6rpl_vars.periodDAO = TIMER_DAO_TIMEOUT + jitter;
+
+#ifdef _DEBUG_DAO_
+      char str[150];
+      sprintf(str, "RPL DAO = jitter=");
+      openserial_ncat_uint32_t(str, (uint32_t)jitter, 150);
+      strncat(str, ", max=", 150);
+      openserial_ncat_uint32_t(str, (uint32_t)TIMER_DAO_TIMEOUT * TIMER_DAO_JITTER, 150);
+      strncat(str, ", val=", 150);
+      openserial_ncat_uint32_t(str, (uint32_t)icmpv6rpl_vars.periodDAO, 150);
+      strncat(str, ", sign=", 150);
+      openserial_ncat_uint32_t(str, (uint32_t)bool > 0, 150);
+      strncat(str, ", bool=", 150);
+      openserial_ncat_uint32_t(str, (uint32_t)bool, 150);
+      openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
 
       
    // send DAO
