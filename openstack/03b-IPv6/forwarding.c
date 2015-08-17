@@ -71,7 +71,7 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
    if(openqueue_overflow_for_data()){
       openserial_statPktBufferOverflow(msg);
 
-      openqueue_freePacketBuffer(msg);
+      // openqueue_freePacketBuffer(msg);
       return(E_FAIL);
    }
 
@@ -258,7 +258,7 @@ void forwarding_receive(
       
 //timeout when a packet is forwarded
 #ifdef TIMEOUT_FORWARDING
-      openqueue_set_timeout(QUEUE_TIMEOUT_DEFAULT);
+      openqueue_set_timeout(msg, QUEUE_TIMEOUT_DEFAULT);
 #endif
 
 
