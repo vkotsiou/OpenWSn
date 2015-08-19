@@ -987,9 +987,6 @@ void openserial_statPktBufferOverflow(OpenQueueEntry_t* msg){
 
 
 
-
-
-
 //push an event to track an erroneous frame
 void openserial_statPktError(OpenQueueEntry_t* msg){
 
@@ -1028,6 +1025,37 @@ void openserial_statGen(uint16_t seqnum, track_t track){
    #endif
 
 }
+
+
+
+//push an event to track DIO transmissions
+void openserial_statDIOtx(){
+
+   #ifdef OPENSERIAL_STAT
+       openserial_printStat(SERTYPE_DIOTX, COMPONENT_ICMPv6RPL, NULL, 0);
+   #endif
+
+}
+
+//push an event to track DAO transmissions
+void openserial_statDAOtx(uint8_t *parent){
+
+   #ifdef OPENSERIAL_STAT
+      evtDaOTx_t          evt;
+      //info
+      memcpy(evt.parent, parent, 8);
+
+      openserial_printStat(SERTYPE_DAOTX, COMPONENT_ICMPv6RPL, (uint8_t*)&evt, sizeof(evt));
+   #endif
+
+}
+
+
+
+/***********************************************
+ *    FUNCTION TOOLS
+ **********************************************/
+
 
 
 //append a uint8_t at the end of a string

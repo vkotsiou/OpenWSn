@@ -184,16 +184,23 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
       sprintf(str, "RPL - DIO transmitted");
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 #endif
+
+      //for stats
+      openserial_statDIOtx();
+
       icmpv6rpl_vars.lastDIO_tx = NULL;
    }
    if (msg == icmpv6rpl_vars.lastDAO_tx){
 
-//#ifdef _DEBUG_DIO_
+//#ifdef _DEBUG_DAO_
       sprintf(str, "RPL - DAO transmitted to ");
       openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
       openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 //#endif
+
+      //for stats
+      openserial_statDAOtx(msg->l2_nextORpreviousHop.addr_64b);
 
       icmpv6rpl_vars.lastDAO_tx = NULL;
    }

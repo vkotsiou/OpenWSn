@@ -81,7 +81,9 @@ enum{
    SERTYPE_ACK_RX             = 0x07,
    SERTYPE_PKT_TIMEOUT        = 0x08,
    SERTYPE_PKT_ERROR          = 0x09,
-   SERTYPE_PKT_BUFFEROVERFLOW = 0x0a
+   SERTYPE_PKT_BUFFEROVERFLOW = 0x0a,
+   SERTYPE_DIOTX              = 0x0b,
+   SERTYPE_DAOTX              = 0x0c
 };
 //=========================== typedef =========================================
 
@@ -151,6 +153,10 @@ typedef struct{
 } evtPktRx_t;
 END_PACK
 
+BEGIN_PACK
+typedef struct{
+   uint8_t     parent[8];     //parent (=next hop) when the DAO was transmitted
+}evtDaOTx_t;
 
 
 //=========================== module variables ================================
@@ -217,6 +223,8 @@ void  openserial_statTx(OpenQueueEntry_t* msg);
 void  openserial_statPktTimeout(OpenQueueEntry_t* msg);
 void  openserial_statPktBufferOverflow(OpenQueueEntry_t* msg);
 void  openserial_statGen(uint16_t seqnum, track_t track);
+void  openserial_statDIOtx(void);
+void  openserial_statDAOtx(uint8_t *parent);
 
 // -- tools
 //append a uint8_t at the end of a string
