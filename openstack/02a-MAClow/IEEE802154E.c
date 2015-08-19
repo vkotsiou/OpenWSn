@@ -171,7 +171,6 @@ This function executes in ISR mode, when the new slot timer fires.
 void isr_ieee154e_newSlot() {
    radio_setTimerPeriod(TsSlotDuration);
 
-   //openserial_printf(COMPONENT_NULL, NULL, 0);
 
    if (ieee154e_vars.isSync==FALSE) {
       if (idmanager_getIsDAGroot()==TRUE) {
