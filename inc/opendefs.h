@@ -30,6 +30,9 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define CHANNELS_NB                    16 //nb. of channels
 #define SCHEDULING_RANDOM                 //a random slot nb is assigned when OTF asks for a cell
 
+//Shared cells are distributed in the slotframe
+#define SCHEDULE_SHAREDCELLS_DISTRIBUTED
+
 //tracks are handled by the 6top
 #define TRACK_ACTIVE                      // applications use tracks
 #define SIXTOP_REMOVE_OBSOLETE_PARENTS    // when a node is removed from the parent list, its associated cells are removed
@@ -274,7 +277,7 @@ enum {
    ERR_OPENQUEUE_BUFFER_OVERFLOW       = 0x44, // buffer overflow: too many packets (space left {0}, reserved for management {1})
    ERR_SIXTOP_TOOMANY_CELLS            = 0x45, // too many cells to reserve in the sixtop request (asked {0}, max {1})
    ERR_GENERIC                         = 0x46, // generic error {0} {1}
-   ERR_UNKNOWN                         = 0x47, // unknown error, location {0}
+   ERR_UNKNOWN                         = 0x47, // unknown error, location {0}, arg {1}
 };
 
 

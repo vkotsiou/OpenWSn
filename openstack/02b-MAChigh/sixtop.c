@@ -271,7 +271,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    uint8_t  i;
    char str[150];
 
-   sprintf(str, "LinkREq txed: to ");
+   sprintf(str, "LinkReq txed: to ");
    openserial_ncat_uint8_t_hex(str, neighbor->addr_64b[6], 150);
    openserial_ncat_uint8_t_hex(str, neighbor->addr_64b[7], 150);
    strncat(str, ", bw=", 150);
@@ -626,7 +626,7 @@ virtual component COMPONENT_SIXTOP_TO_IEEE802154E. Whenever it gets a change,
 IEEE802154E will handle the packet.
 
 \param[in] msg The packet to the transmitted
-\param[in] iePresent Indicates wheter an Information Element is present in the
+\param[in] iePresent Indicates whether an Information Element is present in the
    packet.
 \param[in] frameVersion The frame version to write in the packet.
 
@@ -638,11 +638,13 @@ owerror_t sixtop_send_internal(
    uint8_t frameVersion) {
 
    //todo-debug
-   if (msg->l2_nextORpreviousHop.type == 0)
+   if (msg->l2_nextORpreviousHop.type == 0){
       openserial_printCritical(COMPONENT_SIXTOP, ERR_GENERIC,
-                                  (errorparameter_t)msg->l2_nextORpreviousHop.type,
-                                  (errorparameter_t)123);
+            (errorparameter_t)123,
+            (errorparameter_t)msg->l2_nextORpreviousHop.type);
 
+      return E_FAIL;
+   }
    // assign a number of retries
    if (packetfunctions_isBroadcastMulticast(&(msg->l2_nextORpreviousHop))==TRUE) {
       msg->l2_retriesLeft = 1;
@@ -918,13 +920,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
   
    //the packet cannot be transmitted
    if(error == E_FAIL) {
-   /*   openserial_printError(
-               COMPONENT_SIXTOP,
-               ERR_UNKNOWN,
-               (errorparameter_t)123,
-               (errorparameter_t)001
-            );
-*/
+
       sixtop_setState(SIX_IDLE);
       openqueue_freePacketBuffer(msg);
       return;
@@ -1471,9 +1467,7 @@ bool sixtop_candidateRemoveCellList(
    }
    
    if(numCandCells==0){
-      openserial_printError(
-          COMPONENT_SIXTOP,
-          ERR_GENERIC,
+      openserial_printError(COMPONENT_SIXTOP, ERR_GENERIC,
           (errorparameter_t)1,
           (errorparameter_t)2
       );

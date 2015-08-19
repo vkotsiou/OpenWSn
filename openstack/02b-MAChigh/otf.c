@@ -36,7 +36,7 @@ void otf_init(void) {
 //asks 6top to reserve a cell if we don't have enough for this packet
 //returns the number of cells asked to 6top
 uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
-   uint8_t nbCells_curr, nbCells_req;
+   uint8_t nbCells_curr, nbCells_req, nbCells_toadd;
 
 
    //when 6top will have finished, otf will ask for bandwidth for this packet (if required)
@@ -70,22 +70,25 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    if (nbCells_curr >= nbCells_req)
       return(0);
 
+   //request to sixtop
+   nbCells_toadd = nbCells_req - nbCells_curr;
+
+    //upper bound the nb of cells (at most SIXTOP_NBCELLS_INREQ in the sixtop request)
+   if (nbCells_toadd > SIXTOP_NBCELLS_INREQ)
+      nbCells_toadd = SIXTOP_NBCELLS_INREQ;
+
    //debug
    openserial_printError(
-       COMPONENT_OTF,
-       ERR_OTF_INSUFFICIENT,
-       (errorparameter_t)(uint16_t)(msg->l2_track.instance),
-       (errorparameter_t)nbCells_req
+         COMPONENT_OTF,
+         ERR_OTF_INSUFFICIENT,
+         (errorparameter_t)(uint16_t)(msg->l2_track.instance),
+         (errorparameter_t)nbCells_toadd
    );
 
-   //upper bound the nb of cells
-   if (nbCells_req - nbCells_curr > SIXTOP_NBCELLS_INREQ)
-      nbCells_req = SIXTOP_NBCELLS_INREQ - nbCells_curr;
 
    //ask 6top the required number of cells
-   sixtop_addCells(&(msg->l2_nextORpreviousHop), nbCells_req - nbCells_curr, msg->l2_track);
+   sixtop_addCells(&(msg->l2_nextORpreviousHop), nbCells_toadd, msg->l2_track);
    return(nbCells_req - nbCells_curr);
-
 }
 
 

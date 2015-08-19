@@ -63,17 +63,35 @@ void schedule_init() {
    // shared TXRX anycast slot(s)
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
    temp_neighbor.type             = ADDR_ANYCAST;
+
+
+
+#ifdef SCHEDULE_SHAREDCELLS_DISTRIBUTED
    for (i=0;i<NUMSHAREDTXRX;i++) {
       schedule_addActiveSlot(
-         running_slotOffset,      // slot offset
-         CELLTYPE_TXRX,           // type of slot
-         TRUE,                    // shared?
-         0,                       // channel offset
-         &temp_neighbor,          // neighbor
-         track          		    //for best effort traffic
-     );
+            running_slotOffset + i * SUPERFRAME_LENGTH / NUMSHAREDTXRX  ,      // slot offset
+            CELLTYPE_TXRX,           // type of slot
+            TRUE,                    // shared?
+            0,                       // channel offset
+            &temp_neighbor,          // neighbor
+            track                    //for best effort traffic
+            );
       running_slotOffset++;
    }
+#else
+   for (i=0;i<NUMSHAREDTXRX;i++) {
+      schedule_addActiveSlot(
+            running_slotOffset,      // slot offset
+            CELLTYPE_TXRX,           // type of slot
+            TRUE,                    // shared?
+            0,                       // channel offset
+            &temp_neighbor,          // neighbor
+            track          		    //for best effort traffic
+            );
+      running_slotOffset++;
+   }
+#endif
+
    
    // serial RX slot(s)
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
