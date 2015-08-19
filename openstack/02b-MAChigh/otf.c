@@ -63,7 +63,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
    openserial_ncat_uint8_t_hex(str, msg->l2_track.owner.addr_64b[6], 150);
 //   strncat(str, "-", 150);
    openserial_ncat_uint8_t_hex(str, msg->l2_track.owner.addr_64b[7], 150);
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+   openserial_printf(COMPONENT_OTF, str, strlen(str));
 #endif
 
    //the current allocation is correct
@@ -132,11 +132,11 @@ void otf_remove_obsolete_parents(void){
          //it is not anymore a parent (or even not anymore a neighbor)
          if (neigh == NULL || neigh->parentPreference < MAXPREFERENCE){
             sprintf(str, "OTF LinkRem(oldParent)=");
-            openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[6], 150);
-            openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[7], 150);
-            sprintf(str, ",slotOffset=");
-            openserial_ncat_uint8_t_hex(str, (uint32_t)cell->slotOffset, 150);
-            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            openserial_ncat_uint8_t_hex(str, (uint8_t)cell->neighbor.addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, (uint8_t)cell->neighbor.addr_64b[7], 150);
+            strncat(str, ",slotOffset=", 150);
+            openserial_ncat_uint32_t(str, (uint32_t)cell->slotOffset, 150);
+            openserial_printf(COMPONENT_OTF, str, strlen(str));
 
             sixtop_removeCell(&(cell->neighbor));
             break;
@@ -182,11 +182,11 @@ void otf_remove_unused_cells(void){
             //ASN in nb of slots, timeout in ms, slotduration in us
             if (ieee154e_asnDiff(&(cell->lastUsedAsn)) > 1000 * timeout / TsSlotDuration){
                sprintf(str, "OTF LinkRem(unused)=");
-               openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[6], 150);
-               openserial_ncat_uint8_t_hex(str, (uint32_t)cell->neighbor.addr_64b[7], 150);
-               sprintf(str, ",slotOffset=");
-               openserial_ncat_uint8_t_hex(str, (uint32_t)cell->slotOffset, 150);
-               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+               openserial_ncat_uint8_t_hex(str, (uint8_t)cell->neighbor.addr_64b[6], 150);
+               openserial_ncat_uint8_t_hex(str, (uint8_t)cell->neighbor.addr_64b[7], 150);
+               strncat(str, ",slotOffset=", 150);
+               openserial_ncat_uint32_t(str, (uint32_t)cell->slotOffset, 150);
+               openserial_printf(COMPONENT_OTF, str, strlen(str));
 
                sixtop_removeCell(&(cell->neighbor));
             }

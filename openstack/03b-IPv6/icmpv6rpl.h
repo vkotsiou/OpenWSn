@@ -148,12 +148,14 @@ typedef struct {
    open_addr_t               dioDestination;          ///< IPv6 destination address for DIOs.
    uint16_t                  periodDIO;               ///< duration, in ms, of a timerIdDIO timeout.
    opentimer_id_t            timerIdDIO;              ///< ID of the timer used to send DIOs.
+   uint8_t                   delayDIO;                ///< number of timerIdDIO events before actually sending a DIO.
    // DAO-related
    icmpv6rpl_dao_ht          dao;                     ///< pre-populated DAO packet.
    icmpv6rpl_dao_transit_ht  dao_transit;             ///< pre-populated DAO "Transit Info" option header.
    icmpv6rpl_dao_target_ht   dao_target;              ///< pre-populated DAO "Transit Info" option header.
    opentimer_id_t            timerIdDAO;              ///< ID of the timer used to send DAOs.
    uint16_t                  periodDAO;               ///< duration, in ms, of a timerIdDAO timeout.
+   uint8_t                   delayDAO;                ///< number of timerIdDIO events before actually sending a DAO.
 } icmpv6rpl_vars_t;
 
 //=========================== prototypes ======================================

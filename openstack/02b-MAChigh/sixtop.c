@@ -639,7 +639,7 @@ owerror_t sixtop_send_internal(
 
    //todo-debug
    if (msg->l2_nextORpreviousHop.type == 0)
-      openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
+      openserial_printCritical(COMPONENT_SIXTOP, ERR_GENERIC,
                                   (errorparameter_t)msg->l2_nextORpreviousHop.type,
                                   (errorparameter_t)123);
 
