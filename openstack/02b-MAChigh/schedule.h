@@ -43,7 +43,7 @@ Backoff is used only in slots that are marked as shared in the schedule. When
 not shared, the mote assumes that schedule is collision-free, and therefore
 does not use any backoff mechanism when a transmission fails.
 */
-#define MINBE                4
+#define MINBE                3
 
 /**
 \brief Maximum backoff exponent.

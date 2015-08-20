@@ -637,6 +637,9 @@ owerror_t sixtop_send_internal(
    uint8_t iePresent, 
    uint8_t frameVersion) {
 
+
+
+
    //todo-debug
    if (msg->l2_nextORpreviousHop.type == 0){
       openserial_printCritical(COMPONENT_SIXTOP, ERR_GENERIC,
@@ -717,12 +720,12 @@ void timer_sixtop_six2six_timeout_fired(void) {
 
    //if we are already in idle mode, this means we are just boostraping!
    if (sixtop_vars.six2six_state != SIX_IDLE)
-    openserial_printError(
-        COMPONENT_SIXTOP,
-        ERR_SIXTOP_TIMEOUT,
-        (errorparameter_t)sixtop_vars.six2six_state,
-        (errorparameter_t)0
-     );
+      openserial_printError(
+            COMPONENT_SIXTOP,
+            ERR_SIXTOP_TIMEOUT,
+            (errorparameter_t)sixtop_vars.six2six_state,
+            (errorparameter_t)0
+      );
 
    //remove the packets which caused the timeout (they may not have been transmitted)
    openqueue_removeAllCreatedBy(COMPONENT_SIXTOP_RES);
@@ -911,34 +914,32 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
    uint8_t i,numOfCells;
    uint8_t* ptr;
    cellInfo_ht cellList[SCHEDULEIEMAXNUMCELLS];
-   
-   memset(cellList, 0, SCHEDULEIEMAXNUMCELLS*sizeof(cellInfo_ht));
-  
-   ptr = msg->l2_scheduleIE_cellObjects;
-   numOfCells = msg->l2_scheduleIE_numOfCells;
+
    msg->owner = COMPONENT_SIXTOP_RES;
-  
-   //the packet cannot be transmitted
-   if(error == E_FAIL) {
 
-      sixtop_setState(SIX_IDLE);
-      openqueue_freePacketBuffer(msg);
-      return;
-   }
+   switch(sixtop_vars.six2six_state) {
 
-
-   switch (sixtop_vars.six2six_state) {
+      //ADDRESP_WAIT state if the request was succesfully transmitted
       case SIX_WAIT_ADDREQUEST_SENDDONE:
-         sixtop_setState(SIX_WAIT_ADDRESPONSE);
+
+         if (error != E_FAIL)
+            sixtop_setState(SIX_WAIT_ADDRESPONSE);
+
          break;
          
+      //come back to the idle state anyway
       case SIX_WAIT_ADDRESPONSE_SENDDONE:
          sixtop_setState(SIX_IDLE);
-         //otf_notif_addedCell();
-         
+
          break;
+
+      //remove the corresponding cells whatever the transmission was ok or not
       case SIX_WAIT_REMOVEREQUEST_SENDDONE:
-         //if(error == E_SUCCESS && numOfCells > 0){
+
+         memset(cellList, 0, SCHEDULEIEMAXNUMCELLS*sizeof(cellInfo_ht));
+         ptr = msg->l2_scheduleIE_cellObjects;
+         numOfCells = msg->l2_scheduleIE_numOfCells;
+
          if(numOfCells > 0){
            for (i=0;i<numOfCells;i++){
                //TimeSlot 2B
@@ -959,7 +960,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
             );
          }
          sixtop_setState(SIX_IDLE);
-         leds_debug_off();
+
          break;
       default:
          //log error
@@ -1253,7 +1254,6 @@ void sixtop_linkResponse(
    // declare ownership over that packet
    sixtopPkt->creator = COMPONENT_SIXTOP_RES;
    sixtopPkt->owner   = COMPONENT_SIXTOP_RES;
-    
    memcpy(&(sixtopPkt->l2_nextORpreviousHop),tempNeighbor,sizeof(open_addr_t));
     
    // set SubFrameAndLinkIE
@@ -1278,7 +1278,6 @@ void sixtop_linkResponse(
     
    //I has an IE in my payload
    sixtopPkt->l2_IEListPresent = IEEE154_IELIST_YES;
-  
    sixtop_send(sixtopPkt);
   
    //changes the current state

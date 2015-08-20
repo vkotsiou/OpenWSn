@@ -30,8 +30,9 @@ void schedule_init() {
    open_addr_t     temp_neighbor;
    track_t         track;
 
-   track.owner.type   = ADDR_NONE;
    track.instance     = TRACK_BESTEFFORT;
+   bzero(&(track.owner), sizeof(openaddr_t));
+   track.owner.type   = ADDR_NONE;
 
    // reset local variables
    memset(&schedule_vars,0,sizeof(schedule_vars_t));
