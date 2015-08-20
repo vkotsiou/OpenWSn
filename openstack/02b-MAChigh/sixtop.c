@@ -441,14 +441,16 @@ void task_sixtopNotifSendDone() {
    msg->owner = COMPONENT_SIXTOP;
    
    // update neighbor statistics
+   neighbors_indicateTx(
+       &(msg->l2_nextORpreviousHop),
+       msg->l2_numTxAttempts,
+       (msg->l2_sendDoneError==E_SUCCESS),
+       &msg->l2_asn
+    );
+
+  /*
    if (msg->l2_sendDoneError==E_SUCCESS) {
-      neighbors_indicateTx(
-         &(msg->l2_nextORpreviousHop),
-         msg->l2_numTxAttempts,
-         TRUE,
-         &msg->l2_asn
-      );
-   } else {
+    } else {
       neighbors_indicateTx(
          &(msg->l2_nextORpreviousHop),
          msg->l2_numTxAttempts,
@@ -456,6 +458,8 @@ void task_sixtopNotifSendDone() {
          &msg->l2_asn
       );
    }
+   */
+
    
    // send the packet to where it belongs
    switch (msg->creator) {

@@ -40,6 +40,8 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define SIXTOP_CELL_TIMEOUT_RX         25000
 #define SIXTOP_CELL_TIMEOUT_TX         20000
 
+//RPL features
+//#define RPL_AUTHORIZE_PARENT_WITH_LARGER_RANK
 
 //push statistics to the serial when an event occurs (tx, rx, etc.)
 #define OPENSERIAL_STAT    1

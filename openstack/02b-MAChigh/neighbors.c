@@ -510,6 +510,42 @@ neighborRow_t *neighbors_getNeighborInfo(open_addr_t* address){
    return(NULL);
 }
 
+
+//return the link metric toward this neighbor
+uint32_t neighbors_get_linkcost(uint8_t i){
+   uint32_t  rankIncrease;
+
+   // calculate link cost to this neighbor
+   if (neighbors_vars.neighbors[i].numTx == 0) {
+      rankIncrease = DEFAULTLINKCOST*MINHOPRANKINCREASE;
+   }
+
+   else {
+
+   //6TiSCH minimal draft using OF0 for rank computation
+   #ifdef RPL_OF0
+      rankIncrease = (uint16_t)
+            (
+                  ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
+                  MINHOPRANKINCREASE
+            );
+   #endif
+
+              //my own OF to give a benefit to smaller ETX values (ETX^2)
+   #ifdef RPL_OFFabrice
+      rankIncrease = (uint16_t)
+            (
+                  ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
+                  ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
+                  MINHOPRANKINCREASE
+            );
+   #endif
+   }
+
+   return(rankIncrease);
+}
+
+
 //===== managing routing info
 
 /**
@@ -523,7 +559,6 @@ routing decisions to change. Examples are:
 */
 void neighbors_updateMyDAGrankAndNeighborPreference() {
    uint8_t   i;
-   uint16_t  rankIncrease;
    uint32_t  tentativeDAGrank; // 32-bit since is used to sum
    uint8_t   prefParentIdx;
    bool      prefParentFound;
@@ -535,8 +570,17 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
    }
    
    // reset my DAG rank to max value. May be lowered below.
+#ifdef RPL_AUTHORIZE_PARENT_WITH_LARGER_RANK
    neighbors_vars.myDAGrank  = MAXDAGRANK;
-   
+
+#else
+   //compute my current DAGrank
+   for (i=0;i<MAXNUMNEIGHBORS;i++)
+      if (neighbors_vars.neighbors[i].parentPreference == MAXPREFERENCE)
+            neighbors_vars.myDAGrank = neighbors_vars.neighbors[i].DAGrank + neighbors_get_linkcost(i);
+#endif
+
+
    // by default, I haven't found a preferred parent
    prefParentFound           = FALSE;
    prefParentIdx             = 0;
@@ -551,55 +595,50 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
          
          // reset parent preference
          neighbors_vars.neighbors[i].parentPreference = 0;
-         
-         // calculate link cost to this neighbor
-         if (neighbors_vars.neighbors[i].numTx == 0) {
-            rankIncrease = DEFAULTLINKCOST*MINHOPRANKINCREASE;
-         } else {
-            //6TiSCH minimal draft using OF0 for rank computation
-#ifdef RPL_OF0
-            rankIncrease = (uint16_t)
-                  (
-                        ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
-                        MINHOPRANKINCREASE
-                  );
-#endif
 
-#ifdef RPL_OFFabrice
-            rankIncrease = (uint16_t)
-                  (
-                        ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
-                        ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
-                        MINHOPRANKINCREASE
-                  );
-#endif
-         }
-         
-         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank + rankIncrease;
+         //compute the rank I would have through this neighbor
+         tentativeDAGrank = neighbors_vars.neighbors[i].DAGrank +  neighbors_get_linkcost(i);
+
 
 #ifdef _DEBUG_ICMPv6RPL_RANK_
          char str[150];
-          sprintf(str, "rank: neighbor ");
-          openserial_ncat_uint32_t(str, (uint32_t)i, 150);
-          strncat(str, ", PDR^-1= ", 150);
-          openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTx, 150);
-          strncat(str, " / ", 150);
-          openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTxACK, 150);
-          strncat(str, " - link metric ", 150);
-          openserial_ncat_uint32_t(str, rankIncrease, 150);
-          strncat(str, " - its rank ", 150);
-          openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
-          strncat(str, " - candidate rank  ", 150);
-          openserial_ncat_uint32_t(str, tentativeDAGrank, 150);
-          strncat(str, " - current best rank ", 150);
-          openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
-          openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
+         sprintf(str, "rank: neighbor ");
+         openserial_ncat_uint32_t(str, (uint32_t)i, 150);
+         strncat(str, ", PDR^-1= ", 150);
+         openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTx, 150);
+         strncat(str, " / ", 150);
+         openserial_ncat_uint32_t(str, (uint32_t)neighbors_vars.neighbors[i].numTxACK, 150);
+         strncat(str, " - link metric ", 150);
+         openserial_ncat_uint32_t(str,  neighbors_get_linkcost(i), 150);
+         strncat(str, " - its rank ", 150);
+         openserial_ncat_uint32_t(str, neighbors_vars.neighbors[i].DAGrank, 150);
+         strncat(str, " - candidate rank  ", 150);
+         openserial_ncat_uint32_t(str, tentativeDAGrank, 150);
+         strncat(str, " - my current rank ", 150);
+         openserial_ncat_uint32_t(str, neighbors_vars.myDAGrank , 150);
+         strncat(str, " - conditions ", 150);
+         openserial_ncat_uint32_t(str, (uint32_t)(neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank), 150);
+         openserial_ncat_uint32_t(str, (uint32_t)(!prefParentFound), 150);
+         openserial_ncat_uint32_t(str, (uint32_t)(tentativeDAGrank < neighbors_vars.myDAGrank), 150);
+         openserial_ncat_uint32_t(str, (uint32_t)(neighbors_vars.neighbors[i].DAGrank < MAXDAGRANK), 150);
+         openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
 
 #endif
 
-         if ( tentativeDAGrank<neighbors_vars.myDAGrank &&
-              tentativeDAGrank<MAXDAGRANK) {
-            // found better parent, lower my DAGrank
+         /* ---
+          * Conditions to consider this parent
+          * -> it has a smaller rank than myself
+          * -> either I have no parent or it gives me a better rank
+          * -> it has not the default rank value
+         */
+         if (
+               (neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank)
+               &&
+               ((!prefParentFound) || ( tentativeDAGrank < neighbors_vars.myDAGrank))
+               &&
+               (neighbors_vars.neighbors[i].DAGrank < MAXDAGRANK)
+               ) {
+
             neighbors_vars.myDAGrank   = tentativeDAGrank;
             prefParentFound            = TRUE;
             prefParentIdx              = i;

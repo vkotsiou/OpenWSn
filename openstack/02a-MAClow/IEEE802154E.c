@@ -16,6 +16,7 @@
 #include "adaptive_sync.h"
 #include "processIE.h"
 #include "otf.h"
+#include "neighbors.h"
 #include <stdio.h>
 
 //=========================== variables =======================================
@@ -1128,7 +1129,14 @@ port_INLINE void activity_ti5(PORT_RADIOTIMER_WIDTH capturedTime) {
       radiotimer_schedule(DURATION_tt5);
    } else {
       // indicate succesful Tx to schedule to keep statistics
-      schedule_indicateTx(&ieee154e_vars.asn,TRUE);
+      schedule_indicateTx(&ieee154e_vars.asn, TRUE);
+/*      neighbors_indicateTx(
+            &(ieee154e_vars.dataToSend->l2_nextORpreviousHop),
+            ieee154e_vars.dataToSend->l2_numTxAttempts,
+            TRUE,
+            &ieee154e_vars.dataToSend->l2_asn
+            );
+*/
       // indicate to upper later the packet was sent successfully
       notif_sendDone(ieee154e_vars.dataToSend,E_SUCCESS);
       // reset local variable
@@ -1184,7 +1192,13 @@ port_INLINE void activity_ti7() {
 port_INLINE void activity_tie5() {
    // indicate transmit failed to schedule to keep stats
    schedule_indicateTx(&ieee154e_vars.asn,FALSE);
-   
+/*   neighbors_indicateTx(
+         &(ieee154e_vars.dataToSend->l2_nextORpreviousHop),
+         ieee154e_vars.dataToSend->l2_numTxAttempts,
+         TRUE,
+         &ieee154e_vars.dataToSend->l2_asn
+         );
+  */
    // decrement transmits left counter
    ieee154e_vars.dataToSend->l2_retriesLeft--;
    
@@ -1341,7 +1355,13 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
       
       // inform schedule of successful transmission
       schedule_indicateTx(&ieee154e_vars.asn,TRUE);
-      
+/*      neighbors_indicateTx(
+            &(ieee154e_vars.dataToSend->l2_nextORpreviousHop),
+            ieee154e_vars.dataToSend->l2_numTxAttempts,
+            TRUE,
+            &ieee154e_vars.dataToSend->l2_asn
+            );
+  */
       // inform upper layer
       notif_sendDone(ieee154e_vars.dataToSend,E_SUCCESS);
       ieee154e_vars.dataToSend = NULL;
@@ -2034,7 +2054,7 @@ void notif_sendDone(OpenQueueEntry_t* packetSent, owerror_t error) {
    // COMPONENT_IEEE802154E_TO_RES so RES can knows it's for it
    packetSent->owner              = COMPONENT_IEEE802154E_TO_SIXTOP;
    // post RES's sendDone task
-   scheduler_push_task(task_sixtopNotifSendDone,TASKPRIO_SIXTOP_NOTIF_TXDONE);
+   scheduler_push_task(task_sixtopNotifSendDone, TASKPRIO_SIXTOP_NOTIF_TXDONE);
    // wake up the scheduler
    SCHEDULER_WAKEUP();
 }
@@ -2045,6 +2065,15 @@ void notif_receive(OpenQueueEntry_t* packetReceived) {
 
    // indicate reception to the schedule, to keep statistics
    schedule_indicateRx(&packetReceived->l2_asn);
+/*   neighbors_indicateRx(
+         &(ieee154e_vars.dataToSend->l2_nextORpreviousHop),
+         ieee154e_vars.dataToSend->l1_rssi,
+               &ieee154e_vars.dataToSend->l2_asn,
+               ieee154e_vars.dataToSend->l2_joinPriorityPresent,
+               ieee154e_vars.dataToSend->l2_joinPriority
+         );
+*/
+
 
    // associate this packet with the virtual component
    // COMPONENT_IEEE802154E_TO_SIXTOP so sixtop can knows it's for it
@@ -2216,13 +2245,20 @@ void endSlot() {
       
       // indicate Tx fail to schedule to update stats
       schedule_indicateTx(&ieee154e_vars.asn,FALSE);
+/*      neighbors_indicateTx(
+            &(ieee154e_vars.dataToSend->l2_nextORpreviousHop),
+            ieee154e_vars.dataToSend->l2_numTxAttempts,
+            TRUE,
+            &ieee154e_vars.dataToSend->l2_asn
+            );
+  */
       
       //decrement transmits left counter
       ieee154e_vars.dataToSend->l2_retriesLeft--;
       
       if (ieee154e_vars.dataToSend->l2_retriesLeft==0) {
          // indicate tx fail if no more retries left
-         notif_sendDone(ieee154e_vars.dataToSend,E_FAIL);
+         notif_sendDone(ieee154e_vars.dataToSend, E_FAIL);
       } else {
          // return packet to the virtual COMPONENT_SIXTOP_TO_IEEE802154E component
          ieee154e_vars.dataToSend->owner = COMPONENT_SIXTOP_TO_IEEE802154E;
