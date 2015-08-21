@@ -441,14 +441,6 @@ void task_sixtopNotifSendDone() {
    msg->owner = COMPONENT_SIXTOP;
    
 
- /*  char str[150];
-   sprintf(str, "IndicateTx ");
-   openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[6], 150);
-   openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[7], 150);
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-*/
-
-
    // update neighbor statistics
    neighbors_indicateTx(
        &(msg->l2_nextORpreviousHop),
