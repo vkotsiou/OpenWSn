@@ -415,22 +415,23 @@ void neighbors_indicateTx(open_addr_t* l2_dest,
    
    // loop through neighbor table
    for (i=0;i<MAXNUMNEIGHBORS;i++) {
+
       if (isThisRowMatching(l2_dest,i)) {
+        
          // handle roll-over case
-        
-          if (neighbors_vars.neighbors[i].numTx>(0xff-numTxAttempts)) {
-              neighbors_vars.neighbors[i].numWraps++; //counting the number of times that tx wraps.
-              neighbors_vars.neighbors[i].numTx/=2;
-              neighbors_vars.neighbors[i].numTxACK/=2;
-           }
+         if (neighbors_vars.neighbors[i].numTx>(0xff-numTxAttempts)) {
+            neighbors_vars.neighbors[i].numWraps++; //counting the number of times that tx wraps.
+            neighbors_vars.neighbors[i].numTx/=2;
+            neighbors_vars.neighbors[i].numTxACK/=2;
+         }
          // update statistics
-        neighbors_vars.neighbors[i].numTx += numTxAttempts; 
+         neighbors_vars.neighbors[i].numTx += numTxAttempts;
         
-        if (was_finally_acked==TRUE) {
+         if (was_finally_acked==TRUE) {
             neighbors_vars.neighbors[i].numTxACK++;
             memcpy(&neighbors_vars.neighbors[i].asn,asnTs,sizeof(asn_t));
-        }
-        break;
+         }
+         break;
       }
    }
 }

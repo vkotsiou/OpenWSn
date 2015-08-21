@@ -33,7 +33,7 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 //Shared cells are distributed in the slotframe
 #define SCHEDULE_SHAREDCELLS_DISTRIBUTED
 
-//tracks are handled by the 6top
+//tracks are handled by 6top
 #define TRACK_ACTIVE                      // applications use tracks
 #define SIXTOP_REMOVE_OBSOLETE_PARENTS    // when a node is removed from the parent list, its associated cells are removed
 #define SIXTOP_REMOVE_UNUSED_CELLS        // a cell is removed when it is not used for XXX time
@@ -42,6 +42,10 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 
 //RPL features
 //#define RPL_AUTHORIZE_PARENT_WITH_LARGER_RANK
+
+//FORWARDING
+#define TIMEOUT_FORWARDING                // packets to forward receive automatically a timeout
+
 
 //push statistics to the serial when an event occurs (tx, rx, etc.)
 #define OPENSERIAL_STAT    1

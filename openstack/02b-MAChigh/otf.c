@@ -40,7 +40,7 @@ uint8_t otf_reserve_agressive_for(OpenQueueEntry_t* msg){
 
 
    //when 6top will have finished, otf will ask for bandwidth for this packet (if required)
-    if (sixtop_getState() != SIX_IDLE)
+   if (!sixtop_isIdle())
        return(0);
 
    // track 0 -> only periodical, no sixtop requests
@@ -97,6 +97,9 @@ void otf_update_agressive(void){
    uint8_t  i;
    OpenQueueEntry_t* msg;
 
+   //no ongoing 6top transaction
+   if (!sixtop_isIdle())
+       return;
 
    //only one request may be transmitted through sixtop.
    //This function will be called back when sixtop has finished its reservation later for the other messages in the queue
@@ -122,6 +125,10 @@ void otf_remove_obsolete_parents(void){
 #ifndef SIXTOP_REMOVE_OBSOLETE_PARENTS
    return;
 #endif
+
+   //no ongoing 6top transaction
+   if (!sixtop_isIdle())
+       return;
 
 
    //for each cell in the schedule
@@ -153,7 +160,8 @@ void otf_remove_unused_cells(void){
 #ifndef SIXTOP_REMOVE_UNUSED_CELLS
    return;
 #endif
-   //I MUST be idle
+
+   //no ongoing 6top transaction
    if (!sixtop_isIdle())
       return;
 
@@ -225,6 +233,7 @@ void otf_update_schedule(void){
 
 //a packet is pushed to the MAC layer -> OTF notification
 void otf_notif_transmit(OpenQueueEntry_t* msg){
+
    if (!sixtop_isIdle())
       return;
 

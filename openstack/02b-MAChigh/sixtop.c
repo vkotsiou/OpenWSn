@@ -440,6 +440,15 @@ void task_sixtopNotifSendDone() {
    // take ownership
    msg->owner = COMPONENT_SIXTOP;
    
+
+ /*  char str[150];
+   sprintf(str, "IndicateTx ");
+   openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[6], 150);
+   openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[7], 150);
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+*/
+
+
    // update neighbor statistics
    neighbors_indicateTx(
        &(msg->l2_nextORpreviousHop),
@@ -447,18 +456,6 @@ void task_sixtopNotifSendDone() {
        (msg->l2_sendDoneError==E_SUCCESS),
        &msg->l2_asn
     );
-
-  /*
-   if (msg->l2_sendDoneError==E_SUCCESS) {
-    } else {
-      neighbors_indicateTx(
-         &(msg->l2_nextORpreviousHop),
-         msg->l2_numTxAttempts,
-         FALSE,
-         &msg->l2_asn
-      );
-   }
-   */
 
    
    // send the packet to where it belongs
@@ -937,7 +934,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
 
          break;
 
-      //remove the corresponding cells whatever the transmission was ok or not
+      //remove the corresponding cells (even if the transmission failed)
       case SIX_WAIT_REMOVEREQUEST_SENDDONE:
 
          memset(cellList, 0, SCHEDULEIEMAXNUMCELLS*sizeof(cellInfo_ht));
@@ -1095,7 +1092,6 @@ void sixtop_notifyReceiveCommand(
    
    switch(opcode_ie->opcode){
       case SIXTOP_SOFT_CELL_REQ:
-         if(sixtop_vars.six2six_state == SIX_IDLE){
 
 #ifdef _DEBUG_SIXTOP_
             sprintf(str, "LinkReq rcvd: from ");
@@ -1117,11 +1113,22 @@ void sixtop_notifyReceiveCommand(
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
 
-            sixtop_setState(SIX_ADDREQUEST_RECEIVED);
-            //received uResCommand is reserve link request
-            sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
-         }
-         break;
+            if(sixtop_vars.six2six_state == SIX_IDLE){
+               sixtop_setState(SIX_ADDREQUEST_RECEIVED);
+               //received uResCommand is reserve link request
+               sixtop_notifyReceiveLinkRequest(bandwidth_ie, schedule_ie, addr);
+
+
+            }
+            else{
+            #ifdef _DEBUG_SIXTOP_
+               sprintf(str, "I am not idle, I drop the LinkReq");
+               openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            #endif
+            }
+
+
+            break;
       case SIXTOP_SOFT_CELL_RESPONSE:
          if(sixtop_vars.six2six_state == SIX_WAIT_ADDRESPONSE){
 
