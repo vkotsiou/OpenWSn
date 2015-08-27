@@ -974,14 +974,13 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
          }
          else{
 #ifdef _DEBUG_SIXTOP_
-         char  str[150];
-         sprintf(str, "LinkRep failed: to ");
-         openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[6], 150);
-         openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[7], 150);
-         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+            char  str[150];
+            sprintf(str, "LinkRep failed: to ");
+            openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[6], 150);
+            openserial_ncat_uint8_t_hex(str, msg->l2_nextORpreviousHop.addr_64b[7], 150);
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
 #endif
-
             sixtop_setState(SIX_IDLE);
          }
 
@@ -1010,15 +1009,14 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
 
 #endif
 
-
          sixtop_addCellsByState(
-                                 msg->l2_scheduleIE_frameID,
-                                 numOfCells,
-                                 msg->l2_bandwidthIE_track,
-                                 cellList,
-                                 &(msg->l2_nextORpreviousHop),
-                                 sixtop_vars.six2six_state
-                                 );
+               msg->l2_scheduleIE_frameID,
+               numOfCells,
+               msg->l2_bandwidthIE_track,
+               cellList,
+               &(msg->l2_nextORpreviousHop),
+               sixtop_vars.six2six_state
+               );
 
 
          sixtop_setState(SIX_IDLE);
@@ -1589,17 +1587,6 @@ void sixtop_addCellsByState(
    uint8_t     j;
    open_addr_t temp_neighbor;
   
-
-#ifdef _DEBUG_SIXTOP_
-         char  str[150];
-         sprintf(str, "ADD_CELL: num");
-         openserial_ncat_uint32_t(str, (uint32_t)SCHEDULEIEMAXNUMCELLS, 150);
-         strncat(str, ", state ", 150);
-         openserial_ncat_uint32_t(str, (uint32_t)state, 150);
-         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
-
-#endif
-
    //set schedule according links
    j=0;
    for(i = 0;i<SCHEDULEIEMAXNUMCELLS;i++){
