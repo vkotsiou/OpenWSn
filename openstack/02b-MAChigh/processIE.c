@@ -235,6 +235,7 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    memcpy(pkt->payload, &(track.instance), sizeof(uint16_t));
    len += sizeof(uint16_t);
 
+
    //===== number of links
 
    // reserve space
@@ -273,6 +274,11 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    pkt->payload[1] = (mlme_subHeader.length_subID_type >> 8) & 0xFF;
    
    len += 2;
+
+
+   //record the track info
+    memcpy(&(pkt->l2_bandwidthIE_track), &track, sizeof(track_t));
+
   
    return len;
 }
@@ -315,6 +321,7 @@ port_INLINE uint8_t processIE_prependSheduleIE(
    pkt->l2_scheduleIE_numOfCells  = numOfCells;
    pkt->l2_scheduleIE_cellObjects = pkt->payload;
    
+
    //===== number of cells
    
    // reserve space

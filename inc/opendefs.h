@@ -272,7 +272,7 @@ enum {
    ERR_OTF_INSUFFICIENT                = 0x3a, // otf does not have enough cells (trackInstance {0}, nbCells to add {1})
    ERR_UNKNOWN_NEIGHBOR                = 0x3b, // Unknown neighbor {0}{1} (4 last bytes)
    ERR_SIXTOP_WRONG_PARAM              = 0x3e, // sixtop expects another parameter in its request (bw {0}, nbcells {1})
-   ERR_SIXTOP_WRONG_STATE              = 0x3c, // sixtop current state {0} while {1} is expected
+   ERR_SIXTOP_WRONG_STATE              = 0x3c, // sixtop current state {0}, location {1}
    ERR_SIXTOP_TIMEOUT                  = 0x3d, // a timeout has been fired. We have to flush 6top packets (we have the state {0})
    ERR_OPENQUEUE_TIMEOUT               = 0x3e, // a packet has been removed from the queue (owner {0], creator {1})
    ERR_BAD_TRACKID                     = 0x3f, // the best effort track cannot have an owner (here type {0} and addr {1})
@@ -370,6 +370,7 @@ typedef struct {
    uint8_t*      l2_scheduleIE_cellObjects;      // pointer to the start of cell Objects in scheduleIE
    uint8_t       l2_scheduleIE_numOfCells;       // number of cells were going to be scheduled or removed.
    uint8_t       l2_scheduleIE_frameID;          // frameID in scheduleIE
+   track_t       l2_bandwidthIE_track;           // track in bandwidthIE
    uint8_t*      l2_ASNpayload;                  // pointer to the ASN in EB
    uint8_t       l2_joinPriority;                // the join priority received in EB
    bool          l2_IEListPresent;               //did have IE field?

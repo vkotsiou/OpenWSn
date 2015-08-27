@@ -200,6 +200,9 @@ void otf_remove_unused_cells(void){
                openserial_printf(COMPONENT_OTF, str, strlen(str));
 
                sixtop_removeCell(&(cell->neighbor));
+
+               //at most one request at a time
+               return;
             }
             break;
 
