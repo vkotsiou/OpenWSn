@@ -22,6 +22,7 @@
 
 //#define _DEBUG_SIXTOP_
 #define _DEBUG_SIXTOP_DETAIL_
+//#define _DEBUG_SIXTOP_DETAIL_PLUS
 
 //=========================== variables =======================================
 
@@ -580,13 +581,12 @@ void task_sixtopNotifReceive() {
          if (msg->length>0) {
             // track forward the packet if I am not the DAG root
             if (msg->l2_track.instance == TRACK_BALANCING && idmanager_getIsDAGroot() == FALSE){
-                  msg->l2_IEListPresent = IEEE154_IELIST_NO;
-                  sixtop_send(msg);
-                  //changes the current state
-                  sixtop_setState(SIX_FORWARD_SENDDONE);
+#ifdef _DEBUG_SIXTOP_DETAIL_
                   char str[150];
                   sprintf(str, "Track forward");
                   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+                  sixtop_send(msg);
             } else {
                iphc_receive(msg);
             }
@@ -725,13 +725,8 @@ owerror_t sixtop_send_internal(
 
       // if track send failed
       if (!parent_found){
-         // if number of retries expired failed, use best effort
-         if (msg->l2_retriesLeft-- <= 0){ 
-            msg->l2_track.instance = TRACK_BESTEFFORT;
-            sixtop_setState(SIX_IDLE);
-         } else {
-            openqueue_freePacketBuffer(msg);
-         }
+         // if number of retries expired failed, discard message
+         openqueue_freePacketBuffer(msg);
          return E_FAIL;
       }
    }

@@ -82,25 +82,7 @@ dagrank_t neighbors_getMyDAGrank() {
 }
 
 /**
-\brief Retrieve the number of neighbors this mote's currently knows of.
-
-\returns The number of neighbors this mote's currently knows of.
-*/
-uint8_t neighbors_getNumNeighbors() {
-   uint8_t i;
-   uint8_t returnVal;
-   
-   returnVal=0;
-   for (i=0;i<MAXNUMNEIGHBORS;i++) {
-      if (neighbors_vars.neighbors[i].used==TRUE) {
-         returnVal++;
-      }
-   }
-   return returnVal;
-}
-
-/**
-\brief Retrieve the number of bottlenecks this mote's currently selected.
+\brief Retrieve the number of bottlenecks in the bottleneck set.
 
 \returns The number of bottlenecks this mote's currently selected.
 */
@@ -116,11 +98,20 @@ uint8_t neighbors_getNumBtnecks() {
    return returnVal;
 }   
 
+/**
+\brief Retrieve the address of the preferred track owner 
+
+This function picks a random number and retrieve the address of the track owner associated with the corresponding
+traffic ratio range.
+
+\returns True if a track was found, False otherwise
+*/
 bool neighbors_getPreferredTrack(open_addr_t* addressToWrite){
    uint8_t i;
    bool track_found;
    uint8_t cursor;
    uint8_t rand;
+   track_t pref_track;
 
    cursor = 0;
    track_found = FALSE;
@@ -133,11 +124,18 @@ bool neighbors_getPreferredTrack(open_addr_t* addressToWrite){
       if(neighbors_vars.btnecks[i].counter != 0){
          if (neighbors_vars.traffic_ratios[i] != 0){
             if (rand >= cursor && rand < cursor + neighbors_vars.traffic_ratios[i]){
-               // copy address of preferred track
-               memcpy(addressToWrite->addr_64b,&(neighbors_vars.btnecks[i].addr_64b),LENGTH_ADDR64b);
-               addressToWrite->type = ADDR_64B;
-               track_found = TRUE;         
-               break;
+               memcpy(&pref_track.owner.addr_64b, &(neighbors_vars.btnecks[i].addr_64b),LENGTH_ADDR64b);
+               pref_track.owner.type = ADDR_64B;
+               pref_track.instance = TRACK_BALANCING;
+               //if (schedule_getNbCellsWithTrack(pref_track) != 0){
+                  // copy address of preferred track
+                  memcpy(addressToWrite->addr_64b,&(neighbors_vars.btnecks[i].addr_64b),LENGTH_ADDR64b);
+                  addressToWrite->type = ADDR_64B;
+                  track_found = TRUE;
+                  break;
+               /*} else {
+                  rand += neighbors_vars.traffic_ratios[i]; // select next ratio range
+               }*/
             } 
             cursor += neighbors_vars.traffic_ratios[i];
          }
@@ -148,9 +146,16 @@ bool neighbors_getPreferredTrack(open_addr_t* addressToWrite){
 
  
 /**
-\brief Retrieve the address of the preffered parent that advertise the track and:
-   - if I am a bottleneck: the parent must have the smallest last hop ETX
-   - if not: the parent must have the smallest ETX path to that track
+\brief Retrieve the address of the preferred parent that advertise the given track.
+
+The parent selection is done as follow:
+- if I am a bottleneck: the parent must have the smallest last hop ETX (selfish approach)
+- if not: the parent must have the smallest ETX path to that track
+
+\param[in] track_owner is the address of the track
+\param[out] addressToWrite Where to write the preferred parent's address to. (will be left 
+            untouched if no parent is found)
+\returns True if a parent was found and False otherwise 
 */
 bool neighbors_getPreferredTrackParent(open_addr_t track_owner, open_addr_t* addressToWrite) {
    uint8_t i,j;
@@ -204,105 +209,6 @@ bool neighbors_getPreferredTrackParent(open_addr_t track_owner, open_addr_t* add
       return FALSE;
 }
 
-/**
-\brief Retreive the advertised bottleneck with updated ETX values
-**/
-void neighbors_getAdvBtnecks(btneck_t * advBtnecks){
-   uint8_t i,j,k,l;
-   uint8_t sum_etx;     // ETX value of the path between btneck and parent
-   uint16_t link_etx;   // ETX value of last hop
-   uint8_t nb_etx;      // Number of ETX value per track
-   uint16_t avg_etx;    // Average value of path ETX for a track
-   bool btneck_found;
-   uint8_t self_counter;
-
-   btneck_found = FALSE;
-   
-   // copy selected bottleneck list
-   for (l=0; l<MAX_NUM_BTNECKS;l++){
-      memset(&advBtnecks[l],0, sizeof(btneck_t));
-   }
-
-   // get local counter
-   self_counter = sixtop_getBtneckCounter();
-
-   for (i=0; i<MAX_NUM_BTNECKS; i++){
-      if (neighbors_vars.btnecks[i].counter != 0){
-         sum_etx = 0;
-         nb_etx = 0;
-
-         // if at least one btneck is less constrained than I am => self announcement
-         if (neighbors_vars.btnecks[i].counter < self_counter){
-            btneck_found = FALSE;
-            break;
-         }
-
-         // for each parent get the btneck path ETX and add the last hop ETX
-         for (j=0;j<MAXNUMNEIGHBORS;j++) {
-            if (neighbors_vars.neighbors[j].inParentSet==TRUE){
-               for (k=0; k<MAX_NUM_BTNECKS; k++){
-                  if(neighbors_vars.neighbors[j].btnecks[k].counter != 0){
-                     // if parent advertise the bottleneck, record the path ETX
-                     if (packetfunctions_sameAddress64(&neighbors_vars.neighbors[j].btnecks[k].addr_64b,
-                              &neighbors_vars.btnecks[i].addr_64b)){
-                        link_etx = (uint16_t)(neighbors_vars.neighbors[j].numTx +1
-                              / (float)(neighbors_vars.neighbors[j].numTxACK +1));
-                        sum_etx += neighbors_vars.btnecks[i].etx + link_etx;
-                        nb_etx++;
-                        btneck_found = TRUE;
-                     }
-                  }
-               }
-            }
-         }
-
-         // if at least one parent was found
-         if (nb_etx != 0){
-            // copy local btneck
-            memcpy(&advBtnecks[i],&neighbors_vars.btnecks[i], sizeof(btneck_t));
-
-            // Calculate ETX average for this bottleneck
-            avg_etx = (uint16_t)(sum_etx/(float)nb_etx);
-
-            // update the returned value
-            advBtnecks[i].etx = avg_etx;
-         }
-      }
-   }
-
-#ifdef _DEBUG_NEIGHBORS_DETAIL_PLU
-   char strd[150];
-   sprintf(strd, "NEIGH - Adv btnecks:");
-   for(l=0; l< MAX_NUM_BTNECKS; l++){
-      if (advBtnecks[l].counter != 0){
-         strncat(strd, " --->", 150);
-         openserial_ncat_uint8_t_hex(strd, (uint8_t)advBtnecks[l].addr_64b[6], 150);
-         openserial_ncat_uint8_t_hex(strd, (uint8_t)advBtnecks[l].addr_64b[7], 150);
-         strncat(strd, " ratio: ", 150);
-         openserial_ncat_uint32_t(strd, (uint32_t)neighbors_vars.traffic_ratios[l], 150);
-         strncat(strd, " etx: ", 150);
-         openserial_ncat_uint32_t(strd, (uint32_t)advBtnecks[l].etx, 150);
-         openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
-      }
-   }
-#endif
-
-   if (btneck_found == FALSE){
-      // empty local list
-      memset(advBtnecks,0,sizeof(btneck_t)*MAX_NUM_BTNECKS);
-
-      // self announcement
-      memcpy(advBtnecks[0].addr_64b, idmanager_getMyID(ADDR_64B)->addr_64b, LENGTH_ADDR64b); 
-      advBtnecks[0].counter = self_counter;
-      advBtnecks[0].etx = 0;
-
-      // Save the bottleneck status
-      neighbors_vars.isBottleneck = TRUE;
-   }  else {
-      // I am not a bottleneck anymore
-      neighbors_vars.isBottleneck = FALSE;
-   }
-}
 
 /**
 \brief Retrieve my preferred parent's EUI64 address.
@@ -410,38 +316,114 @@ open_addr_t* neighbors_getKANeighbor(uint16_t kaPeriod) {
    }
 }
 
-uint16_t neighbors_getNeighborMinBtneckCounter(uint8_t index){
-   uint8_t i;
-   uint16_t min_counter;
+/**
+\brief Retrieve the advertised bottleneck with updated path quality values
 
-   min_counter = 0xffff;
+For each bottleneck in the set, update the path quality value by adding the last hop link quality.
+If multiple parents advertise the same bottleneck, return the average of the links (TO REPLACE BY
+BEST LINK VALUE ?)
 
-   for (i=0; i<MAX_NUM_BTNECKS; i++){
-      if (neighbors_vars.neighbors[index].btnecks[i].counter != 0
-            && neighbors_vars.neighbors[index].btnecks[i].counter < min_counter)
-         min_counter = neighbors_vars.neighbors[index].btnecks[i].counter;
+If no bottleneck was found or if at least one parent advertise a bottleneck less constrained than
+myself: Self advertisement
+
+\param[out] adv_btnecks The list of advertised bottlenecks
+**/
+void neighbors_getAdvBtnecks(btneck_t * adv_btnecks){
+   uint8_t i,j,k,l;
+   uint8_t sum_etx;     // ETX value of the path between btneck and parent
+   uint16_t link_etx;   // ETX value of last hop
+   uint8_t nb_etx;      // Number of ETX value per track
+   uint16_t avg_etx;    // Average value of path ETX for a track
+   bool btneck_found;
+   uint8_t self_counter;
+
+   btneck_found = FALSE;
+   
+   // copy selected bottleneck list
+   for (l=0; l<MAX_NUM_BTNECKS;l++){
+      memset(&adv_btnecks[l],0, sizeof(btneck_t));
    }
 
-   return min_counter;
-}
-uint16_t neighbors_getMinBtneckCounter(){
-   uint8_t i;
-   uint16_t min_counter;
-
-   min_counter = 0xffff;
+   // get local counter
+   self_counter = sixtop_getBtneckCounter();
 
    for (i=0; i<MAX_NUM_BTNECKS; i++){
-      if (neighbors_vars.btnecks[i].counter != 0
-            && neighbors_vars.btnecks[i].counter < min_counter)
-         min_counter = neighbors_vars.btnecks[i].counter;
+      if (neighbors_vars.btnecks[i].counter != 0){
+         sum_etx = 0;
+         nb_etx = 0;
+
+         // if at least one btneck is less constrained than I am => self announcement
+         if (neighbors_vars.btnecks[i].counter < self_counter){
+            btneck_found = FALSE;
+            break;
+         }
+
+         // for each parent get the btneck path quality and add the last hop link quality
+         for (j=0;j<MAXNUMNEIGHBORS;j++) {
+            if (neighbors_vars.neighbors[j].inParentSet==TRUE){
+               for (k=0; k<MAX_NUM_BTNECKS; k++){
+                  if(neighbors_vars.neighbors[j].btnecks[k].counter != 0){
+                     // if parent advertise the bottleneck, record the path quality 
+                     if (packetfunctions_sameAddress64(&neighbors_vars.neighbors[j].btnecks[k].addr_64b,
+                              &neighbors_vars.btnecks[i].addr_64b)){
+                        link_etx = (uint16_t)(neighbors_vars.neighbors[j].numTx +1
+                              / (float)(neighbors_vars.neighbors[j].numTxACK +1));
+                        sum_etx += neighbors_vars.btnecks[i].etx + link_etx;
+                        nb_etx++;
+                        btneck_found = TRUE;
+                     }
+                  }
+               }
+            }
+         }
+
+         // if at least one parent was found
+         if (nb_etx != 0){
+            // copy local btneck
+            memcpy(&adv_btnecks[i],&neighbors_vars.btnecks[i], sizeof(btneck_t));
+
+            // Calculate ETX average for this bottleneck
+            avg_etx = (uint16_t)(sum_etx/(float)nb_etx);
+
+            // update the returned value
+            adv_btnecks[i].etx = avg_etx;
+         }
+      }
    }
 
-   if (min_counter == 0xffff)
-      return 0;
-   else
-      return min_counter;
-}
+#ifdef _DEBUG_NEIGHBORS_DETAIL_PLU
+   char strd[150];
+   sprintf(strd, "NEIGH - Adv btnecks:");
+   for(l=0; l< MAX_NUM_BTNECKS; l++){
+      if (adv_btnecks[l].counter != 0){
+         strncat(strd, " --->", 150);
+         openserial_ncat_uint8_t_hex(strd, (uint8_t)adv_btnecks[l].addr_64b[6], 150);
+         openserial_ncat_uint8_t_hex(strd, (uint8_t)adv_btnecks[l].addr_64b[7], 150);
+         strncat(strd, " ratio: ", 150);
+         openserial_ncat_uint32_t(strd, (uint32_t)neighbors_vars.traffic_ratios[l], 150);
+         strncat(strd, " etx: ", 150);
+         openserial_ncat_uint32_t(strd, (uint32_t)adv_btnecks[l].etx, 150);
+         openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
+      }
+   }
+#endif
 
+   if (btneck_found == FALSE){
+      // empty local list
+      memset(adv_btnecks,0,sizeof(btneck_t)*MAX_NUM_BTNECKS);
+
+      // self announcement
+      memcpy(adv_btnecks[0].addr_64b, idmanager_getMyID(ADDR_64B)->addr_64b, LENGTH_ADDR64b); 
+      adv_btnecks[0].counter = self_counter;
+      adv_btnecks[0].etx = 0;
+
+      // Save the bottleneck status
+      neighbors_vars.isBottleneck = TRUE;
+   }  else {
+      // I am not a bottleneck anymore
+      neighbors_vars.isBottleneck = FALSE;
+   }
+}
 
 //===== interrogators
 
@@ -618,7 +600,8 @@ void neighbors_indicateRx(open_addr_t* l2_src,
                neighbors_vars.neighbors[i].switchStabilityCounter++;
                if (neighbors_vars.neighbors[i].switchStabilityCounter>=SWITCHSTABILITYTHRESHOLD) {
                   neighbors_vars.neighbors[i].switchStabilityCounter=0;
-                   neighbors_vars.neighbors[i].stableNeighbor=FALSE;
+                  neighbors_vars.neighbors[i].stableNeighbor=FALSE;
+                  neighbors_vars.neighbors[i].inParentSet=FALSE;
                }
             } else {
                neighbors_vars.neighbors[i].switchStabilityCounter=0;
@@ -711,12 +694,7 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
    uint8_t        i,j,k;
    uint8_t        nb_btnecks;
 
-#ifdef _DEBUG_NEIGHBORS_
-   char str[100];
-   sprintf(str, "RX DIO");
-   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-#endif
-
+   // increment DIO counter for bootstrap period
    neighbors_vars.dio_counter++;
 
    // take ownership over the packet
@@ -742,7 +720,7 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
             neighbors_vars.neighbors[i].DAGrank = neighbors_vars.dio->rank;
          }
 
-         // update neighbor bottlecks
+         // update neighbor bottlenecks
          for (j=0; j<MAX_NUM_BTNECKS; j++){
             neighbors_vars.neighbors[i].btnecks[j] = neighbors_vars.dio->btnecks[j];
          }
@@ -758,7 +736,7 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
          if (neighbors_vars.dio_counter == 3){
             neighbors_vars.bootstrap_period = FALSE;
             
-            // init balance factors
+            // initialize balance factors
             nb_btnecks = neighbors_getNumBtnecks();
             for (k=0; k<MAX_NUM_BTNECKS; k++)
                neighbors_vars.traffic_ratios[k] = (uint8_t)(100 / (float)nb_btnecks);
@@ -828,7 +806,6 @@ routing decisions to change. Examples are:
   very low DAGrank, I may want to change by routing parent.
 - I became a DAGroot, so my DAGrank should be 0.
 */
-
 void neighbors_updateMyDAGrankAndNeighborPreference() {
    uint8_t     i;
    uint16_t    rankIncrease;
@@ -1005,7 +982,10 @@ void neighbors_updateMyDAGrankWorst(){
 }
 
 /**
-\brief Update the bottlecks I advertise by saving only less constrained nodes
+\brief Update the bottlenecks I advertise by saving only less constrained nodes
+
+Loop through neighbors with lower rank and select less constrained bottlenecks their advertise.
+The bottlenecks in the local set (neighbors_vars.bottlenecks) will be replace, inserted or updated.
 
 **/
 void neighbors_updateMyBottlenecksSet(){
@@ -1020,7 +1000,7 @@ void neighbors_updateMyBottlenecksSet(){
 
    // For each used neighbor with lower rank, save less constrained bottlenecks
    for (i=0;i<MAXNUMNEIGHBORS;i++) {
-      if ( neighbors_vars.neighbors[i].DAGrank < neighbors_vars.myDAGrank
+      if ( neighbors_isNeighborWithLowerDAGrank(i)
             && (neighbors_vars.neighbors[i].stableNeighbor)
          ){ 
          // for each neighbor btneck, insert, replace or update local btnecks
@@ -1083,7 +1063,13 @@ void neighbors_updateMyBottlenecksSet(){
 }
 
 
-// remove bottleneck that are too constrained
+/**
+\brief Update the balance ratio and remove the bottleneck that have a too small traffic ratio
+
+Call neighbors_updateBalanceRatios() to compute the traffic ratio sent to each bottleneck.
+If the ratio is too small, remove the bottleneck from the set and rerun the procedure.
+
+**/
 void neighbors_filterBtnecks(){
    uint8_t i;
    bool ratioAcceptable;
@@ -1099,9 +1085,9 @@ void neighbors_filterBtnecks(){
    // Until traffic ratios are acceptable (>5%) for each bottleneck    
    while(ratioAcceptable == FALSE){
       // Calculate traffic ratio to send to each bottleneck
-      neighbors_updateBalanceFactors();
+      neighbors_updateBalanceRatios();
 
-      // Remove too coinstrained bottlenecks
+      // Remove too constrained bottlenecks
       ratioAcceptable = TRUE;
       for (i=0; i<MAX_NUM_BTNECKS; i++){
          if (neighbors_vars.btnecks[i].counter != 0 && neighbors_vars.traffic_ratios[i] < 5){
@@ -1120,18 +1106,12 @@ void neighbors_filterBtnecks(){
 }
 
 /**
-\brief Select the parents that advertise the btnecks I  have selected
+\brief Select the parents that advertise the bottlenecks I selected
 
 **/
 void  neighbors_updateMyParentsSet(){
-   uint8_t i,j,k,l;
+   uint8_t i,j,k;
    bool btneck_found;
-
-#ifdef _DEBUG_NEIGHBORS_
-   char str[100];
-   sprintf(str, "Update Parent Set");
-   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-#endif
 
    for (i=0; i<MAXNUMNEIGHBORS; i++){
       btneck_found = FALSE;
@@ -1148,75 +1128,26 @@ void  neighbors_updateMyParentsSet(){
             }
          }
       }
-      // If the parent doesn't annonce a selected btneck and is in the parent set, remove the parent
+      // If the parent doesn't announce a selected btneck and is in the parent set, remove the parent
       if (!btneck_found && neighbors_vars.neighbors[i].inParentSet){
          // remove neighbor from parent set
          neighbors_vars.neighbors[i].inParentSet = FALSE;
-
-         // remove existing tracks
-         for (l=0; l<MAX_NUM_BTNECKS; l++){
-            if (neighbors_vars.neighbors[i].btnecks[l].counter != 0){
-               //sixtop_removeNeighborTracks(neighbors_vars.neighbors[i].btnecks[l].addr_64b, TRACK_BALANCING);
-               //remove the old cells if the parent has changed
-            }
-         }
-#ifdef _DEBUG_NEIGHBORS_
-   char str[100];
-   sprintf(str, "Remove Parent from Set");
-   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-#endif
       } else if (btneck_found && !neighbors_vars.neighbors[i].inParentSet){
-#ifdef _DEBUG_NEIGHBORS_
-   char str[100];
-   sprintf(str, "Add Parent to Set");
-   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-#endif
          // add parent to set
          neighbors_vars.neighbors[i].inParentSet = TRUE;
       }
    }
-
-/*
-   // init parent set 
-   for (i=0; i<MAXNUMNEIGHBORS; i++) {
-      neighbors_vars.neighbors[i].inParentSet = FALSE;
-   }
-
-   // select parents that advertise the bottlenecks I have selected
-   for (j=0;j <MAX_NUM_BTNECKS;j++){
-      if (neighbors_vars.btnecks[j].counter != 0){
-         for (k=0; k<MAXNUMNEIGHBORS; k++){
-            if (neighbors_vars.neighbors[k].used==TRUE 
-                  && neighbors_vars.neighbors[k].DAGrank < neighbors_vars.myDAGrank
-                  && neighbors_vars.neighbors[k].inParentSet!=TRUE){
-               for (l=0; l<MAX_NUM_BTNECKS; l++){
-                  if (neighbors_vars.neighbors[k].btnecks[l].counter != 0){
-                     if (packetfunctions_sameAddress64(
-                              &(neighbors_vars.btnecks[j].addr_64b),
-                              &(neighbors_vars.neighbors[k].btnecks[l].addr_64b))
-                        ){
-                        neighbors_vars.neighbors[k].inParentSet = TRUE;
-                        #ifdef _DEBUG_NEIGHBORS_DETAIL_
-                           char strd[100];
-                           sprintf(strd, "NEIGH ----- Add parent in set");
-                           openserial_printf(COMPONENT_NEIGHBORS, strd, strlen(strd));
-         
-                        #endif
-                        break;
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
-*/
 }
 
 /**
 \brief Compute the traffic ratio to send to each selected bottleneck
+
+If I am a bottleneck, use the parent with whom I have the best link quality
+and send all my traffic to the less constrained bottleneck it announce.
+If not, compute the optimal distribution and gradually balance the load.
+
 **/
-void neighbors_updateBalanceFactors() {
+void neighbors_updateBalanceRatios() {
    uint8_t i,j,k,l;
    uint8_t sum_counters;
    uint8_t btnecks_number;
@@ -1228,12 +1159,12 @@ void neighbors_updateBalanceFactors() {
    btnecks_number = 0;
    sum_counters = 0;
 
-   // if I am a bottleneck, send all my traffic to parent with minimal ETX
+   // if I am a bottleneck, send all my traffic to the parent with the best link quality
    if(neighbors_vars.isBottleneck){
       min_etx = 0xFF;
       min_counter = 0xFF;
 
-      // get the parent with minimal ETX
+      // get the parent with minimal link quality
       for (i=0;i<MAXNUMNEIGHBORS;i++) {
          if (neighbors_vars.neighbors[i].inParentSet==TRUE){
             link_etx = (uint8_t)(neighbors_vars.neighbors[i].numTx +1
@@ -1245,7 +1176,7 @@ void neighbors_updateBalanceFactors() {
          }
       }
 
-      // select best bottleck of the best neighbor
+      // select best bottleneck of the best neighbor
       for (j=0; j<MAX_NUM_BTNECKS; j++) {
          if (neighbors_vars.neighbors[pref_parent].btnecks[j].counter != 0){
             for (k=0; k<MAX_NUM_BTNECKS; k++) {
@@ -1267,15 +1198,15 @@ void neighbors_updateBalanceFactors() {
       if (min_counter < 0xff){
          gradual_diff = (uint8_t)(100 - neighbors_vars.traffic_ratios[pref_btneck])/4;
          for (l=0; l<MAX_NUM_BTNECKS; l++){
-            if (l == pref_btneck){ // incease ratio to selected btneck
+            if (l == pref_btneck){ // increase ratio to selected btneck
                neighbors_vars.traffic_ratios[l]+= gradual_diff;
-            } else { // decrease ration to ohters
+            } else { // decrease ration to others
                neighbors_vars.traffic_ratios[l]-= gradual_diff;
             }
          }
       } else {
-         // TODO throw error, this should nerver append because parent is in parent set and thus advertise 
-         // one of the selected btnecks
+         // TODO throw error, this should never append because parent is in parent set and 
+         // thus advertise one of the selected btnecks
       }
    } 
    // I am not a bottleneck
@@ -1311,22 +1242,21 @@ void neighbors_updateBalanceFactors() {
 }
 
 /**
-\brief Reserve link with parents advertising selected tracks
+\brief Reserve tracks with parents advertising selected bottlenecks
+
+Call sixtop_addCells if a track is not already reserved with a parent advertising a selected 
+bottleneck.
+Note: This function only creates track. Track removal is not done here.
+
 **/
 void neighbors_updateReservedTracks(){
    uint8_t i,j,k;
    track_t new_track;
 
-#ifdef _DEBUG_NEIGHBORS_
-   char str[100];
-   sprintf(str, "Update reserved track");
-   openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-#endif
-
    // for each selected parent
    for (i=0;i<MAXNUMNEIGHBORS;i++) {
       if (neighbors_vars.neighbors[i].inParentSet == TRUE){
-         // for eacth of the selected parent's advertise bottleneck
+         // for each bottleneck the parent advertise
          for (j=0; j<MAX_NUM_BTNECKS; j++){
             if(neighbors_vars.neighbors[i].btnecks[j].counter != 0){
                // for each of the bottleneck I advertise
@@ -1365,7 +1295,8 @@ void neighbors_updateReservedTracks(){
 }
 
 /**
-\brief Remove bottlenecks that are not advertised by selected parents
+\brief Remove bottlenecks that are not anymore advertised by selected parents
+
 **/
 void neighbors_removeUnadvertisedBtnecks(){
    uint8_t i,j,k,l;
@@ -1395,7 +1326,7 @@ void neighbors_removeUnadvertisedBtnecks(){
       }
    }
 
-   // If no parent advertise the bottleck remove it
+   // If no parent advertise the bottleneck remove it
    for (l=0; l<MAX_NUM_BTNECKS; l++){
       if (neighbors_vars.btnecks[l].counter != 0 && adv_counters == 0){
          memset(&neighbors_vars.btnecks[l],0,sizeof(btneck_t));

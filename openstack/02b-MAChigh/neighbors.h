@@ -105,18 +105,12 @@ void          neighbors_init(void);
 
 // getters
 dagrank_t     neighbors_getMyDAGrank(void);
-uint16_t      neighbors_getOfferedDAGrank(neighborRow_t neighbor);
-uint8_t       neighbors_getNumNeighbors(void);
 uint8_t       neighbors_getNumBtnecks(void);
-uint16_t      neighbors_getNeighborMinBtneckCounter(uint8_t index);
-uint16_t      neighbors_getMinBtneckCounter(void);
 bool          neighbors_getPreferredTrack(open_addr_t* addressToWrite);
 bool          neighbors_getPreferredTrackParent(open_addr_t track_owner, open_addr_t* addressToWrite);
 bool          neighbors_getPreferredParentEui64(open_addr_t* addressToWrite);
 open_addr_t*  neighbors_getKANeighbor(uint16_t kaPeriod);
-void          neighbors_getNeighborID(open_addr_t addr_64b);
 void          neighbors_getAdvBtnecks(btneck_t* btnecks);
-void          neighbors_getWorstParent(neighborRow_t* worstParent);
 
 // interrogators
 bool          neighbors_isStableNeighbor(open_addr_t* address);
@@ -150,7 +144,7 @@ void          neighbors_updateMyDAGrankWorst(void);
 void          neighbors_updateMyBottlenecksSet(void);
 void          neighbors_filterBtnecks(void);
 void          neighbors_updateMyParentsSet(void);
-void          neighbors_updateBalanceFactors(void);
+void          neighbors_updateBalanceRatios(void);
 void          neighbors_updateReservedTracks(void);
 void          neighbors_removeUnadvertisedBtnecks(void);
 

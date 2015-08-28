@@ -7,7 +7,6 @@
 #include "packetfunctions.h"
 #include "openrandom.h"
 #include "scheduler.h"
-//#include "sixtop.h"
 #include "idmanager.h"
 #include "opentimers.h"
 #include "IEEE802154E.h"
@@ -193,12 +192,12 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
    }
    if (msg == icmpv6rpl_vars.lastDAO_tx){
 
-//#ifdef _DEBUG_DAO_
+#ifdef _DEBUG_DAO_
       sprintf(str, "RPL - DAO transmitted to ");
       openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
       openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-//#endif
+#endif
 
       //for stats
       openserial_statDAOtx(msg->l2_nextORpreviousHop.addr_64b);
