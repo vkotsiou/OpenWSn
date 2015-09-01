@@ -10,6 +10,7 @@
 #include "idmanager.h"
 #include "opentimers.h"
 #include "IEEE802154E.h"
+#include "iphc.h"
 #include <stdio.h>
 
 
@@ -195,11 +196,11 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
 
 #ifdef _DEBUG_DAO_
       sprintf(str, "RPL - DAO transmitted via ");
-      openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
-      openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
+      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[6], 150);
+      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l2_nextORpreviousHop.addr_64b[7], 150);
       strncat(str, " to ", 150);
-      openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l3_destinationAdd.addr_128b[14], 150);
-      openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l3_destinationAdd.addr_128b[15], 150);
+      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
+      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 #endif
 
@@ -260,16 +261,12 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
       
       case IANA_ICMPv6_RPL_DAO:
 
-
-
-             sprintf(str, "ICMP");
-             openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
-             openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
-             strncat(str, ",broad=", 150);
-             openserial_ncat_uint32_t(str, (uint32_t)packetfunctions_isBroadcastMulticast(&msg->l3_destinationAdd), 150);
-             openserial_printf(COMPONENT_OTF, str, strlen(str));
-
-
+         sprintf(str, "DAO txed - dest ");
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
+         strncat(str, ",broad=", 150);
+         openserial_ncat_uint32_t(str, (uint32_t)packetfunctions_isBroadcastMulticast(&msg->l3_destinationAdd), 150);
+         openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
 
          // this should never happen
@@ -334,7 +331,7 @@ void icmpv6rpl_timer_DIO_task() {
         else
            icmpv6rpl_vars.periodDIO = (TIMER_DIO_TIMEOUT + jitter) / TIMER_NB_TRIGGERED;
 
-     #ifdef _DEBUG_DIO_
+ /*    #ifdef _DEBUG_DIO_
            char str[150];
            sprintf(str, "RPL DIO = jitter=");
            openserial_ncat_uint32_t(str, (uint32_t)jitter, 150);
@@ -348,7 +345,7 @@ void icmpv6rpl_timer_DIO_task() {
            openserial_ncat_uint32_t(str, (uint32_t)bool, 150);
            openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
      #endif
-
+*/
 
        // arm the DIO timer with this new value
        opentimers_setPeriod(
@@ -427,7 +424,7 @@ void sendDIO() {
    msg->l4_sourcePortORicmpv6Type           = IANA_ICMPv6_RPL;
    
    // set DIO destination
-   memcpy(&(msg->l3_destinationAdd),&icmpv6rpl_vars.dioDestination,sizeof(open_addr_t));
+   memcpy(&(msg->l3_destinationAdd), &icmpv6rpl_vars.dioDestination, sizeof(open_addr_t));
    
    //===== DIO payload
    // note: DIO is already mostly populated
@@ -502,7 +499,7 @@ void icmpv6rpl_timer_DAO_task() {
         else
            icmpv6rpl_vars.periodDAO = (TIMER_DAO_TIMEOUT + jitter) / TIMER_NB_TRIGGERED;
 
-     #ifdef _DEBUG_DAO_
+/*     #ifdef _DEBUG_DAO_
            char str[150];
            sprintf(str, "RPL DAO = jitter=");
            openserial_ncat_uint32_t(str, (uint32_t)jitter, 150);
@@ -516,7 +513,7 @@ void icmpv6rpl_timer_DAO_task() {
            openserial_ncat_uint32_t(str, (uint32_t)bool, 150);
            openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
      #endif
-
+*/
       // send DAO
       sendDAO();
 
@@ -585,7 +582,6 @@ void sendDAO() {
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 #endif
 
-
       openqueue_removeEntry(icmpv6rpl_vars.lastDAO_tx);
       icmpv6rpl_vars.lastDAO_tx = NULL;
    }
@@ -622,13 +618,13 @@ void sendDAO() {
 
    // set DAO destination
    msg->l3_destinationAdd.type=ADDR_128B;
-   memcpy(msg->l3_destinationAdd.addr_128b,icmpv6rpl_vars.dio.DODAGID,sizeof(icmpv6rpl_vars.dio.DODAGID));
+   memcpy(msg->l3_destinationAdd.addr_128b, icmpv6rpl_vars.dio.DODAGID, sizeof(icmpv6rpl_vars.dio.DODAGID));
    
 
 #ifdef _DEBUG_DAO_
       sprintf(str, "RPL - DAO dest ");
-      openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l3_destinationAdd.addr_128b[14], 150);
-      openserial_ncat_uint8_t_hex(str, (uint32_t)msg->l3_destinationAdd.addr_128b[15], 150);
+      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
+      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
       openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 #endif
 

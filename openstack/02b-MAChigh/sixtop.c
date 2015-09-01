@@ -240,7 +240,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
       openserial_printError(
          COMPONENT_SIXTOP_RES,
          ERR_NO_FREE_PACKET_BUFFER,
-         (errorparameter_t)0,
+         (errorparameter_t)3,
          (errorparameter_t)0
       );
       return;
@@ -348,7 +348,7 @@ void sixtop_removeCell(open_addr_t* neighbor){
       openserial_printError(
          COMPONENT_SIXTOP_RES,
          ERR_NO_FREE_PACKET_BUFFER,
-         (errorparameter_t)0,
+         (errorparameter_t)4,
          (errorparameter_t)0
       );
       return;
@@ -809,7 +809,7 @@ port_INLINE void sixtop_sendEB() {
       sprintf(str, "EB bug");
       openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
       openserial_printError(COMPONENT_SIXTOP, ERR_NO_FREE_PACKET_BUFFER,
-                            (errorparameter_t)0,
+                            (errorparameter_t)5,
                             (errorparameter_t)0);
       return;
    }
@@ -1342,7 +1342,7 @@ void sixtop_linkResponse(
       sixtop_setState(SIX_IDLE);
 
       openserial_printError(COMPONENT_SIXTOP_RES,ERR_NO_FREE_PACKET_BUFFER,
-                            (errorparameter_t)0,
+                            (errorparameter_t)2,
                             (errorparameter_t)0);
       return;
     }

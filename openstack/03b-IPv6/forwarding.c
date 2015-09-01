@@ -210,17 +210,15 @@ void forwarding_receive(
 
 
    if (
-         (
-            idmanager_isMyAddress(&ipv6_header->dest)
-            ||
-            packetfunctions_isBroadcastMulticast(&ipv6_header->dest)
-         )
-         &&
-         ipv6_header->next_header!=IANA_IPv6ROUTE
-      ) {
+      (
+         idmanager_isMyAddress(&ipv6_header->dest)
+         ||
+         packetfunctions_isBroadcastMulticast(&ipv6_header->dest)
+      )
+      &&
+      ipv6_header->next_header!=IANA_IPv6ROUTE
+   ) {
       // this packet is for me, no source routing header.
-
-
 
       // indicate received packet to upper layer
       switch(msg->l4_protocol) {

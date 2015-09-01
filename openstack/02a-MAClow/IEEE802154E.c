@@ -2065,15 +2065,6 @@ void notif_receive(OpenQueueEntry_t* packetReceived) {
 
    // indicate reception to the schedule, to keep statistics
    schedule_indicateRx(&packetReceived->l2_asn);
-/*   neighbors_indicateRx(
-         &(ieee154e_vars.dataToSend->l2_nextORpreviousHop),
-         ieee154e_vars.dataToSend->l1_rssi,
-               &ieee154e_vars.dataToSend->l2_asn,
-               ieee154e_vars.dataToSend->l2_joinPriorityPresent,
-               ieee154e_vars.dataToSend->l2_joinPriority
-         );
-*/
-
 
    // associate this packet with the virtual component
    // COMPONENT_IEEE802154E_TO_SIXTOP so sixtop can knows it's for it

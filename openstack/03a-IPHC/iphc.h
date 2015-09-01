@@ -184,6 +184,7 @@ owerror_t     iphc_sendFromForwarding(
 owerror_t     iphc_sendFromBridge(OpenQueueEntry_t *msg);
 void          iphc_sendDone(OpenQueueEntry_t *msg, owerror_t error);
 void          iphc_receive(OpenQueueEntry_t *msg);
+void          iphc_retrieveIPv6Header(OpenQueueEntry_t* msg, ipv6_header_iht* ipv6_header);
 
 /**
 \}
