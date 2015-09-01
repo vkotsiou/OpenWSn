@@ -168,7 +168,9 @@ uint8_t icmpv6rpl_getRPLIntanceID(){
 \param[in] error Outcome of the sending.
 */
 void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
-  char str[150];
+#if defined(_DEBUG_DIO_) || defined(_DEBUG_DAO_)
+   char str[150];
+#endif
 
    // take ownership over that packet
    msg->owner = COMPONENT_ICMPv6RPL;
