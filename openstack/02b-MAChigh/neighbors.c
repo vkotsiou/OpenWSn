@@ -623,7 +623,6 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
          openserial_ncat_uint32_t(str, (uint32_t)(tentativeDAGrank < neighbors_vars.myDAGrank), 150);
          openserial_ncat_uint32_t(str, (uint32_t)(neighbors_vars.neighbors[i].DAGrank < MAXDAGRANK), 150);
          openserial_printf(COMPONENT_NEIGHBORS, str, strlen(str));
-
 #endif
 
          /* ---
@@ -655,8 +654,9 @@ void neighbors_updateMyDAGrankAndNeighborPreference() {
    }
 
    //remove the old cells if the parent has changed
-   if(!packetfunctions_sameAddress(&pref_parent, &(neighbors_vars.neighbors[prefParentIdx].addr_64b)))
-      otf_notif_remove_parent(&pref_parent);
+   if(!packetfunctions_sameAddress(&pref_parent, &(neighbors_vars.neighbors[prefParentIdx].addr_64b))){
+     otf_notif_remove_parent(&pref_parent);
+   }
 }
 
 //===== maintenance

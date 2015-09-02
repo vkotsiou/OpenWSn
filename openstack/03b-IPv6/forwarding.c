@@ -198,12 +198,29 @@ void forwarding_receive(
       msg->l4_protocol_compressed = ipv6_header->next_header_compressed;
    }
    
+
+   //todo- bug- special case: a DAO to forward
+   //ICMPv6, I am the destination and I am not the DAGroot
+    if (msg->l4_protocol == IANA_ICMPv6)
+       if ((idmanager_isMyAddress(&ipv6_header->dest)) && (!idmanager_getIsDAGroot()))
+
+          //This is a DAO
+          if ((((ICMPv6_ht*)(msg->payload))->type == IANA_ICMPv6_RPL) && (((ICMPv6_ht*)(msg->payload))->code == IANA_ICMPv6_RPL_DAO)){
+             ipv6_header->dest.type=ADDR_128B;
+             memcpy(ipv6_header->dest.addr_128b, icmpv6rpl_get_DODAGID(), 16 * sizeof(uint8_t));
+
+             char str[150];
+             sprintf(str, "DAO dest replaced");
+             openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+         }
+
+
    // populate packets metadata with L3 information
    memcpy(&(msg->l3_destinationAdd),&ipv6_header->dest,sizeof(open_addr_t));
    memcpy(&(msg->l3_sourceAdd),     &ipv6_header->src, sizeof(open_addr_t));
    
    //todo-debug
-    if (ipv6_header->dest.type == 0)
+   if (ipv6_header->dest.type == 0)
        openserial_printCritical(COMPONENT_IPHC, ERR_GENERIC,
                                    (errorparameter_t)ipv6_header->dest.type,
                                    (errorparameter_t)88);

@@ -157,6 +157,11 @@ void  icmpv6rpl_writeDODAGid(uint8_t* dodagid) {
    icmpv6rpl_vars.fDodagidWritten = 1;
 }
 
+uint8_t  *icmpv6rpl_get_DODAGID(void){
+   return &(icmpv6rpl_vars.dio.DODAGID[0]);
+}
+
+
 uint8_t icmpv6rpl_getRPLIntanceID(){
    return icmpv6rpl_vars.dao.rplinstanceId;
 }
@@ -270,11 +275,14 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
          openserial_ncat_uint32_t(str, (uint32_t)packetfunctions_isBroadcastMulticast(&msg->l3_destinationAdd), 150);
          openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
-
          // this should never happen
          openserial_printCritical(COMPONENT_ICMPv6RPL,ERR_UNEXPECTED_DAO,
                                (errorparameter_t)0,
                                (errorparameter_t)0);
+
+         //we forward it to our DAGroot
+
+
          break;
       
       default:

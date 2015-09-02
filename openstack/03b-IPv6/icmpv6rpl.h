@@ -167,6 +167,7 @@ void     icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error);
 void     icmpv6rpl_receive(OpenQueueEntry_t* msg);
 void     icmpv6rpl_writeDODAGid(uint8_t* dodagid);
 uint8_t  icmpv6rpl_getRPLIntanceID(void);
+uint8_t  *icmpv6rpl_get_DODAGID(void);
 
 /**
 \}
