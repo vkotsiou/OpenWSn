@@ -75,7 +75,6 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
       return(E_FAIL);
    }
 
-
    // retrieve my prefix and EUI64
    myprefix                  = idmanager_getMyID(ADDR_PREFIX);
    myadd64                   = idmanager_getMyID(ADDR_64B);
@@ -95,7 +94,6 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
    ipv6_header.hop_limit     = IPHC_DEFAULT_HOP_LIMIT;
    
    // create the RPL hop-by-hop option
-
    forwarding_createRplOption(
       &rpl_option,      // rpl_option to fill in
       0x00              // flags
@@ -104,8 +102,6 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
 #ifdef FLOW_LABEL_RPL_DOMAIN
    forwarding_createFlowLabel(&flow_label,0x00);
 #endif
-
-
 
    return forwarding_send_internal_RoutingTable(
       msg,
@@ -198,7 +194,7 @@ void forwarding_receive(
       msg->l4_protocol_compressed = ipv6_header->next_header_compressed;
    }
    
-
+/*
    //todo- bug- special case: a DAO to forward
    //ICMPv6, I am the destination and I am not the DAGroot
     if (msg->l4_protocol == IANA_ICMPv6)
@@ -207,13 +203,13 @@ void forwarding_receive(
           //This is a DAO
           if ((((ICMPv6_ht*)(msg->payload))->type == IANA_ICMPv6_RPL) && (((ICMPv6_ht*)(msg->payload))->code == IANA_ICMPv6_RPL_DAO)){
              ipv6_header->dest.type=ADDR_128B;
-             memcpy(ipv6_header->dest.addr_128b, icmpv6rpl_get_DODAGID(), 16 * sizeof(uint8_t));
+             memcpy(&(ipv6_header->dest.addr_128b[0]), icmpv6rpl_get_DODAGID(), sizeof(ipv6_header->dest.addr_128b));
 
              char str[150];
-             sprintf(str, "DAO dest replaced");
+             sprintf(str, "DAO dest replaced (bug)");
              openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
          }
-
+*/
 
    // populate packets metadata with L3 information
    memcpy(&(msg->l3_destinationAdd),&ipv6_header->dest,sizeof(open_addr_t));
@@ -426,6 +422,8 @@ owerror_t forwarding_send_internal_RoutingTable(
       );
       return E_FAIL;
 #endif
+
+
 
 
    // retrieve the next hop from the routing table

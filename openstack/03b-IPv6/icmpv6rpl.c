@@ -268,11 +268,9 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
       
       case IANA_ICMPv6_RPL_DAO:
 
-         sprintf(str, "DAO txed - dest ");
+         sprintf(str, "DAO received - dest ");
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
-         strncat(str, ",broad=", 150);
-         openserial_ncat_uint32_t(str, (uint32_t)packetfunctions_isBroadcastMulticast(&msg->l3_destinationAdd), 150);
          openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
          // this should never happen
@@ -281,6 +279,28 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
                                (errorparameter_t)0);
 
          //we forward it to our DAGroot
+         msg->l3_destinationAdd.type=ADDR_128B;
+         memcpy(&(msg->l3_destinationAdd.addr_128b[0]), icmpv6rpl_vars.dio.DODAGID, sizeof(msg->l3_destinationAdd.addr_128b));
+
+         //to enqueue
+         if (icmpv6_send(msg) == E_SUCCESS) {
+
+      #ifdef _DEBUG_DAO_
+            sprintf(str, "RPL - DAO forwarded to the DAGroot");
+            openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+      #endif
+
+         } else {
+            openqueue_freePacketBuffer(msg);
+
+      #ifdef _DEBUG_DAO_
+            sprintf(str, "RPL - DAO forwarded - icmpv6_send() error");
+            openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+      #endif
+         }
+
+         //the packet treatment MUST stop here (else, will be re-desallocated)
+         return;
 
 
          break;
@@ -628,7 +648,7 @@ void sendDAO() {
 
    // set DAO destination
    msg->l3_destinationAdd.type=ADDR_128B;
-   memcpy(msg->l3_destinationAdd.addr_128b, icmpv6rpl_vars.dio.DODAGID, sizeof(icmpv6rpl_vars.dio.DODAGID));
+   memcpy(&(msg->l3_destinationAdd.addr_128b[0]), icmpv6rpl_vars.dio.DODAGID, sizeof(msg->l3_destinationAdd.addr_128b));
    
 
 #ifdef _DEBUG_DAO_
