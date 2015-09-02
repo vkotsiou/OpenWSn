@@ -271,7 +271,11 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
          sprintf(str, "DAO received - dest ");
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
+         sprintf(str, "DAO received - from ");
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[14], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[15], 150);
          openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+
 
          // this should never happen
          openserial_printCritical(COMPONENT_ICMPv6RPL,ERR_UNEXPECTED_DAO,
@@ -281,6 +285,14 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
          //we forward it to our DAGroot
          msg->l3_destinationAdd.type=ADDR_128B;
          memcpy(&(msg->l3_destinationAdd.addr_128b[0]), icmpv6rpl_vars.dio.DODAGID, sizeof(msg->l3_destinationAdd.addr_128b));
+
+         //timeout when a packet is forwarded
+         #ifdef TIMEOUT_FORWARDING
+               openqueue_set_timeout(msg, QUEUE_TIMEOUT_DEFAULT);
+         #endif
+
+         //new creator
+         msg->creator = COMPONENT_FORWARDING;
 
          //to enqueue
          if (icmpv6_send(msg) == E_SUCCESS) {
