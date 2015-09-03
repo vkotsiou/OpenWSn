@@ -15,6 +15,7 @@
 #include "idmanager.h"
 #include "IEEE802154E.h"
 #include "sixtop.h"
+#include "icmpv6rpl.h"
 #include <stdio.h>
 
 
@@ -90,6 +91,12 @@ void cexample_init() {
 owerror_t cexample_receive(OpenQueueEntry_t* msg,
                       coap_header_iht* coap_header,
                       coap_option_iht* coap_options) {
+
+   char str[150];
+   sprintf(str, "Cexample reception");
+   openserial_printf(COMPONENT_CEXAMPLE, str, strlen(str));
+
+
    return E_FAIL;
 }
 
@@ -190,7 +197,12 @@ void cexample_task_cb() {
    pkt->l2_track                  = cexample_vars.track;
    pkt->l4_destination_port       = WKP_UDP_COAP;
    pkt->l3_destinationAdd.type    = ADDR_128B;
-   memcpy(&pkt->l3_destinationAdd.addr_128b[0], &ipAddr_unistra, 16);
+   //memcpy(&pkt->l3_destinationAdd.addr_128b[0], &ipAddr_unistra, 16);
+   pkt->l3_destinationAdd.type=ADDR_128B;
+   memcpy(&(pkt->l3_destinationAdd.addr_128b[0]), icmpv6rpl_get_DODAGID(), sizeof(pkt->l3_destinationAdd.addr_128b));
+
+
+
    
    // send
    outcome = opencoap_send(
