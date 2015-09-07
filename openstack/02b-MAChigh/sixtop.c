@@ -637,9 +637,6 @@ owerror_t sixtop_send_internal(
    uint8_t iePresent, 
    uint8_t frameVersion) {
 
-
-
-
    //todo-debug
    if (msg->l2_nextORpreviousHop.type == 0){
       openserial_printCritical(COMPONENT_SIXTOP, ERR_GENERIC,

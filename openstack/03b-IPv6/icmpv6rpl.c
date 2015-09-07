@@ -44,6 +44,8 @@ void icmpv6rpl_init() {
    memcpy(&dodagid[0],idmanager_getMyID(ADDR_PREFIX)->prefix,8); // prefix
    memcpy(&dodagid[8],idmanager_getMyID(ADDR_64B)->addr_64b,8);  // eui64
    
+
+
    //===== reset local variables
    memset(&icmpv6rpl_vars,0,sizeof(icmpv6rpl_vars_t));
    
@@ -269,13 +271,30 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
       case IANA_ICMPv6_RPL_DAO:
 
          sprintf(str, "DAO received - dest ");
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[0], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[1], 150);
+         strncat(str, "-", 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[2], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[3], 150);
+         strncat(str, "-", 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[4], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[5], 150);
+         strncat(str, "-", 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[6], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[7], 150);
+         strncat(str, "-", 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[8], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[9], 150);
+         strncat(str, "-", 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[10], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[11], 150);
+         strncat(str, "-", 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[12], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[13], 150);
+         strncat(str, "-", 150);
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
-         sprintf(str, "DAO received - from ");
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[14], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[15], 150);
          openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-
 
          // this should never happen
          openserial_printCritical(COMPONENT_ICMPv6RPL,ERR_UNEXPECTED_DAO,
@@ -660,16 +679,7 @@ void sendDAO() {
 
    // set DAO destination
    msg->l3_destinationAdd.type=ADDR_128B;
-   memcpy(&(msg->l3_destinationAdd.addr_128b[0]), icmpv6rpl_vars.dio.DODAGID, sizeof(msg->l3_destinationAdd.addr_128b));
-   
-
-#ifdef _DEBUG_DAO_
-      sprintf(str, "RPL - DAO dest ");
-      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
-      openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
-      openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
-#endif
-
+   memcpy(msg->l3_destinationAdd.addr_128b,icmpv6rpl_vars.dao.DODAGID,sizeof(icmpv6rpl_vars.dao.DODAGID));
 
 
    //===== fill in packet

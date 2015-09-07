@@ -8,6 +8,7 @@
 #include "opencoap.h"
 #include "uecho.h"
 #include "rrt.h"
+#include <stdio.h>
 
 //=========================== variables =======================================
 
@@ -95,6 +96,11 @@ void openudp_receive(OpenQueueEntry_t* msg) {
       msg->l4_destination_port        = msg->payload[2]*256+msg->payload[3];
       packetfunctions_tossHeader(msg,sizeof(udp_ht));
    }
+
+   char str[150];
+   sprintf(str, "UDP reception");
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
    
    switch(msg->l4_destination_port) {
       case WKP_UDP_COAP:

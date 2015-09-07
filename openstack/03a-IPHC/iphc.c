@@ -101,7 +101,9 @@ owerror_t iphc_sendFromForwarding(
    //XV -poipoi we want to check if the source address prefix is the same as destination prefix
    if (packetfunctions_sameAddress(&temp_dest_prefix,&temp_src_prefix)) {   
    //dest and src on same prefix
-      if (neighbors_isStableNeighbor(&(msg->l3_destinationAdd))) {
+
+      //TODO-Fabrice: this is not because an IPv6 is a neighbor we aim at delivering directly the packet!
+      if (00 && neighbors_isStableNeighbor(&(msg->l3_destinationAdd))) {
          //if direct neighbors, MAC nextHop and IP destination indicate same node
          //the source can be ME or another who I am relaying from. If its me then SAM is elided,
          //if not SAM is 64b address 
@@ -228,7 +230,8 @@ void iphc_receive(OpenQueueEntry_t* msg) {
    iphc_retrieveIPv6Header(msg,&ipv6_header);
    
    if (idmanager_getIsDAGroot()==FALSE ||
-      packetfunctions_isBroadcastMulticast(&(ipv6_header.dest))) {
+      packetfunctions_isBroadcastMulticast(&(ipv6_header.dest))
+   ) {
       packetfunctions_tossHeader(msg,ipv6_header.header_length);
       
       if (ipv6_header.next_header==IANA_IPv6HOPOPT) {
