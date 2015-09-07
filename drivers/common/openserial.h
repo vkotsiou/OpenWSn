@@ -73,17 +73,18 @@ enum {
 
 enum{
    SERTYPE_DATA_GENERATION    = 0x01,
-   SERTYPE_PKT_TX             = 0x02,
-   SERTYPE_PKT_RX             = 0x03,
-   SERTYPE_CELL_ADD           = 0x04,
-   SERTYPE_CELL_REMOVE        = 0x05,
-   SERTYPE_ACK_TX             = 0x06,
-   SERTYPE_ACK_RX             = 0x07,
-   SERTYPE_PKT_TIMEOUT        = 0x08,
-   SERTYPE_PKT_ERROR          = 0x09,
-   SERTYPE_PKT_BUFFEROVERFLOW = 0x0a,
-   SERTYPE_DIOTX              = 0x0b,
-   SERTYPE_DAOTX              = 0x0c
+   SERTYPE_DATA_RX            = 0x02,
+   SERTYPE_PKT_TX             = 0x03,
+   SERTYPE_PKT_RX             = 0x04,
+   SERTYPE_CELL_ADD           = 0x05,
+   SERTYPE_CELL_REMOVE        = 0x06,
+   SERTYPE_ACK_TX             = 0x07,
+   SERTYPE_ACK_RX             = 0x08,
+   SERTYPE_PKT_TIMEOUT        = 0x09,
+   SERTYPE_PKT_ERROR          = 0x0a,
+   SERTYPE_PKT_BUFFEROVERFLOW = 0x0b,
+   SERTYPE_DIOTX              = 0x0c,
+   SERTYPE_DAOTX              = 0x0d
 };
 //=========================== typedef =========================================
 
@@ -118,6 +119,7 @@ typedef struct{
    uint16_t    track_instance;
    uint8_t     track_owner[8];
    uint16_t    seqnum;
+   uint8_t     l3Dest[16];
 } evtPktGen_t;
 END_PACK
 
@@ -224,7 +226,8 @@ void  openserial_statRx(OpenQueueEntry_t* msg);
 void  openserial_statTx(OpenQueueEntry_t* msg);
 void  openserial_statPktTimeout(OpenQueueEntry_t* msg);
 void  openserial_statPktBufferOverflow(OpenQueueEntry_t* msg);
-void  openserial_statGen(uint16_t seqnum, track_t track);
+void  openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t dest);
+void  openserial_statDataRx(uint16_t seqnum, track_t track, open_addr_t dest);
 void  openserial_statDIOtx(void);
 void  openserial_statDAOtx(uint8_t *parent);
 

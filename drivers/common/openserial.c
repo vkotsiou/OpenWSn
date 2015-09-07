@@ -958,11 +958,11 @@ void openserial_statTx(OpenQueueEntry_t* msg){
 //a ack has timeouted in openqueue
 void openserial_statPktTimeout(OpenQueueEntry_t* msg){
 
-#ifdef OPENSERIAL_STAT
-   evtPktTx_t evt;
-   openserial_fillPktTx(&evt, msg);
-   openserial_printStat(SERTYPE_PKT_TIMEOUT, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktTx_t));
-  #endif
+   #ifdef OPENSERIAL_STAT
+      evtPktTx_t evt;
+      openserial_fillPktTx(&evt, msg);
+      openserial_printStat(SERTYPE_PKT_TIMEOUT, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktTx_t));
+   #endif
 }
 
 
@@ -970,12 +970,11 @@ void openserial_statPktTimeout(OpenQueueEntry_t* msg){
 //not enough space in openqueue for this data packet
 void openserial_statPktBufferOverflow(OpenQueueEntry_t* msg){
 
-#ifdef OPENSERIAL_STAT
-   evtPktRx_t evt;
-   openserial_fillPktRx(&evt, msg);
-   openserial_printStat(SERTYPE_PKT_BUFFEROVERFLOW, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktRx_t));
-
-  #endif
+   #ifdef OPENSERIAL_STAT
+      evtPktRx_t evt;
+      openserial_fillPktRx(&evt, msg);
+      openserial_printStat(SERTYPE_PKT_BUFFEROVERFLOW, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktRx_t));
+   #endif
 }
 
 
@@ -983,7 +982,6 @@ void openserial_statPktBufferOverflow(OpenQueueEntry_t* msg){
 void openserial_statPktError(OpenQueueEntry_t* msg){
 
    #ifdef OPENSERIAL_STAT
-
       evtPktTx_t evt;
       openserial_fillPktTx(&evt, msg);
       openserial_printStat(SERTYPE_PKT_ERROR, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evtPktTx_t));
@@ -992,7 +990,7 @@ void openserial_statPktError(OpenQueueEntry_t* msg){
 
 
 //push an event to track generated frames
-void openserial_statGen(uint16_t seqnum, track_t track){
+void openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t dest){
 
    #ifdef OPENSERIAL_STAT
       evtPktGen_t          dataGen;
@@ -1001,13 +999,30 @@ void openserial_statGen(uint16_t seqnum, track_t track){
       dataGen.seqnum          = seqnum ;
       dataGen.track_instance  = track.instance;
       memcpy(dataGen.track_owner, track.owner.addr_64b, 8);
+      memcpy(dataGen.l3Dest, dest.addr_128b, 16);
 
-      //memcpy(&(dataGen.track), &(cexample_vars.track), sizeof(cexample_vars.track));
       openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
    #endif
 
 }
 
+
+//push an event to track generated frames
+void openserial_statDataRx(uint16_t seqnum, track_t track, open_addr_t dest){
+
+   #ifdef OPENSERIAL_STAT
+      evtPktGen_t          dataGen;
+
+      //info
+      dataGen.seqnum          = seqnum ;
+      dataGen.track_instance  = track.instance;
+      memcpy(dataGen.track_owner, track.owner.addr_64b, 8);
+      memcpy(dataGen.l3Dest, dest.addr_128b, 16);
+
+      openserial_printStat(SERTYPE_DATA_RX, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
+   #endif
+
+}
 
 
 //push an event to track DIO transmissions

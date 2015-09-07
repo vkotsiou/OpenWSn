@@ -92,10 +92,18 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
                       coap_header_iht* coap_header,
                       coap_option_iht* coap_options) {
 
+   uint16_t seqnum;
+
    char str[150];
    sprintf(str, "Cexample reception");
    openserial_printf(COMPONENT_CEXAMPLE, str, strlen(str));
 
+
+   //extracts the sequence number
+   seqnum = (msg->payload[0] << 8) & (msg->payload[1]);
+
+   //a frame was received
+   openserial_statDataRx(seqnum, msg->l2_track, msg->l3_destinationAdd);
 
    return E_FAIL;
 }
@@ -136,10 +144,6 @@ void cexample_task_cb() {
    uint8_t              i;
 
 
-//   char                 msg[15];
-//   snprintf(msg, 15, "generation");
-//   openserial_printf(COMPONENT_CEXAMPLE, (uint8_t*)msg, strlen(msg));
-   
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) return;
    
@@ -192,16 +196,15 @@ void cexample_task_cb() {
    packetfunctions_reserveHeaderSize(pkt,1);
    pkt->payload[0]                = ((COAP_OPTION_NUM_URIPATH) << 4) | (sizeof(cexample_path0)-1);
    
-
    // metadata
    pkt->l2_track                  = cexample_vars.track;
    pkt->l4_destination_port       = WKP_UDP_COAP;
-   pkt->l3_destinationAdd.type    = ADDR_128B;
+   //pkt->l3_destinationAdd.type    = ADDR_128B;
    //memcpy(&pkt->l3_destinationAdd.addr_128b[0], &ipAddr_unistra, 16);
+
+   // set DAO destination
    pkt->l3_destinationAdd.type=ADDR_128B;
-   memcpy(&(pkt->l3_destinationAdd.addr_128b[0]), icmpv6rpl_get_DODAGID(), sizeof(pkt->l3_destinationAdd.addr_128b));
-
-
+   memcpy(pkt->l3_destinationAdd.addr_128b, icmpv6rpl_get_DODAGID(), sizeof(pkt->l3_destinationAdd.addr_128b));
 
    
    // send
@@ -219,7 +222,7 @@ void cexample_task_cb() {
    }
    
    //a frame was generated (seqnum was meanwhile incremented)
-   openserial_statGen(cexample_vars.seqnum -1, cexample_vars.track);
+   openserial_statDataGen(cexample_vars.seqnum -1, cexample_vars.track, pkt->l3_destinationAdd);
 
    return;
 }
