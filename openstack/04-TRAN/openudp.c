@@ -97,11 +97,7 @@ void openudp_receive(OpenQueueEntry_t* msg) {
       packetfunctions_tossHeader(msg,sizeof(udp_ht));
    }
 
-   char str[150];
-   sprintf(str, "UDP reception");
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
-   
    switch(msg->l4_destination_port) {
       case WKP_UDP_COAP:
          opencoap_receive(msg);

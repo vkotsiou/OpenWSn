@@ -94,6 +94,7 @@ void openbridge_receive(OpenQueueEntry_t* msg) {
    openserial_printData((uint8_t*)(msg->payload),msg->length);
    
    // free packet
+   //TODO=fabrice
    openqueue_freePacketBuffer(msg);
 }
 

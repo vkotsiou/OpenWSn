@@ -8,6 +8,8 @@
 #include "idmanager.h"
 #include "opentimers.h"
 #include "scheduler.h"
+#include <stdio.h>
+
 
 //=========================== defines =========================================
 
@@ -58,7 +60,12 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    msg->owner                = COMPONENT_OPENCOAP;
    
    //=== step 1. parse the packet
-   
+
+   char str[150];
+        sprintf(str, "coap reception");
+        openserial_printf(COMPONENT_CEXAMPLE, str, strlen(str));
+
+
    // parse the CoAP header and remove from packet
    index = 0;
    coap_header.Ver           = (msg->payload[index] & 0xc0) >> 6;
@@ -111,6 +118,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       coap_options[i].length      = (msg->payload[index] & 0x0f);
       index++;
       coap_options[i].pValue      = &(msg->payload[index]);
+
       index                      += coap_options[i].length; //includes length as well
    }
    
@@ -134,6 +142,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       
       // iterate until matching resource found, or no match
       while (found==FALSE) {
+
          if (
                coap_options[0].type==COAP_OPTION_NUM_URIPATH    &&
                coap_options[1].type==COAP_OPTION_NUM_URIPATH    &&
@@ -158,6 +167,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
                temp_desc->path0len>0                            &&
                temp_desc->path0val!=NULL
             ) {
+
             // resource has a path of form path0
                
             if (
@@ -179,6 +189,8 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       }
    
    } else {
+
+
       // this is a response: target resource is indicated by token, and message ID
       // if an ack for a confirmable message, or a reset
       // find the resource which matches
@@ -188,7 +200,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       
       // iterate until matching resource found, or no match
       while (found==FALSE) {
-         
+
          if (
                 coap_header.TKL==temp_desc->last_request.TKL                                       &&
                 memcmp(&coap_header.token[0],&temp_desc->last_request.token[0],coap_header.TKL)==0
@@ -229,9 +241,15 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    
    if (found==TRUE) {
       
+      char str[150];
+      sprintf(str, "coap - Cexample reception");
+      openserial_printf(COMPONENT_CEXAMPLE, str, strlen(str));
+
+
       // call the resource's callback
       outcome = temp_desc->callbackRx(msg,&coap_header,&coap_options[0]);
    } else {
+
       // reset packet payload (DO NOT DELETE, we will reuse same buffer for response)
       msg->payload                     = &(msg->packet[127]);
       msg->length                      = 0;
@@ -241,6 +259,8 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    }
    
    if (outcome==E_FAIL) {
+
+
       // reset packet payload (DO NOT DELETE, we will reuse same buffer for response)
       msg->payload                     = &(msg->packet[127]);
       msg->length                      = 0;
@@ -257,6 +277,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    } else {
       msg->creator                     = COMPONENT_OPENCOAP;
    }
+
    msg->l4_protocol                    = IANA_UDP;
    temp_l4_destination_port            = msg->l4_destination_port;
    msg->l4_destination_port            = msg->l4_sourcePortORicmpv6Type;

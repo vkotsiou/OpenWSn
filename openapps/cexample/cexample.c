@@ -27,7 +27,7 @@
 #define  CEXAMPLE_PERIOD      4000
 
 const uint16_t cexample_timeout = 4000;
-const uint8_t cexample_path0[] = "ex";
+const char cexample_path0[] = "cexample";
 
 //=========================== variables =======================================
 
@@ -49,7 +49,7 @@ void    cexample_sendDone(OpenQueueEntry_t* msg, owerror_t error);
 void cexample_init() {
    
    // prepare the resource descriptor for the /ex path
-   cexample_vars.desc.path0len             = sizeof(cexample_path0)-1;
+   cexample_vars.desc.path0len             = strlen(cexample_path0)-1;
    cexample_vars.desc.path0val             = (uint8_t*)(&cexample_path0);
    cexample_vars.desc.path1len             = 0;
    cexample_vars.desc.path1val             = NULL;
@@ -69,11 +69,14 @@ void cexample_init() {
 
    opencoap_register(&cexample_vars.desc);
 
+   //DAGroot: no packet is generated, only the reception part is activated
+   if (idmanager_getIsDAGroot())
+      return;
+
    //starts to generate packets when I am synchronized
    uint64_t  next = openrandom_get16b();
    while (next > 5 * CEXAMPLE_PERIOD)
       next -= CEXAMPLE_PERIOD;
-
 
    cexample_vars.timerId    = opentimers_start(
          next,
