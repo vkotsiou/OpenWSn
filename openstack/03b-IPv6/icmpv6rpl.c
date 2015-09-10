@@ -232,7 +232,7 @@ void icmpv6rpl_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
 void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
    uint8_t      icmpv6code;
    open_addr_t  myPrefix;
-   char str[150];
+
    // take ownership
    msg->owner      = COMPONENT_ICMPv6RPL;
    
@@ -270,14 +270,14 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
       
       case IANA_ICMPv6_RPL_DAO:
 
-
-         sprintf(str, "DAO received - src ");
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[12], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[13], 150);
-         strncat(str, "-", 150);
+#ifdef _DEBUG_DAO_
+         char str[150];
+         sprintf(str, "DAO received from the source ");
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[14], 150);
+         strncat(str, "-", 150);
          openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[15], 150);
          openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
+#endif
 
          // this should never happen
          if (!idmanager_getIsDAGroot())

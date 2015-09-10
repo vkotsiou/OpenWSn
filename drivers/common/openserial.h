@@ -119,8 +119,9 @@ typedef struct{
    uint16_t    track_instance;
    uint8_t     track_owner[8];
    uint16_t    seqnum;
-   uint8_t     l3Dest[16];
-} evtPktGen_t;
+   uint8_t     l3Source[8];
+   uint8_t     l3Dest[8];
+} evtPktData_t;
 END_PACK
 
 BEGIN_PACK
@@ -226,8 +227,8 @@ void  openserial_statRx(OpenQueueEntry_t* msg);
 void  openserial_statTx(OpenQueueEntry_t* msg);
 void  openserial_statPktTimeout(OpenQueueEntry_t* msg);
 void  openserial_statPktBufferOverflow(OpenQueueEntry_t* msg);
-void  openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t dest);
-void  openserial_statDataRx(uint16_t seqnum, track_t track, open_addr_t dest);
+void  openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t src, open_addr_t dest);
+void  openserial_statDataRx(uint16_t seqnum, track_t track, open_addr_t src, open_addr_t dest);
 void  openserial_statDIOtx(void);
 void  openserial_statDAOtx(uint8_t *parent);
 

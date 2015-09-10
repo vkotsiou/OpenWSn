@@ -990,16 +990,27 @@ void openserial_statPktError(OpenQueueEntry_t* msg){
 
 
 //push an event to track generated frames
-void openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t dest){
+void openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t src, open_addr_t dest){
 
    #ifdef OPENSERIAL_STAT
-      evtPktGen_t          dataGen;
+      evtPktData_t          dataGen;
+
+      //wrong arguments
+        if (src.type != ADDR_64B){
+            openserial_printError(COMPONENT_OPENSERIAL, ERR_WRONG_ADDR_TYPE, src.type, 5);
+            return;
+         }
+        if (dest.type != ADDR_64B){
+            openserial_printError(COMPONENT_OPENSERIAL, ERR_WRONG_ADDR_TYPE, dest.type, 5);
+            return;
+         }
 
       //info
       dataGen.seqnum          = seqnum ;
       dataGen.track_instance  = track.instance;
       memcpy(dataGen.track_owner, track.owner.addr_64b, 8);
-      memcpy(dataGen.l3Dest, dest.addr_128b, 16);
+      memcpy(dataGen.l3Source, src.addr_64b, 8);
+      memcpy(dataGen.l3Dest, dest.addr_64b, 8);
 
       openserial_printStat(SERTYPE_DATA_GENERATION, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
    #endif
@@ -1008,18 +1019,29 @@ void openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t dest){
 
 
 //push an event to track generated frames
-void openserial_statDataRx(uint16_t seqnum, track_t track, open_addr_t dest){
+void openserial_statDataRx(uint16_t seqnum, track_t track, open_addr_t src, open_addr_t dest){
 
    #ifdef OPENSERIAL_STAT
-      evtPktGen_t          dataGen;
+      evtPktData_t          dataRx;
+
+      //wrong arguments
+      if (src.type != ADDR_64B){
+          openserial_printError(COMPONENT_OPENSERIAL, ERR_WRONG_ADDR_TYPE, src.type, 5);
+          return;
+       }
+      if (dest.type != ADDR_64B){
+          openserial_printError(COMPONENT_OPENSERIAL, ERR_WRONG_ADDR_TYPE, dest.type, 5);
+          return;
+       }
 
       //info
-      dataGen.seqnum          = seqnum ;
-      dataGen.track_instance  = track.instance;
-      memcpy(dataGen.track_owner, track.owner.addr_64b, 8);
-      memcpy(dataGen.l3Dest, dest.addr_128b, 16);
+      dataRx.seqnum          = seqnum ;
+      dataRx.track_instance  = track.instance;
+      memcpy(dataRx.track_owner, track.owner.addr_64b, 8);
+      memcpy(dataRx.l3Source, src.addr_64b, 8);
+      memcpy(dataRx.l3Dest, dest.addr_64b, 8);
 
-      openserial_printStat(SERTYPE_DATA_RX, COMPONENT_CEXAMPLE, (uint8_t*)&dataGen, sizeof(dataGen));
+      openserial_printStat(SERTYPE_DATA_RX, COMPONENT_CEXAMPLE, (uint8_t*)&dataRx, sizeof(dataRx));
    #endif
 
 }

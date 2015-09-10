@@ -235,8 +235,15 @@ void iphc_receive(OpenQueueEntry_t* msg) {
    
 
    //DAGROOT -> openbridge for debug (to openvizualizer)
-   if (idmanager_getIsDAGroot())
+   if (idmanager_getIsDAGroot()){
       openbridge_receive(msg);
+
+#ifndef IPHC_FORWARD_UPPER
+      openqueue_freePacketBuffer(msg);
+      return;
+#endif
+   }
+
 
 
    //ipv6 headers

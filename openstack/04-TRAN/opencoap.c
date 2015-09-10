@@ -61,11 +61,6 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    
    //=== step 1. parse the packet
 
-   char str[150];
-        sprintf(str, "coap reception");
-        openserial_printf(COMPONENT_CEXAMPLE, str, strlen(str));
-
-
    // parse the CoAP header and remove from packet
    index = 0;
    coap_header.Ver           = (msg->payload[index] & 0xc0) >> 6;
@@ -169,7 +164,6 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
             ) {
 
             // resource has a path of form path0
-               
             if (
                   coap_options[0].length==temp_desc->path0len                               &&
                   memcmp(coap_options[0].pValue,temp_desc->path0val,temp_desc->path0len)==0
@@ -238,13 +232,8 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    }
    
    //=== step 3. ask the resource to prepare response
-   
-   if (found==TRUE) {
-      
-      char str[150];
-      sprintf(str, "coap - Cexample reception");
-      openserial_printf(COMPONENT_CEXAMPLE, str, strlen(str));
 
+   if (found==TRUE) {
 
       // call the resource's callback
       outcome = temp_desc->callbackRx(msg,&coap_header,&coap_options[0]);
@@ -271,6 +260,14 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    
    //=== step 4. send that packet back
    
+   //particular case: the dagroot does not reply to CoAP messages (openbrdge should do so, we just  have here a log purpose)
+#ifdef OPENCOAP_DROPREP_DAGROOT
+   if (outcome == E_SUCCESS && idmanager_getIsDAGroot()){
+      openqueue_freePacketBuffer(msg);
+      return;
+   }
+#endif
+
    // fill in packet metadata
    if (found==TRUE) {
       msg->creator                     = temp_desc->componentID;
@@ -410,7 +407,7 @@ void opencoap_register(coap_resource_desc_t* desc) {
    // since this CoAP resource will be at the end of the list, its next element
    // should point to NULL, indicating the end of the linked list.
    desc->next = NULL;
-   
+
    // if this is the first resource, simply have resources point to it
    if (opencoap_vars.resources==NULL) {
       opencoap_vars.resources = desc;

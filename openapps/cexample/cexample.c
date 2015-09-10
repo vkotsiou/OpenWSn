@@ -49,7 +49,7 @@ void    cexample_sendDone(OpenQueueEntry_t* msg, owerror_t error);
 void cexample_init() {
    
    // prepare the resource descriptor for the /ex path
-   cexample_vars.desc.path0len             = strlen(cexample_path0)-1;
+   cexample_vars.desc.path0len             = sizeof(cexample_path0) - 1;
    cexample_vars.desc.path0val             = (uint8_t*)(&cexample_path0);
    cexample_vars.desc.path1len             = 0;
    cexample_vars.desc.path1val             = NULL;
@@ -83,7 +83,6 @@ void cexample_init() {
          TIMER_ONESHOT,
          TIME_MS,
          cexample_timer_start);
-
 }
 
 
@@ -97,18 +96,17 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
 
    uint16_t seqnum;
 
-   char str[150];
-   sprintf(str, "Cexample reception");
-   openserial_printf(COMPONENT_CEXAMPLE, str, strlen(str));
-
-
    //extracts the sequence number
    seqnum = (msg->payload[0] << 8) & (msg->payload[1]);
 
    //a frame was received
-   openserial_statDataRx(seqnum, msg->l2_track, msg->l3_destinationAdd);
+   open_addr_t dest_128b, prefix, src_128b;
+   packetfunctions_ip128bToMac64b(&dest_128b, &prefix, &(msg->l3_destinationAdd));
+   packetfunctions_ip128bToMac64b(&src_128b, &prefix, &(msg->l3_sourceAdd));
+   openserial_statDataRx(seqnum, msg->l2_track, src_128b, dest_128b);
 
-   return E_FAIL;
+   //nothing to respond
+   return E_SUCCESS;
 }
 
 
@@ -179,9 +177,9 @@ void cexample_task_cb() {
    (cexample_vars.seqnum)++;
 
    //garbage for the remaining bytes
-   for (i=2;i<PAYLOADLEN;i++) {
+   for (i=2;i<PAYLOADLEN;i++)
        pkt->payload[i]             = i;
-    }
+
 
    //coap packet
    packetfunctions_reserveHeaderSize(pkt,1);
@@ -225,7 +223,9 @@ void cexample_task_cb() {
    }
    
    //a frame was generated (seqnum was meanwhile incremented)
-   openserial_statDataGen(cexample_vars.seqnum -1, cexample_vars.track, pkt->l3_destinationAdd);
+   open_addr_t dest_128b, prefix;
+   packetfunctions_ip128bToMac64b(&dest_128b, &prefix, &(pkt->l3_destinationAdd));
+   openserial_statDataGen(cexample_vars.seqnum -1, cexample_vars.track, *(idmanager_getMyID(ADDR_64B)), dest_128b);
 
    return;
 }
