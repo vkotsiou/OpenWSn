@@ -234,58 +234,38 @@ void iphc_receive(OpenQueueEntry_t* msg) {
    iphc_retrieveIPv6Header(msg, &ipv6_header);
    
 
-   //Not a DAGroot OR I am the destination OR multicast / broadcast
- /*  if (idmanager_getIsDAGroot()==FALSE ||
-      packetfunctions_isBroadcastMulticast(&(ipv6_header.dest)) ||
-      idmanager_isMyAddress(&(ipv6_header.dest)
-   ) {
-   */
-
-   //DAGROOT -> openbridge
-   if (idmanager_getIsDAGroot()){
+   //DAGROOT -> openbridge for debug (to openvizualizer)
+   if (idmanager_getIsDAGroot())
       openbridge_receive(msg);
-   //   openqueue_freePacketBuffer(msg);
+
+
+   //ipv6 headers
+   packetfunctions_tossHeader(msg,ipv6_header.header_length);
+
+   if (ipv6_header.next_header==IANA_IPv6HOPOPT) {
+
+      // retrieve hop-by-hop header (includes RPL option)
+      iphc_retrieveIPv6HopByHopHeader(
+         msg,
+         &ipv6_hop_header,
+         &rpl_option
+      );
+
+      // toss the headers
+      packetfunctions_tossHeader(
+         msg,
+         IPv6HOP_HDR_LEN+ipv6_hop_header.HdrExtLen
+      );
    }
 
- //  else{
-      //ipv6 headers
-      packetfunctions_tossHeader(msg,ipv6_header.header_length);
 
-      if (ipv6_header.next_header==IANA_IPv6HOPOPT) {
-
-         // retrieve hop-by-hop header (includes RPL option)
-         iphc_retrieveIPv6HopByHopHeader(
-            msg,
-            &ipv6_hop_header,
-            &rpl_option
-         );
-
-         // toss the headers
-         packetfunctions_tossHeader(
-            msg,
-            IPv6HOP_HDR_LEN+ipv6_hop_header.HdrExtLen
-         );
-      }
-
-
-      // send up the stack
-        forwarding_receive(
-           msg,
-           &ipv6_header,
-           &ipv6_hop_header,
-           &rpl_option
-        );
- //  }
-
-/*   else{
-
-      //backtrack for the IPv6 headers
-      packetfunctions_reserveHeaderSize(msg, length);
-
-      //serial line
-      openbridge_receive(msg);
-   }
-*/
+   // send up the stack
+     forwarding_receive(
+        msg,
+        &ipv6_header,
+        &ipv6_hop_header,
+        &rpl_option
+     );
 
 }
 

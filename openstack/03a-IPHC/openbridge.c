@@ -108,11 +108,6 @@ void openbridge_receive(OpenQueueEntry_t* msg) {
    msg->payload   = payload;
    msg->length    = length;
    memcpy(msg->packet, packet, sizeof(msg->packet));
-
-
-   // free packet
-   //TODO=fabrice
-   //openqueue_freePacketBuffer(msg);
 }
 
 //=========================== private =========================================

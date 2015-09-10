@@ -270,34 +270,18 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
       
       case IANA_ICMPv6_RPL_DAO:
 
-         sprintf(str, "DAO received - dest ");
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[0], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[1], 150);
+
+         sprintf(str, "DAO received - src ");
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[12], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[13], 150);
          strncat(str, "-", 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[2], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[3], 150);
-         strncat(str, "-", 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[4], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[5], 150);
-         strncat(str, "-", 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[6], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[7], 150);
-         strncat(str, "-", 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[8], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[9], 150);
-         strncat(str, "-", 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[10], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[11], 150);
-         strncat(str, "-", 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[12], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[13], 150);
-         strncat(str, "-", 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[14], 150);
-         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_destinationAdd.addr_128b[15], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[14], 150);
+         openserial_ncat_uint8_t_hex(str, (uint8_t)msg->l3_sourceAdd.addr_128b[15], 150);
          openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
 
          // this should never happen
-         openserial_printCritical(COMPONENT_ICMPv6RPL,ERR_UNEXPECTED_DAO,
+         if (!idmanager_getIsDAGroot())
+            openserial_printCritical(COMPONENT_ICMPv6RPL,ERR_UNEXPECTED_DAO,
                                (errorparameter_t)0,
                                (errorparameter_t)0);
 
