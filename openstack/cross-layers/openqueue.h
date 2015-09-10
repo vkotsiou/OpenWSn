@@ -41,6 +41,7 @@ typedef struct {
 typedef struct {
    OpenQueueEntry_t  queue[QUEUELENGTH];
    uint8_t           debugPrintRow;
+   OpenQueueEntry_t  openbridge;
 } openqueue_vars_t;
 
 //=========================== prototypes ======================================
@@ -68,6 +69,8 @@ OpenQueueEntry_t*    openqueue_getPacket(uint8_t pos);
 // called by IEEE80215E
 OpenQueueEntry_t*  openqueue_macGetDataPacket(open_addr_t* toNeighbor, track_t *track);
 OpenQueueEntry_t*  openqueue_macGetAdvPacket(void);
+//called by openbridge
+OpenQueueEntry_t* openqueue_copy_for_openbridge(OpenQueueEntry_t* pkt);
 //management
 bool              openqueue_overflow_for_data(void);
 

@@ -7,6 +7,7 @@
 #include "forwarding.h"
 #include "neighbors.h"
 #include "openbridge.h"
+#include "openqueue.h"
 
 //=========================== variables =======================================
 
@@ -79,13 +80,16 @@ owerror_t iphc_sendFromForwarding(
    nh=IPHC_NH_INLINE;
    
    // error checking
-   if (idmanager_getIsDAGroot()==TRUE &&
+   //TODO-Fabrice: no, the CoAP app may be implemented on the DAGroot
+ /*  if (idmanager_getIsDAGroot()==TRUE &&
       packetfunctions_isAllRoutersMulticast(&(msg->l3_destinationAdd))==FALSE) {
       openserial_printCritical(COMPONENT_IPHC,ERR_BRIDGE_MISMATCH,
                             (errorparameter_t)2,
                             (errorparameter_t)0);
       return E_FAIL;
    }
+   */
+
    
    //discard the packet.. hop limit reached.
    if (ipv6_header->hop_limit==0) {
@@ -223,7 +227,6 @@ void iphc_receive(OpenQueueEntry_t* msg) {
    ipv6_header_iht      ipv6_header;
    ipv6_hopbyhop_iht    ipv6_hop_header;
    rpl_option_ht        rpl_option;
-   uint16_t             length =0;
    
    msg->owner      = COMPONENT_IPHC;
    
@@ -238,60 +241,51 @@ void iphc_receive(OpenQueueEntry_t* msg) {
    ) {
    */
 
-   length = ipv6_header.header_length;
-   packetfunctions_tossHeader(msg,ipv6_header.header_length);
-      
-   if (ipv6_header.next_header==IANA_IPv6HOPOPT) {
-      
-      // retrieve hop-by-hop header (includes RPL option)
-      iphc_retrieveIPv6HopByHopHeader(
-         msg,
-         &ipv6_hop_header,
-         &rpl_option
-      );
-
-      // toss the headers
-      length += IPv6HOP_HDR_LEN+ipv6_hop_header.HdrExtLen;
-      packetfunctions_tossHeader(
-         msg,
-         IPv6HOP_HDR_LEN+ipv6_hop_header.HdrExtLen
-      );
+   //DAGROOT -> openbridge
+   if (idmanager_getIsDAGroot()){
+      openbridge_receive(msg);
+   //   openqueue_freePacketBuffer(msg);
    }
 
-   //transport layer
-   uint16_t l4proto;
-   if (ipv6_header.next_header == IANA_IPv6HOPOPT)
-      l4proto = ipv6_hop_header.nextHeader;
-   else
-      l4proto = ipv6_header.next_header;
+ //  else{
+      //ipv6 headers
+      packetfunctions_tossHeader(msg,ipv6_header.header_length);
 
-   //I am not the DAGroot OR this is not an UDP/TCP packet for me
-   if (!idmanager_getIsDAGroot())// || l4proto == IANA_TCP || l4proto == IANA_UDP)
+      if (ipv6_header.next_header==IANA_IPv6HOPOPT) {
+
+         // retrieve hop-by-hop header (includes RPL option)
+         iphc_retrieveIPv6HopByHopHeader(
+            msg,
+            &ipv6_hop_header,
+            &rpl_option
+         );
+
+         // toss the headers
+         packetfunctions_tossHeader(
+            msg,
+            IPv6HOP_HDR_LEN+ipv6_hop_header.HdrExtLen
+         );
+      }
+
+
       // send up the stack
-      forwarding_receive(
-         msg,
-         &ipv6_header,
-         &ipv6_hop_header,
-         &rpl_option
-      );
-   else{
+        forwarding_receive(
+           msg,
+           &ipv6_header,
+           &ipv6_hop_header,
+           &rpl_option
+        );
+ //  }
+
+/*   else{
 
       //backtrack for the IPv6 headers
       packetfunctions_reserveHeaderSize(msg, length);
 
       //serial line
       openbridge_receive(msg);
-
-      //and then push the packet up
- /*     forwarding_receive(
-          msg,
-          &ipv6_header,
-          &ipv6_hop_header,
-          &rpl_option
-       );
- */
    }
-
+*/
 
 }
 

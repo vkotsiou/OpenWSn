@@ -80,6 +80,8 @@ bool debugPrint_queue() {
    return TRUE;
 }
 
+
+
 //this represents an invalid timeout
 bool openqueue_timeout_is_zero(timeout_t value){
    uint8_t  i;
@@ -304,8 +306,6 @@ void openqueue_set_timeout(OpenQueueEntry_t* entry, const uint16_t duration_ms){
    ENABLE_INTERRUPTS();
    return;
 }
-
-
 
 
 
@@ -543,6 +543,15 @@ OpenQueueEntry_t* openqueue_macGetAdvPacket() {
 OpenQueueEntry_t* openqueue_getPacket(uint8_t i) {
    return (&(openqueue_vars.queue[i]));
 }
+
+
+//make a local copy of the entry to push it to openbridge
+OpenQueueEntry_t* openqueue_copy_for_openbridge(OpenQueueEntry_t* pkt){
+
+   memcpy(&(openqueue_vars.openbridge), pkt, sizeof(OpenQueueEntry_t));
+   return(&(openqueue_vars.openbridge));
+}
+
 
 
 //not enough space for non prioritar packets

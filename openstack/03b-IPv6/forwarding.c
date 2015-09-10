@@ -239,9 +239,14 @@ void forwarding_receive(
             // free packet
             openqueue_freePacketBuffer(msg);
       }
-   } else {
-      // this packet is not for me: relay
-      
+   }
+   //a DAGroot does not forward packets: this is already done via openbridge
+   else if (idmanager_getIsDAGroot()){
+      openqueue_freePacketBuffer(msg);
+      return;
+   }
+   // this packet is not for me: relay
+   else {
       //too many packets in the buffer? We should drop this one to save data for management packets (e.g. sixtop)
       if(openqueue_overflow_for_data()){
          openserial_statPktBufferOverflow(msg);
