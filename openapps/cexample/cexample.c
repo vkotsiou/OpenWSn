@@ -96,8 +96,9 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
 
    uint16_t seqnum;
 
+
    //extracts the sequence number
-   seqnum = (msg->payload[0] << 8) & (msg->payload[1]);
+   seqnum = ((uint16_t)msg->payload[0] << 8) + ((uint16_t)msg->payload[1]);
 
    //a frame was received
    open_addr_t dest_64b, prefix, src_64b;
