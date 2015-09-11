@@ -100,10 +100,10 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
    seqnum = (msg->payload[0] << 8) & (msg->payload[1]);
 
    //a frame was received
-   open_addr_t dest_128b, prefix, src_128b;
-   packetfunctions_ip128bToMac64b(&dest_128b, &prefix, &(msg->l3_destinationAdd));
-   packetfunctions_ip128bToMac64b(&src_128b, &prefix, &(msg->l3_sourceAdd));
-   openserial_statDataRx(seqnum, msg->l2_track, src_128b, dest_128b);
+   open_addr_t dest_64b, prefix, src_64b;
+   packetfunctions_ip128bToMac64b(&(msg->l3_destinationAdd), &prefix, &dest_64b);
+   packetfunctions_ip128bToMac64b(&(msg->l3_sourceAdd), &prefix, &src_64b);
+   openserial_statDataRx(seqnum, &(msg->l2_track), &src_64b, &dest_64b);
 
    //nothing to respond
    return E_SUCCESS;
@@ -204,7 +204,7 @@ void cexample_task_cb() {
    //memcpy(&pkt->l3_destinationAdd.addr_128b[0], &ipAddr_unistra, 16);
 
    // set DAO destination
-   pkt->l3_destinationAdd.type=ADDR_128B;
+   pkt->l3_destinationAdd.type = ADDR_128B;
    memcpy(pkt->l3_destinationAdd.addr_128b, icmpv6rpl_get_DODAGID(), sizeof(pkt->l3_destinationAdd.addr_128b));
 
    
@@ -223,9 +223,9 @@ void cexample_task_cb() {
    }
    
    //a frame was generated (seqnum was meanwhile incremented)
-   open_addr_t dest_128b, prefix;
-   packetfunctions_ip128bToMac64b(&dest_128b, &prefix, &(pkt->l3_destinationAdd));
-   openserial_statDataGen(cexample_vars.seqnum -1, cexample_vars.track, *(idmanager_getMyID(ADDR_64B)), dest_128b);
+   open_addr_t dest_64b, prefix;
+   packetfunctions_ip128bToMac64b(&(pkt->l3_destinationAdd), &prefix, &dest_64b);
+   openserial_statDataGen(cexample_vars.seqnum -1, &(cexample_vars.track), idmanager_getMyID(ADDR_64B), &dest_64b);
 
    return;
 }

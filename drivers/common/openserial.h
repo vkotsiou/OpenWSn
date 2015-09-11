@@ -227,8 +227,8 @@ void  openserial_statRx(OpenQueueEntry_t* msg);
 void  openserial_statTx(OpenQueueEntry_t* msg);
 void  openserial_statPktTimeout(OpenQueueEntry_t* msg);
 void  openserial_statPktBufferOverflow(OpenQueueEntry_t* msg);
-void  openserial_statDataGen(uint16_t seqnum, track_t track, open_addr_t src, open_addr_t dest);
-void  openserial_statDataRx(uint16_t seqnum, track_t track, open_addr_t src, open_addr_t dest);
+void  openserial_statDataGen(uint16_t seqnum, track_t *track, open_addr_t *src, open_addr_t *dest);
+void  openserial_statDataRx(uint16_t seqnum, track_t *track, open_addr_t *src, open_addr_t *dest);
 void  openserial_statDIOtx(void);
 void  openserial_statDAOtx(uint8_t *parent);
 
