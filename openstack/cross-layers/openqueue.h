@@ -17,7 +17,7 @@
 
 #define QUEUELENGTH           15
 #define QUEUELENGTH_RESERVED  4     //DAO + DIO + 2 * SIXTOP
-#define QUEUE_TIMEOUT_DEFAULT (uint16_t) 4000
+#define QUEUE_TIMEOUT_DEFAULT (uint16_t) 8000
 
 
 

@@ -24,9 +24,9 @@
 
 /// info for traffic generation
 #define  PAYLOADLEN           40
-#define  CEXAMPLE_PERIOD      4000
+#define  CEXAMPLE_PERIOD      6000
 
-const uint16_t cexample_timeout = 4000;
+const uint16_t cexample_timeout = 8000;
 const char cexample_path0[] = "cexample";
 
 //=========================== variables =======================================
