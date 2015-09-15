@@ -23,7 +23,7 @@
 #define GOODNEIGHBORMINRSSI       -90 //dBm
 #define SWITCHSTABILITYTHRESHOLD  3
 //#define DEFAULTLINKCOST           15
-#define DEFAULTLINKCOST           2
+#define DEFAULTLINKCOST           1.2        //we should try another link if its link is > DEFAULTLINKCOST
 
 
 #define MAXDAGRANK                0xffff

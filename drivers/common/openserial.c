@@ -990,7 +990,7 @@ void openserial_statPktError(OpenQueueEntry_t* msg){
 
 
 //push an event to track generated frames
-void openserial_statDataGen(uint16_t seqnum, track_t *track, open_addr_t *src, open_addr_t *dest){
+void openserial_statDataGen(uint32_t seqnum, track_t *track, open_addr_t *src, open_addr_t *dest){
 
    #ifdef OPENSERIAL_STAT
       evtPktData_t          dataGen;
@@ -1019,7 +1019,7 @@ void openserial_statDataGen(uint16_t seqnum, track_t *track, open_addr_t *src, o
 
 
 //push an event to track generated frames
-void openserial_statDataRx(uint16_t seqnum, track_t *track, open_addr_t *src, open_addr_t *dest){
+void openserial_statDataRx(uint32_t seqnum, track_t *track, open_addr_t *src, open_addr_t *dest){
 
    #ifdef OPENSERIAL_STAT
       evtPktData_t          dataRx;

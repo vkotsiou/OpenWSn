@@ -56,7 +56,8 @@ void cexample_init() {
    cexample_vars.desc.componentID          = COMPONENT_CEXAMPLE;
    cexample_vars.desc.callbackRx           = &cexample_receive;
    cexample_vars.desc.callbackSendDone     = &cexample_sendDone;
-   cexample_vars.seqnum                    = openrandom_get16b();
+   cexample_vars.seqnum                    = ((uint32_t)openrandom_get16b() <<16) | ((uint32_t)openrandom_get16b());
+
 
 #ifdef TRACK_ACTIVE
    //I am the owner of this track (8 bytes address)
@@ -94,11 +95,8 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
                       coap_header_iht* coap_header,
                       coap_option_iht* coap_options) {
 
-   uint16_t seqnum;
-
-
    //extracts the sequence number
-   seqnum = ((uint16_t)msg->payload[0] << 8) + ((uint16_t)msg->payload[1]);
+   uint32_t seqnum = packetfunctions_ntohl(&(msg->payload[0]));
 
    //a frame was received
    open_addr_t dest_64b, prefix, src_64b;
@@ -113,6 +111,11 @@ owerror_t cexample_receive(OpenQueueEntry_t* msg,
 
 //starts generating the packet only once I am synchronized
 void cexample_timer_start(void){
+
+   // don't run on dagroot
+   if (idmanager_getIsDAGroot()) {
+       return;
+   }
 
    //next verification between CEXAMPLE_PERIOD and 2 * CEXAMPLE_PERIOD
    uint64_t  next = openrandom_get16b();
@@ -145,17 +148,26 @@ void cexample_task_cb() {
    owerror_t            outcome;
    uint8_t              i;
 
-
-   // don't run if not synch
-   if (ieee154e_isSynch() == FALSE) return;
-   
    // don't run on dagroot
    if (idmanager_getIsDAGroot()) {
       opentimers_stop(cexample_vars.timerId);
       return;
    }
+
+   //increment the sequence number
+   (cexample_vars.seqnum)++;
+
+   //stat for data packet generation
+   open_addr_t dest_128b, dest_64b, prefix;
+   dest_128b.type = ADDR_128B;
+   memcpy(&(dest_128b.addr_128b[0]), icmpv6rpl_get_DODAGID(), sizeof(dest_128b.addr_128b));
+   packetfunctions_ip128bToMac64b(&dest_128b, &prefix, &dest_64b);
+   openserial_statDataGen(cexample_vars.seqnum, &(cexample_vars.track), idmanager_getMyID(ADDR_64B), &dest_64b);
+
+   // don't run if not synch
+   if (ieee154e_isSynch() == FALSE) return;
    
-   // create a CoAP RD packet
+   // create a CoAP packet
    pkt = openqueue_getFreePacketBuffer_with_timeout(COMPONENT_CEXAMPLE, cexample_timeout);
    if (pkt==NULL) {
       openserial_printError(
@@ -164,6 +176,7 @@ void cexample_task_cb() {
          (errorparameter_t)0,
          (errorparameter_t)0
       );
+
       openqueue_freePacketBuffer(pkt);
       return;
    }
@@ -171,16 +184,17 @@ void cexample_task_cb() {
    pkt->creator                   = COMPONENT_CEXAMPLE;
    pkt->owner                     = COMPONENT_CEXAMPLE;
 
+
    // CoAP payload - seqnum are the first two bytes
    packetfunctions_reserveHeaderSize(pkt,PAYLOADLEN);
-   pkt->payload[0]                = (cexample_vars.seqnum>>8)&0xff;
-   pkt->payload[1]                = (cexample_vars.seqnum>>0)&0xff;
-   (cexample_vars.seqnum)++;
+   pkt->payload[0]                = (cexample_vars.seqnum & 0xff000000) >> 24;
+   pkt->payload[1]                = (cexample_vars.seqnum & 0x00ff0000) >> 16;
+   pkt->payload[2]                = (cexample_vars.seqnum & 0x0000ff00) >> 8;
+   pkt->payload[3]                = (cexample_vars.seqnum & 0x000000ff);
 
    //garbage for the remaining bytes
-   for (i=2;i<PAYLOADLEN;i++)
+   for (i=4;i<PAYLOADLEN;i++)
        pkt->payload[i]             = i;
-
 
    //coap packet
    packetfunctions_reserveHeaderSize(pkt,1);
@@ -208,7 +222,6 @@ void cexample_task_cb() {
    pkt->l3_destinationAdd.type = ADDR_128B;
    memcpy(pkt->l3_destinationAdd.addr_128b, icmpv6rpl_get_DODAGID(), sizeof(pkt->l3_destinationAdd.addr_128b));
 
-   
    // send
    outcome = opencoap_send(
       pkt,
@@ -223,11 +236,6 @@ void cexample_task_cb() {
       openqueue_freePacketBuffer(pkt);
    }
    
-   //a frame was generated (seqnum was meanwhile incremented)
-   open_addr_t dest_64b, prefix;
-   packetfunctions_ip128bToMac64b(&(pkt->l3_destinationAdd), &prefix, &dest_64b);
-   openserial_statDataGen(cexample_vars.seqnum -1, &(cexample_vars.track), idmanager_getMyID(ADDR_64B), &dest_64b);
-
    return;
 }
 
