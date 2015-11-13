@@ -20,6 +20,7 @@
 #define MLME_IE_SUBID_OPCODE           0x41
 #define MLME_IE_SUBID_BANDWIDTH        0x42
 #define MLME_IE_SUBID_SCHEDULE         0x44
+#define MLME_IE_SUBID_BLACKLIST        0x45
 
 // ========================== typedef =========================================
 
@@ -155,6 +156,13 @@ uint8_t          processIE_prependBandwidthIE(
    track_t              track
 );
 uint8_t          processIE_prependSheduleIE(
+   OpenQueueEntry_t*    pkt,
+   uint8_t              type,
+   uint8_t              frameID,
+   uint8_t              flag,
+   cellInfo_ht*         cellList
+);
+uint8_t          processIE_prependBlacklistIE(
    OpenQueueEntry_t*    pkt,
    uint8_t              type,
    uint8_t              frameID,

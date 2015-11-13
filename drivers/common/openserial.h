@@ -34,7 +34,7 @@
 
 */
 
-#define  OPENSERIAL_OUTPUT_NBBUFFERS        8
+#define  OPENSERIAL_OUTPUT_NBBUFFERS        10
 
 
 

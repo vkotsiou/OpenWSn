@@ -10,6 +10,8 @@
 #include "schedule.h"
 #include "scheduler.h"
 #include "packetfunctions.h"
+#include <stdio.h>
+
 
 //=========================== variables =======================================
 
@@ -283,6 +285,122 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    return len;
 }
 
+port_INLINE uint8_t processIE_prependBlacklistIE(
+      OpenQueueEntry_t* pkt,
+      uint8_t           type,
+      uint8_t           frameID,
+      uint8_t           flag,
+      cellInfo_ht*      cellList
+   ){
+
+   uint8_t    i;
+    uint8_t    len;
+    uint8_t    temp8b;
+    uint8_t    numOfCells;
+    mlme_IE_ht mlme_subHeader;
+
+    len        = 0;
+    numOfCells = 0;
+
+    //===== cell list
+
+    for(i=0;i<SCHEDULEIEMAXNUMCELLS;i++)
+       if(cellList[i].linkoptions == CELLTYPE_BUSY){
+          // cellobjects:
+          // - [2B] slotOffset
+          // - [2B] channelOffset
+          // - [1B] link_type
+          packetfunctions_reserveHeaderSize(pkt,5);
+          packetfunctions_htons(cellList[i].tsNum,    &(pkt->payload[0]));
+          packetfunctions_htons(cellList[i].choffset, &(pkt->payload[2]));
+          pkt->payload[4] = cellList[i].linkoptions;
+          len += 5;
+          numOfCells++;
+       }
+
+    char str[150];
+    sprintf(str, "LinkRep prepared: nbCellsBusy ");
+    openserial_ncat_uint32_t(str, (uint32_t)numOfCells, 150);
+    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+    //===== number of cells
+
+    // reserve space
+    packetfunctions_reserveHeaderSize(pkt,sizeof(uint8_t));
+
+    // prepare header
+    temp8b  = 0;
+    temp8b |= numOfCells << 1;
+    temp8b |= flag << 0;
+
+    // copy header
+    *((uint8_t*)(pkt->payload)) = temp8b;
+
+    len += 1;
+
+
+    //===== slotframeID
+
+    // reserve space
+    packetfunctions_reserveHeaderSize(pkt,sizeof(uint8_t));
+
+    // prepare header
+    temp8b = frameID;
+
+    // copy header
+    *((uint8_t*)(pkt->payload)) = temp8b;
+
+    len += 1;
+
+    //===== length
+
+    // reserve space
+    packetfunctions_reserveHeaderSize(pkt,sizeof(uint8_t));
+
+    // prepare header
+    temp8b = len;
+
+    // copy header
+    *((uint8_t*)(pkt->payload)) = temp8b;
+
+    // length
+    len += 1;
+
+    //===== type
+
+    // reserve space
+    packetfunctions_reserveHeaderSize(pkt,sizeof(uint8_t));
+
+    // prepare header
+    temp8b = type;
+
+    // copy header
+    *((uint8_t*)(pkt->payload)) = temp8b;
+
+    len += 1;
+
+    //===== MLME IE header
+
+    // reserve space
+    packetfunctions_reserveHeaderSize(pkt, sizeof(mlme_IE_ht));
+
+    // prepare header
+    mlme_subHeader.length_subID_type  =
+       len << IEEE802154E_DESC_LEN_SHORT_MLME_IE_SHIFT;
+    mlme_subHeader.length_subID_type |=
+       (MLME_IE_SUBID_BLACKLIST <<
+          MLME_IE_SUBID_SHIFT) |
+       IEEE802154E_DESC_TYPE_SHORT;
+
+    // copy header
+    pkt->payload[0] = mlme_subHeader.length_subID_type & 0xFF;
+    pkt->payload[1] = (mlme_subHeader.length_subID_type >> 8) & 0xFF;
+
+    len+=2;
+
+    return len;
+
+}
 
 port_INLINE uint8_t processIE_prependSheduleIE(
       OpenQueueEntry_t* pkt,
@@ -302,8 +420,8 @@ port_INLINE uint8_t processIE_prependSheduleIE(
    
    //===== cell list
    
-   for(i=0;i<SCHEDULEIEMAXNUMCELLS;i++) {
-      if(cellList[i].linkoptions != CELLTYPE_OFF){
+   for(i=0;i<SCHEDULEIEMAXNUMCELLS;i++)
+      if(cellList[i].linkoptions != CELLTYPE_OFF && cellList[i].linkoptions != CELLTYPE_BUSY){
          // cellobjects:
          // - [2B] slotOffset
          // - [2B] channelOffset
@@ -315,7 +433,6 @@ port_INLINE uint8_t processIE_prependSheduleIE(
          len += 5;
          numOfCells++;
       }
-   }
    
    // record the position of cellObjects
    pkt->l2_scheduleIE_numOfCells  = numOfCells;
@@ -336,7 +453,7 @@ port_INLINE uint8_t processIE_prependSheduleIE(
    *((uint8_t*)(pkt->payload)) = temp8b;
    
    len += 1;
-   
+
    //===== slotframeID
    
    // reserve space
@@ -570,3 +687,5 @@ port_INLINE void processIE_retrieveSheduleIE(
    }
    *ptr=localptr; 
 }
+
+

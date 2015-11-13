@@ -71,7 +71,8 @@ typedef enum {
    CELLTYPE_RX               = 3,
    CELLTYPE_TXRX             = 4,
    CELLTYPE_SERIALRX         = 5,
-   CELLTYPE_MORESERIALRX     = 6
+   CELLTYPE_MORESERIALRX     = 6,
+   CELLTYPE_BUSY			 = 7
 } cellType_t;
 
 typedef struct {

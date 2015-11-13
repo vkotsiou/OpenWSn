@@ -28,7 +28,10 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define CHANNEL_STATIC_FOR_DISCOVERY
 #define CHANNEL_RAND_DEDICATED_SLOTS      //random channel offset when assigning a new cell
 #define CHANNELS_NB                    16 //nb. of channels
-#define SCHEDULING_RANDOM                 //a random slot nb is assigned when OTF asks for a cell
+//#define SCHEDULING_RANDOM                 //a random slot nb is assigned when OTF asks for a cell
+#define SCHEDULING_RANDOM_CONTIGUOUS	  // tries to reserve contiguous cells
+
+
 
 //Shared cells are distributed in the slotframe
 #define SCHEDULE_SHAREDCELLS_DISTRIBUTED

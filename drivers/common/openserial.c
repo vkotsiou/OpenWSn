@@ -129,7 +129,7 @@ owerror_t openserial_printStat(uint8_t type, uint8_t calling_component, uint8_t 
 
    DISABLE_INTERRUPTS();
 
-   pos = openserial_get_output_buffer(length + 10);
+   pos = openserial_get_output_buffer(length + 12);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
       ENABLE_INTERRUPTS();
@@ -170,7 +170,7 @@ owerror_t openserial_printf(uint8_t calling_component, char* buffer, uint8_t len
 
    DISABLE_INTERRUPTS();
 
-   pos = openserial_get_output_buffer(length + 9);
+   pos = openserial_get_output_buffer(length + 12);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
       ENABLE_INTERRUPTS();
@@ -207,7 +207,7 @@ owerror_t openserial_printStatus(uint8_t statusElement,uint8_t* buffer, uint8_t 
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
 
-   pos = openserial_get_output_buffer(length + 4);
+   pos = openserial_get_output_buffer(length + 12);
    if (pos >= OPENSERIAL_OUTPUT_NBBUFFERS){
       //leds_error_toggle();
       ENABLE_INTERRUPTS();

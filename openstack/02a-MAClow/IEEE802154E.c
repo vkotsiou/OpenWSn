@@ -446,6 +446,8 @@ port_INLINE void activity_synchronize_newSlot() {
       openserial_stop();
       openserial_startInput();
    }
+
+
 }
 
 port_INLINE void activity_synchronize_startOfFrame(PORT_RADIOTIMER_WIDTH capturedTime) {
@@ -501,6 +503,8 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
    ieee154e_vars.dataReceived->creator = COMPONENT_IEEE802154E;
    ieee154e_vars.dataReceived->owner   = COMPONENT_IEEE802154E;
    
+
+
    /*
    The do-while loop that follows is a little parsing trick.
    Because it contains a while(0) condition, it gets executed only once.
@@ -973,6 +977,11 @@ port_INLINE void activity_ti1ORri1() {
          break;
       case CELLTYPE_MORESERIALRX:
          // do nothing (not even endSlot())
+         break;
+
+      case CELLTYPE_BUSY:
+    	  //nothing todo: this cell is just busy for my parent
+          endSlot();
          break;
       default:
          // stop using serial
@@ -2034,6 +2043,7 @@ void synchronizeAck(PORT_SIGNED_INT_WIDTH timeCorrection) {
 void changeIsSync(bool newIsSync) {
    ieee154e_vars.isSync = newIsSync;
    
+
    if (ieee154e_vars.isSync==TRUE) {
       leds_sync_on();
       resetStats();
