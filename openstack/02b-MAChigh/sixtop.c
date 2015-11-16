@@ -1563,7 +1563,7 @@ bool sixtop_candidateAddCellList(
    uint8_t incomingCell_last = 0;
 
    char str[150];
-   sprintf(str, "ADD SCHEL: ");
+   sprintf(str, "ADD SCHED: ");
 
 
    for(i=0;i<MAXACTIVESLOTS;i++)

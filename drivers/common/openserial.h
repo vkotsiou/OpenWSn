@@ -84,7 +84,8 @@ enum{
    SERTYPE_PKT_ERROR          = 0x0a,
    SERTYPE_PKT_BUFFEROVERFLOW = 0x0b,
    SERTYPE_DIOTX              = 0x0c,
-   SERTYPE_DAOTX              = 0x0d
+   SERTYPE_DAOTX              = 0x0d,
+   SERTYPE_NODESTATE          = 0x0e,
 };
 //=========================== typedef =========================================
 
@@ -162,6 +163,15 @@ BEGIN_PACK
 typedef struct{
    uint8_t     parent[8];     //parent (=next hop) when the DAO was transmitted
 }evtDaOTx_t;
+END_PACK
+
+BEGIN_PACK
+typedef struct{
+   uint32_t    numTicsTotal;
+   uint32_t    numTicsOn;
+}evtState;
+END_PACK
+
 
 
 //=========================== module variables ================================

@@ -394,8 +394,17 @@ status information about several modules in the OpenWSN stack.
 bool debugPrint_macStats() {
    // send current stats over serial
    openserial_printStatus(STATUS_MACSTATS,(uint8_t*)&ieee154e_stats,sizeof(ieee154e_stats_t));
+
+
+   //periodical stats about the node  to push in the logs
+   evtState evt;
+   evt.numTicsOn     = ieee154e_stats.numTicsOn;
+   evt.numTicsTotal  = ieee154e_stats.numTicsTotal;
+   openserial_printStat(SERTYPE_NODESTATE, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
    return TRUE;
 }
+
+
 
 //=========================== private =========================================
 
