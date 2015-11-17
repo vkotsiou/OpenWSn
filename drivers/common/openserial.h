@@ -167,8 +167,9 @@ END_PACK
 
 BEGIN_PACK
 typedef struct{
-   uint32_t    numTicsTotal;
    uint32_t    numTicsOn;
+   uint32_t    numTicsTotal;
+   uint8_t     numDeSync;
 }evtState;
 END_PACK
 

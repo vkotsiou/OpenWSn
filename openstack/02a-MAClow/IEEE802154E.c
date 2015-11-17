@@ -391,16 +391,20 @@ status information about several modules in the OpenWSN stack.
 
 \returns TRUE if this function printed something, FALSE otherwise.
 */
+uint8_t  period_nodestate = 0;
 bool debugPrint_macStats() {
    // send current stats over serial
    openserial_printStatus(STATUS_MACSTATS,(uint8_t*)&ieee154e_stats,sizeof(ieee154e_stats_t));
 
 
    //periodical stats about the node  to push in the logs
-   evtState evt;
-   evt.numTicsOn     = ieee154e_stats.numTicsOn;
-   evt.numTicsTotal  = ieee154e_stats.numTicsTotal;
-   openserial_printStat(SERTYPE_NODESTATE, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   if ((period_nodestate++ % PERIOD_NODESTATE_UPDATE) == 0){
+      evtState evt;
+      evt.numTicsOn     = ieee154e_stats.numTicsOn;
+      evt.numTicsTotal  = ieee154e_stats.numTicsTotal;
+      evt.numDeSync     = ieee154e_stats.numDeSync;
+      openserial_printStat(SERTYPE_NODESTATE, COMPONENT_IEEE802154E, (uint8_t*)&evt, sizeof(evt));
+   }
    return TRUE;
 }
 

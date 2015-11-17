@@ -88,6 +88,10 @@ bit after the start of the packet.
 */
 #define FIRST_FRAME_BYTE             1
 
+
+//Stats about the node state are pushed to the serial line only every PERIOD_NODESTATE_UPDATE * number of status debugPrint()
+#define PERIOD_NODESTATE_UPDATE      10
+
 // the different states of the IEEE802.15.4e state machine
 typedef enum {
    S_SLEEP                   = 0x00,   // ready for next slot
