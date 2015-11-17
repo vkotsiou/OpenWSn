@@ -295,7 +295,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    openserial_ncat_uint8_t_hex(str, (uint32_t)track.owner.addr_64b[6], 150);
    openserial_ncat_uint8_t_hex(str, (uint32_t)track.owner.addr_64b[7], 150);
    strncat(str, ", nbcells ", 150);
-   openserial_ncat_uint32_t(str, (uint32_t)numCells, 150);
+   openserial_ncat_uint32_t(str, (uint32_t)pkt->l2_scheduleIE_numOfCells, 150);
    for(i=0; i<SCHEDULEIEMAXNUMCELLS; i++){
       strncat(str, ", slot ", 150);
       openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);
@@ -374,7 +374,7 @@ void sixtop_removeCell(open_addr_t* neighbor){
    
    // create packet
    len  = 0;
-   len += processIE_prependSheduleIE(pkt,type,frameID, flag,cellList);
+   len += processIE_prependSheduleIE(pkt, type, frameID, flag, cellList);
    len += processIE_prependOpcodeIE(pkt,SIXTOP_REMOVE_SOFT_CELL_REQUEST);
    processIE_prependMLMEIE(pkt,len);
  
@@ -1252,8 +1252,6 @@ void sixtop_notifyReceiveCommand(
             }
             strncat(str, ", nbcellsBusy ", 150);
             openserial_ncat_uint32_t(str, (uint32_t)blacklist_ie->numberOfcells, 150);
-            strncat(str, ", cellBusy ", 150);
-            openserial_ncat_uint32_t(str, (uint32_t)blacklist_ie->numberOfcells, 150);
             for(i=0; i<blacklist_ie->numberOfcells; i++){
                strncat(str, ", slot ", 150);
                openserial_ncat_uint32_t(str, (uint32_t)blacklist_ie->cellList[i].tsNum, 150);
@@ -1549,6 +1547,7 @@ bool sixtop_candidateAddCellList(
    ){
    uint8_t i;
    uint8_t numCandCells;
+   char str[150];
    
    *type = 1;
    *frameID = SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE;
@@ -1558,13 +1557,11 @@ bool sixtop_candidateAddCellList(
 
 
 //find the last incoming cell for this track
-#ifdef SCHEDULING_RANDOM_CONTIGUOUS
+#if SCHEDULING_ALGO == SCHEDULING_RANDOM_CONTIGUOUS
    scheduleEntry_t *entry;
    uint8_t incomingCell_last = 0;
 
-   char str[150];
-   sprintf(str, "ADD SCHED: ");
-
+   sprintf(str, "TEST SCHED: ");
 
    for(i=0;i<MAXACTIVESLOTS;i++)
 	   if(schedule_isSlotOffsetAvailable(i)==TRUE) {
@@ -1572,13 +1569,9 @@ bool sixtop_candidateAddCellList(
 		   if ((entry->type == CELLTYPE_RX) && (sixtop_track_equal(entry->track, track)) && (entry->slotOffset > incomingCell_last)){
 			   incomingCell_last = entry->slotOffset;
 
-		      strncat(str, ", - slot=", 150);
+		      strncat(str, ",  slot=", 150);
 		      openserial_ncat_uint32_t(str, (uint32_t)entry->slotOffset, 150);
 		   }
-
-
-
-
 	   }
    //start from this timeslot
    if (incomingCell_last != 0){
@@ -1599,17 +1592,19 @@ bool sixtop_candidateAddCellList(
 #endif
 
 
-#ifdef SCHEDULING_RANDOM
+#if SCHEDULING_ALGO == SCHEDULING_RANDOM
    slotnb = openrandom_get16b() % SUPERFRAME_LENGTH;
 #endif
 
    //add the list of possible cells in the linkrequest
    numCandCells=0;
+   sprintf(str, "SELECT SCHED: ");
    for(i=0;i<MAXACTIVESLOTS;i++){
 
 	   slotnb = (slotnb + 1) % SUPERFRAME_LENGTH;
 
 	   if(schedule_isSlotOffsetAvailable(slotnb)==TRUE){
+         numCandCells++;
 
 	      //LIFO (the cells with the largest priority must be placed last)
 	      cellList[SCHEDULEIEMAXNUMCELLS-numCandCells].linkoptions = CELLTYPE_TX;
@@ -1620,20 +1615,28 @@ bool sixtop_candidateAddCellList(
 		   cellList[SCHEDULEIEMAXNUMCELLS-numCandCells].choffset    = 0;
 #endif
 
+         strncat(str, ", avail=", 150);
+         openserial_ncat_uint32_t(str, (uint32_t)slotnb, 150);
 
 		   //next cell to include in the linkreq
-		   numCandCells++;
 		   if(numCandCells==SCHEDULEIEMAXNUMCELLS){
 			   break;
 		   }
 	   }
+	   else{
+	      strncat(str, ", busy=", 150);
+	      openserial_ncat_uint32_t(str, (uint32_t)slotnb, 150);
+	   }
    }
-   
-   if (numCandCells==0) {
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+
+
+   //enough bandwidth?
+   if (numCandCells==0)
       return FALSE;
-   } else {
+   else
       return TRUE;
-   }
+
 }
 
 bool sixtop_candidateRemoveCellList(

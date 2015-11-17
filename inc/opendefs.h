@@ -23,25 +23,36 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 #define OPENWSN_VERSION_MINOR     9
 #define OPENWSN_VERSION_PATCH     0
 
-//use a static channel for debug (in any case / for the ADVT slots / never)
-//#define CHANNEL_STATIC_ALWAYS
-#define CHANNEL_STATIC_FOR_DISCOVERY
+
+// ALGOS and SCHEDULING
+#define SCHEDULING_RANDOM_CONTIGUOUS   2     // tries to reserve contiguous cells
+#define SCHEDULING_RANDOM              1     //a random slot nb is assigned when OTF asks for a cell
+#define SCHEDULING_ALGO                SCHEDULING_RANDOM
+
+
+//Options
+#define SCHEDULE_SHAREDCELLS_DISTRIBUTED  //Shared cells are distributed in the slotframe
 #define CHANNEL_RAND_DEDICATED_SLOTS      //random channel offset when assigning a new cell
-#define CHANNELS_NB                    16 //nb. of channels
-//#define SCHEDULING_RANDOM                 //a random slot nb is assigned when OTF asks for a cell
-#define SCHEDULING_RANDOM_CONTIGUOUS	  // tries to reserve contiguous cells
+#define TRACK_ACTIVE                      // applications use tracks
 
 
 
-//Shared cells are distributed in the slotframe
-#define SCHEDULE_SHAREDCELLS_DISTRIBUTED
 
 //tracks are handled by 6top
-#define TRACK_ACTIVE                      // applications use tracks
 #define SIXTOP_REMOVE_OBSOLETE_PARENTS    // when a node is removed from the parent list, its associated cells are removed
 #define SIXTOP_REMOVE_UNUSED_CELLS        // a cell is removed when it is not used for XXX time
 #define SIXTOP_CELL_TIMEOUT_RX         25000
 #define SIXTOP_CELL_TIMEOUT_TX         20000
+
+
+
+//use a static channel for debug (in any case / for the ADVT slots / never)
+//#define CHANNEL_STATIC_ALWAYS
+#define CHANNEL_STATIC_FOR_DISCOVERY
+#define CHANNELS_NB                    16 //nb. of channels
+
+
+
 
 //RPL features
 //#define RPL_AUTHORIZE_PARENT_WITH_LARGER_RANK
