@@ -393,6 +393,8 @@ status information about several modules in the OpenWSN stack.
 */
 uint8_t  period_nodestate = 0;
 bool debugPrint_macStats() {
+   ieee154e_stats.isSync = ieee154e_vars.isSync;
+
    // send current stats over serial
    openserial_printStatus(STATUS_MACSTATS,(uint8_t*)&ieee154e_stats,sizeof(ieee154e_stats_t));
 

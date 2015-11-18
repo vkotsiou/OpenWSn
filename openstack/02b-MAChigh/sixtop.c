@@ -761,19 +761,19 @@ has fired. This timer is set to fire every second, on average.
 The body of this function executes one of the MAC management task.
 */
 void timer_sixtop_management_fired(void) {
-   sixtop_vars.mgtTaskCounter = (sixtop_vars.mgtTaskCounter+1)%ADVTIMEOUT;
+   sixtop_vars.mgtTaskCounter = (sixtop_vars.mgtTaskCounter+1)%EB_PERIOD;
    
    switch (sixtop_vars.mgtTaskCounter) {
       case 0:
-         // called every ADVTIMEOUT seconds
+         // called every EB_PERIOD seconds
          sixtop_sendEB();
          break;
       case 1:
-         // called every ADVTIMEOUT seconds
+         // called every EB_PERIOD seconds
          neighbors_removeOld();
          break;
       default:
-         // called every second, except twice every ADVTIMEOUT seconds
+         // called every second, except twice every EB_PERIOD seconds
          sixtop_sendKA();
          break;
    }
@@ -849,6 +849,13 @@ port_INLINE void sixtop_sendEB() {
    
    // I'm now busy sending an ADV
    sixtop_vars.busySendingEB = TRUE;
+
+#ifdef _DEBUG_EB_
+   char str[150];
+   sprintf(str, "EB generated");
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
 }
 
 /**
