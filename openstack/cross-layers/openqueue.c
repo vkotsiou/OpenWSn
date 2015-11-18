@@ -192,19 +192,30 @@ get a new packet buffer to start creating a new packet.
 */
 OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
    uint8_t i;
+
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    
    // refuse to allocate if we're not in sync
    if (ieee154e_isSynch()==FALSE && creator > COMPONENT_IEEE802154E){
-     ENABLE_INTERRUPTS();
-     return NULL;
+      ENABLE_INTERRUPTS();
+
+      openserial_printCritical(COMPONENT_SIXTOP, ERR_OPENQUEUE_DESYNC,
+                                     (errorparameter_t)creator,
+                                     (errorparameter_t)0);
+
+      return NULL;
    }
    
    // bad creator
    if (creator == COMPONENT_NULL){
-     ENABLE_INTERRUPTS();
-     return NULL;
+      ENABLE_INTERRUPTS();
+
+      openserial_printCritical(COMPONENT_SIXTOP, ERR_OPENQUEUE_DESYNC,
+                                         (errorparameter_t)creator,
+                                         (errorparameter_t)0);
+
+      return NULL;
    }
 
 
@@ -229,8 +240,6 @@ OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
          openserial_ncat_uint32_t(str, (uint32_t)creator, 150);
          openserial_printf(COMPONENT_OPENQUEUE, str, strlen(str));
 #endif
-
-
 
          return &openqueue_vars.queue[i];
       }

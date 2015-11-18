@@ -21,6 +21,7 @@
 
 
 #define _DEBUG_SIXTOP_
+#define _DEBUG_EB_
 
 //=========================== variables =======================================
 
@@ -470,6 +471,13 @@ void task_sixtopNotifSendDone() {
             
             // not busy sending ADV anymore
             sixtop_vars.busySendingEB = FALSE;
+
+#ifdef _DEBUG_EB_
+            char str[150];
+            sprintf(str, "EB transmitted");
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
          } else {
             // this is a KA
             

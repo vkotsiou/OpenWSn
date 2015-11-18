@@ -302,8 +302,10 @@ enum {
    ERR_OPENSERIAL_BUFFER_OVERFLOW      = 0x43, // buffer overflow for output in openserial (indexWrite {0}, location {1})
    ERR_OPENQUEUE_BUFFER_OVERFLOW       = 0x44, // buffer overflow: too many packets (space left {0}, reserved for management {1})
    ERR_SIXTOP_TOOMANY_CELLS            = 0x45, // too many cells to reserve in the sixtop request (asked {0}, max {1})
-   ERR_GENERIC                         = 0x46, // generic error {0} {1}
-   ERR_UNKNOWN                         = 0x47, // unknown error, location {0}, arg {1}
+   ERR_OPENQUEUE_DESYNC                = 0x46, // a packet cannot be allocated for component {0} when the node is not synchronized
+   ERR_INVALID_COMPONENT               = 0x47, // The component {0} cannot trigger this command (location {1})
+   ERR_GENERIC                         = 0x48, // generic error {0} {1}
+   ERR_UNKNOWN                         = 0x49, // unknown error, location {0}, arg {1}
 };
 
 
