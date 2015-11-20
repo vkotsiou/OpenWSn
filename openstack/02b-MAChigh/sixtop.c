@@ -22,6 +22,7 @@
 
 #define _DEBUG_SIXTOP_
 #define _DEBUG_EB_
+//#define _DEBUG_KA_
 
 //=========================== variables =======================================
 
@@ -146,15 +147,14 @@ void sixtop_init() {
    sixtop_vars.dsn                = 0;
    sixtop_vars.mgtTaskCounter     = 0;
    sixtop_vars.kaPeriod           = MAXKAPERIOD;
-   
+
+
    sixtop_vars.maintenanceTimerId = opentimers_start(
       sixtop_vars.periodMaintenance,
       TIMER_PERIODIC,
       TIME_MS,
       sixtop_maintenance_timer_cb
    );
-   
-
 }
 
 void sixtop_setKaPeriod(uint16_t kaPeriod) {
@@ -438,7 +438,10 @@ owerror_t sixtop_send(OpenQueueEntry_t *msg) {
 
 void task_sixtopNotifSendDone() {
    OpenQueueEntry_t* msg;
-   
+#if defined(_DEBUG_EB_) || defined (_DEBUG_KA_)
+   char str[150];
+#endif
+
    // get recently-sent packet from openqueue
    msg = openqueue_sixtopGetSentPacket();
    if (msg==NULL) {
@@ -468,19 +471,22 @@ void task_sixtopNotifSendDone() {
       case COMPONENT_SIXTOP:
          if (msg->l2_frameType==IEEE154_TYPE_BEACON) {
             // this is a ADV
-            
+
             // not busy sending ADV anymore
             sixtop_vars.busySendingEB = FALSE;
 
 #ifdef _DEBUG_EB_
-            char str[150];
             sprintf(str, "EB transmitted");
             openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
-
          } else {
             // this is a KA
-            
+
+#ifdef _DEBUG_KA_
+            sprintf(str, "KA transmitted");
+            openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
             // not busy sending KA anymore
             sixtop_vars.busySendingKA = FALSE;
          }
@@ -490,10 +496,18 @@ void task_sixtopNotifSendDone() {
          // restart a random timer
          sixtop_vars.periodMaintenance = 872+(openrandom_get16b()&0xff);
          opentimers_setPeriod(
-            sixtop_vars.maintenanceTimerId,
-            TIME_MS,
-            sixtop_vars.periodMaintenance
+               sixtop_vars.maintenanceTimerId,
+               TIME_MS,
+               sixtop_vars.periodMaintenance
          );
+
+#if defined(_DEBUG_EB_) || defined (_DEBUG_KA_)
+         sprintf(str, "KA/EB maintenance period=");
+         openserial_ncat_uint32_t(str, (uint32_t)sixtop_vars.periodMaintenance, 150);
+         openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
+
          break;
       
       case COMPONENT_SIXTOP_RES:
@@ -691,6 +705,8 @@ owerror_t sixtop_send_internal(
    return E_SUCCESS;
 }
 
+
+
 // timer interrupt callbacks
 void sixtop_maintenance_timer_cb(void) {
    scheduler_push_task(timer_sixtop_management_fired, TASKPRIO_SIXTOP);
@@ -709,7 +725,6 @@ six2six_state_t sixtop_getState(void){
 //changes the current sixtop state
 void sixtop_setState(six2six_state_t state){
    sixtop_vars.six2six_state = state;
-   opentimers_stop(sixtop_vars.timeoutTimerId);
 
    //schedule a timer: back to the idle state after a timeout
    if (state != SIX_IDLE)
@@ -763,21 +778,26 @@ The body of this function executes one of the MAC management task.
 void timer_sixtop_management_fired(void) {
    sixtop_vars.mgtTaskCounter = (sixtop_vars.mgtTaskCounter+1)%EB_PERIOD;
    
+   //Fabrice: we separated these actions because EBs failed previously
+
    switch (sixtop_vars.mgtTaskCounter) {
-      case 0:
-         // called every EB_PERIOD seconds
-         sixtop_sendEB();
-         break;
-      case 1:
-         // called every EB_PERIOD seconds
-         neighbors_removeOld();
-         break;
-      default:
-         // called every second, except twice every EB_PERIOD seconds
-         sixtop_sendKA();
-         break;
+   case 0:
+      // called every EB_PERIOD seconds
+      sixtop_sendEB();
+      break;
+   case 1:
+      // called every EB_PERIOD seconds
+       neighbors_removeOld();
+      break;
+   default:
+      // called every second, except twice every EB_PERIOD seconds
+      sixtop_sendKA();
+      break;
    }
 }
+
+
+
 
 /**
 \brief Send an advertisement.
@@ -789,9 +809,10 @@ readability of the code.
 port_INLINE void sixtop_sendEB() {
    OpenQueueEntry_t* adv;
    uint8_t len;
-   
+   char str[150];
+
    len = 0;
-   
+
    if (ieee154e_isSynch()==FALSE) {
       // I'm not sync'ed
       
@@ -801,22 +822,32 @@ port_INLINE void sixtop_sendEB() {
       // I'm now busy sending an ADV
       sixtop_vars.busySendingEB = FALSE;
       
+#ifdef _DEBUG_EB_
+     sprintf(str, "EB not sync'ed");
+      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
       // stop here
       return;
    }
    
    if (sixtop_vars.busySendingEB==TRUE) {
       // don't continue if I'm still sending a previous ADV
+
+
+#ifdef _DEBUG_EB_
+     sprintf(str, "EB BUSY");
+      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+      return;
    }
    
+
    // if I get here, I will send an ADV
    
    // get a free packet buffer
    adv = openqueue_getFreePacketBuffer(COMPONENT_SIXTOP);
    if (adv==NULL) {
-      char str[150];
-      sprintf(str, "EB bug");
-      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
       openserial_printError(COMPONENT_SIXTOP, ERR_NO_FREE_PACKET_BUFFER,
                             (errorparameter_t)5,
                             (errorparameter_t)0);
@@ -851,7 +882,6 @@ port_INLINE void sixtop_sendEB() {
    sixtop_vars.busySendingEB = TRUE;
 
 #ifdef _DEBUG_EB_
-   char str[150];
    sprintf(str, "EB generated");
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
@@ -868,10 +898,14 @@ readability of the code.
 port_INLINE void sixtop_sendKA() {
    OpenQueueEntry_t* kaPkt;
    open_addr_t*      kaNeighAddr;
-   
+#ifdef _DEBUG_KA_
+   char str[150];
+#endif
+
+
    if (ieee154e_isSynch()==FALSE) {
       // I'm not sync'ed
-      
+
       // delete packets genereted by this module (ADV and KA) from openqueue
       openqueue_removeAllCreatedBy(COMPONENT_SIXTOP);
       
@@ -889,6 +923,11 @@ port_INLINE void sixtop_sendKA() {
    
    kaNeighAddr = neighbors_getKANeighbor(sixtop_vars.kaPeriod);
    if (kaNeighAddr==NULL) {
+#ifdef _DEBUG_KA_
+      sprintf(str, "KA nothing todo");
+      openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
       // don't proceed if I have no neighbor I need to send a KA to
       return;
    }
@@ -918,10 +957,20 @@ port_INLINE void sixtop_sendKA() {
    // I'm now busy sending a KA
    sixtop_vars.busySendingKA = TRUE;
 
+#ifdef _DEBUG_KA_
+   sprintf(str, "KA generated for parent ");
+   openserial_ncat_uint8_t_hex(str, (uint8_t)kaNeighAddr->addr_64b[6], 150);
+   strncat(str, "-", 150);
+   openserial_ncat_uint8_t_hex(str, (uint8_t)kaNeighAddr->addr_64b[7], 150);
+   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
+#endif
+
 #ifdef OPENSIM
    debugpins_ka_set();
    debugpins_ka_clr();
 #endif
+
+
 }
 
 //======= six2six task

@@ -503,14 +503,14 @@ void icmpv6rpl_timer_DAO_task() {
       //icmpv6rpl_vars.periodDAO = (TIMER_DAO_TIMEOUT+(openrandom_get16b()&0xff)) / TIMER_NB_TRIGGERED;
 
       // pick a new pseudo-random periodDAO
-        uint16_t   jitter = openrandom_get16b();
-        uint16_t   bool = openrandom_get16b() & 0x0001;
-        while(jitter > TIMER_DAO_TIMEOUT * TIMER_DAO_JITTER)
-           jitter -= TIMER_DAO_TIMEOUT * TIMER_DAO_JITTER;
-        if (bool > 0)
-           icmpv6rpl_vars.periodDAO = (TIMER_DAO_TIMEOUT - jitter) / TIMER_NB_TRIGGERED;
-        else
-           icmpv6rpl_vars.periodDAO = (TIMER_DAO_TIMEOUT + jitter) / TIMER_NB_TRIGGERED;
+      uint16_t   jitter = openrandom_get16b();
+      uint16_t   bool = openrandom_get16b() & 0x0001;
+      while(jitter > TIMER_DAO_TIMEOUT * TIMER_DAO_JITTER)
+         jitter -= TIMER_DAO_TIMEOUT * TIMER_DAO_JITTER;
+      if (bool > 0)
+         icmpv6rpl_vars.periodDAO = (TIMER_DAO_TIMEOUT - jitter) / TIMER_NB_TRIGGERED;
+      else
+         icmpv6rpl_vars.periodDAO = (TIMER_DAO_TIMEOUT + jitter) / TIMER_NB_TRIGGERED;
 
 /*     #ifdef _DEBUG_DAO_
            char str[150];
@@ -526,15 +526,15 @@ void icmpv6rpl_timer_DAO_task() {
            openserial_ncat_uint32_t(str, (uint32_t)bool, 150);
            openserial_printf(COMPONENT_ICMPv6RPL, str, strlen(str));
      #endif
-*/
+ */
       // send DAO
       sendDAO();
 
       // arm the DAO timer with this new value
       opentimers_setPeriod(
-         icmpv6rpl_vars.timerIdDAO,
-         TIME_MS,
-         icmpv6rpl_vars.periodDAO
+            icmpv6rpl_vars.timerIdDAO,
+            TIME_MS,
+            icmpv6rpl_vars.periodDAO
       );
    }
 

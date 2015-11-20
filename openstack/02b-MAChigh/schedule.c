@@ -60,6 +60,8 @@ void schedule_init() {
       running_slotOffset++;
    } 
    
+
+
    // shared TXRX anycast slot(s)
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
    temp_neighbor.type             = ADDR_ANYCAST;
