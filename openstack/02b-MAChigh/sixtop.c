@@ -725,26 +725,33 @@ six2six_state_t sixtop_getState(void){
 
 //changes the current sixtop state
 void sixtop_setState(six2six_state_t state){
+   uint8_t  previously_idle = (sixtop_vars.six2six_state == SIX_IDLE);
+
    sixtop_vars.six2six_state = state;
 
    //schedule a timer: back to the idle state after a timeout
    if (state != SIX_IDLE){
 
-      // arm timeout
-        opentimers_setPeriod(
-           sixtop_vars.timeoutTimerId,
-           TIME_MS,
-           SIX2SIX_TIMEOUT_MS
-        );
-        opentimers_restart(sixtop_vars.timeoutTimerId);
-   }
- /*     sixtop_vars.timeoutTimerId     = opentimers_start(
+      //stops the previous timer
+      if (!previously_idle)
+      opentimers_stop(sixtop_vars.timeoutTimerId);
+
+      //and starts a new one
+      sixtop_vars.timeoutTimerId     = opentimers_start(
             SIX2SIX_TIMEOUT_MS,
             TIMER_ONESHOT,
             TIME_MS,
             sixtop_timeout_timer_cb
-            );
-*/
+      );
+
+      openserial_printError(
+            COMPONENT_SIXTOP,
+            ERR_GENERIC,
+            (errorparameter_t)state,
+            (errorparameter_t)SIX2SIX_TIMEOUT_MS
+      );
+   }
+
    //otf callback when we come back to the idle state
    if (state == SIX_IDLE){
       opentimers_stop(sixtop_vars.timeoutTimerId);
