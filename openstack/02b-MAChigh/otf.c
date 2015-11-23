@@ -130,7 +130,6 @@ void otf_remove_obsolete_parents(void){
    if (!sixtop_isIdle())
        return;
 
-
    //for each cell in the schedule
    for (i=0;i<MAXACTIVESLOTS;i++){
       cell = schedule_getCell(i);

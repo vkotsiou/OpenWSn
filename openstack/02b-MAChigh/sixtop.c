@@ -21,7 +21,7 @@
 
 
 #define _DEBUG_SIXTOP_
-#define _DEBUG_EB_
+//#define _DEBUG_EB_
 //#define _DEBUG_KA_
 
 //=========================== variables =======================================
@@ -304,7 +304,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
 
-
+/*
    // arm timeout
    opentimers_setPeriod(
       sixtop_vars.timeoutTimerId,
@@ -312,6 +312,7 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
       SIX2SIX_TIMEOUT_MS
    );
    opentimers_restart(sixtop_vars.timeoutTimerId);
+*/
 }
 
 
@@ -727,14 +728,23 @@ void sixtop_setState(six2six_state_t state){
    sixtop_vars.six2six_state = state;
 
    //schedule a timer: back to the idle state after a timeout
-   if (state != SIX_IDLE)
-      sixtop_vars.timeoutTimerId     = opentimers_start(
+   if (state != SIX_IDLE){
+
+      // arm timeout
+        opentimers_setPeriod(
+           sixtop_vars.timeoutTimerId,
+           TIME_MS,
+           SIX2SIX_TIMEOUT_MS
+        );
+        opentimers_restart(sixtop_vars.timeoutTimerId);
+   }
+ /*     sixtop_vars.timeoutTimerId     = opentimers_start(
             SIX2SIX_TIMEOUT_MS,
             TIMER_ONESHOT,
             TIME_MS,
             sixtop_timeout_timer_cb
             );
-
+*/
    //otf callback when we come back to the idle state
    if (state == SIX_IDLE){
       opentimers_stop(sixtop_vars.timeoutTimerId);
@@ -809,7 +819,9 @@ readability of the code.
 port_INLINE void sixtop_sendEB() {
    OpenQueueEntry_t* adv;
    uint8_t len;
+#if defined(_DEBUG_EB_) || defined(_DEBUG_KA_)
    char str[150];
+#endif
 
    len = 0;
 
@@ -1750,9 +1762,9 @@ bool sixtop_candidateRemoveCellList(
    }
    
    if(numCandCells==0){
-      openserial_printError(COMPONENT_SIXTOP, ERR_GENERIC,
-          (errorparameter_t)1,
-          (errorparameter_t)2
+      openserial_printError(COMPONENT_SIXTOP, ERR_SIXTOP_NOCELL,
+          (errorparameter_t)cell->neighbor.addr_64b[6],
+          (errorparameter_t)cell->neighbor.addr_64b[7]
       );
 
       return FALSE;

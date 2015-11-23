@@ -50,7 +50,7 @@ does not use any backoff mechanism when a transmission fails.
 
 See MINBE for an explanation of backoff.
 */
-#define MAXBE                4
+#define MAXBE                5
 //6tisch minimal draft
 #define SCHEDULE_MINIMAL_6TISCH_ACTIVE_CELLS                    NUMSHAREDTXRX
 #define SCHEDULE_MINIMAL_6TISCH_EB_CELLS                          1
