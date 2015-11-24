@@ -396,7 +396,6 @@ void sixtop_removeCell(open_addr_t* neighbor){
     strncat(str, ", nbcells ", 150);
     openserial_ncat_uint32_t(str, (uint32_t)1, 150);
 
-    //delete only one cell in each remove request
     for(i=0; i<1; i++){
        strncat(str, ", slot ", 150);
        openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);

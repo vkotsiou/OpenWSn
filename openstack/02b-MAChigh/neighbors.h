@@ -14,16 +14,16 @@
 //=========================== define ==========================================
 
 //Objective function
-#define RPL_OFFabrice
-//#define   RPL_OF0
+//#define RPL_OFFabrice
+#define   RPL_OF0
 
 #define MAXNUMNEIGHBORS           15
 #define MAXPREFERENCE             2
 #define BADNEIGHBORMAXRSSI        -80 //dBm
 #define GOODNEIGHBORMINRSSI       -90 //dBm
 #define SWITCHSTABILITYTHRESHOLD  3
-//#define DEFAULTLINKCOST           15
-#define DEFAULTLINKCOST           1.2        //we should try another link if its link is > DEFAULTLINKCOST
+#define DEFAULTLINKCOST           15
+//#define DEFAULTLINKCOST           1.2        //we should try another link if its link is > DEFAULTLINKCOST
 
 
 #define MAXDAGRANK                0xffff

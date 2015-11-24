@@ -259,7 +259,7 @@ void otf_notif_remove_parent(open_addr_t *parent){
 
 #ifdef TRACK_ACTIVE
    char str[150];
-   sprintf(str, "remove cells to old parent)=");
+   sprintf(str, "remove cells to old parent ");
    openserial_ncat_uint8_t_hex(str, (uint8_t)parent->addr_64b[6], 150);
    openserial_ncat_uint8_t_hex(str, (uint8_t)parent->addr_64b[7], 150);
    openserial_printf(COMPONENT_OTF, str, strlen(str));
