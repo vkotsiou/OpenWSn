@@ -51,7 +51,7 @@ typedef enum {
 
 //#define SIX2SIX_TIMEOUT_MS 4000
 //4 slotframes
-#define SIX2SIX_TIMEOUT_MS ((uint32_t)4 * SUPERFRAME_LENGTH * TsSlotDuration * PORT_TICS_PER_MS / 1000)
+#define SIX2SIX_TIMEOUT_MS ((uint32_t)10 * SUPERFRAME_LENGTH * TsSlotDuration * PORT_TICS_PER_MS / 1000)
 
 //=========================== module variables ================================
 

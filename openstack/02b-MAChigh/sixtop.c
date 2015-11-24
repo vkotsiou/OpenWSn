@@ -743,13 +743,6 @@ void sixtop_setState(six2six_state_t state){
             TIME_MS,
             sixtop_timeout_timer_cb
       );
-
-      openserial_printError(
-            COMPONENT_SIXTOP,
-            ERR_GENERIC,
-            (errorparameter_t)state,
-            (errorparameter_t)SIX2SIX_TIMEOUT_MS
-      );
    }
 
    //otf callback when we come back to the idle state
