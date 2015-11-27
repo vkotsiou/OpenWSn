@@ -1622,7 +1622,6 @@ bool sixtop_candidateAddCellList(
    ){
    uint8_t i;
    uint8_t numCandCells;
-   char str[150];
    
    *type = 1;
    *frameID = SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE;
@@ -1636,33 +1635,17 @@ bool sixtop_candidateAddCellList(
    scheduleEntry_t *entry;
    uint8_t incomingCell_last = 0;
 
-   sprintf(str, "TEST SCHED: ");
-
    for(i=0;i<MAXACTIVESLOTS;i++)
 	   if(schedule_isSlotOffsetAvailable(i)==TRUE) {
 		   entry = schedule_getCell(i);
-		   if ((entry->type == CELLTYPE_RX) && (sixtop_track_equal(entry->track, track)) && (entry->slotOffset > incomingCell_last)){
+		   if ((entry->type == CELLTYPE_RX) && (sixtop_track_equal(entry->track, track)) && (entry->slotOffset > incomingCell_last))
 			   incomingCell_last = entry->slotOffset;
-
-		      strncat(str, ",  slot=", 150);
-		      openserial_ncat_uint32_t(str, (uint32_t)entry->slotOffset, 150);
-		   }
 	   }
    //start from this timeslot
-   if (incomingCell_last != 0){
+   if (incomingCell_last != 0)
       slotnb = incomingCell_last;
-
-      strncat(str, ", next=", 150);
-      openserial_ncat_uint32_t(str, (uint32_t)slotnb, 150);
-   }
-   else{
+   else
       slotnb = openrandom_get16b() % SUPERFRAME_LENGTH;
-
-      strncat(str, ", rand", 150);
-      openserial_ncat_uint32_t(str, (uint32_t)slotnb, 150);
-   }
-
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
 #endif
 
@@ -1673,7 +1656,7 @@ bool sixtop_candidateAddCellList(
 
    //add the list of possible cells in the linkrequest
    numCandCells=0;
-   sprintf(str, "SELECT SCHED: ");
+   //sprintf(str, "SELECT SCHED: ");
    for(i=0;i<MAXACTIVESLOTS;i++){
 
 	   slotnb = (slotnb + 1) % SUPERFRAME_LENGTH;
@@ -1689,21 +1672,12 @@ bool sixtop_candidateAddCellList(
 #else
 		   cellList[SCHEDULEIEMAXNUMCELLS-numCandCells].choffset    = 0;
 #endif
-
-         strncat(str, ", avail=", 150);
-         openserial_ncat_uint32_t(str, (uint32_t)slotnb, 150);
-
 		   //next cell to include in the linkreq
 		   if(numCandCells==SCHEDULEIEMAXNUMCELLS){
 			   break;
 		   }
 	   }
-	   else{
-	      strncat(str, ", busy=", 150);
-	      openserial_ncat_uint32_t(str, (uint32_t)slotnb, 150);
-	   }
    }
-   openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 
 
    //enough bandwidth?

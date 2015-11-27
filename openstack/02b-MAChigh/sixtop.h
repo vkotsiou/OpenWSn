@@ -45,7 +45,7 @@ typedef enum {
 
 
 #define SIXTOP_NBCELLS_INREQ     3     //nb cells in the 6top IE (request / reply)
-
+//#define SIXTOP_NBCELLS_INREQ     1        // to force the reservation 1 by 1
 
 //=========================== typedef =========================================
 

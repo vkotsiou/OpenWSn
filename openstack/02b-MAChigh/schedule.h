@@ -17,12 +17,12 @@
 
 The superframe repears over time and can be arbitrarly long.
 */
-#define SUPERFRAME_LENGTH    101 //should be 101
+#define SUPERFRAME_LENGTH    303 //should be 101
 
 #define NUMADVSLOTS          1
 #define NUMSHAREDTXRX        8
 #define NUMSERIALRX          3
-#define NUMDYNAMIC           70
+#define NUMDYNAMIC           200
 
 /**
 \brief Maximum number of active slots in a superframe.
