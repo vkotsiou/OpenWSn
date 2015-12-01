@@ -74,7 +74,8 @@ project:
     forcetopology  Force the topology to the one indicated in the
                    openstack/02a-MAClow/topology.c file.
     noadaptivesync Do not use adaptive synchronization.
-    
+    distribshared  Shared cells are not contiguous
+    tracks         Use tracks to reserve bandwidth for each application
     Common variables:
     verbose        Print each complete compile/link command.
                    0 (off), 1 (on)
@@ -126,6 +127,8 @@ command_line_options = {
     'forcetopology':    ['0','1'],
     'debug':            ['0','1'],
     'noadaptivesync':   ['0','1'],
+    'distribshared':    ['0','1'],
+    'tracks':           ['0','1'],
 }
 
 def validate_option(key, value, env):
@@ -253,6 +256,20 @@ command_line_vars.AddVariables(
         'noadaptivesync',                                  # key
         '',                                                # help
         command_line_options['noadaptivesync'][0],         # default
+        validate_option,                                   # validator
+        int,                                               # converter
+    ),
+    (
+        'distribshared',                                   # key
+        '',                                                # help
+        command_line_options['distribshared'][0],          # default
+        validate_option,                                   # validator
+        int,                                               # converter
+    ),
+    (
+        'tracks',                                          # key
+        '',                                                # help
+        command_line_options['tracks'][0],                 # default
         validate_option,                                   # validator
         int,                                               # converter
     ),

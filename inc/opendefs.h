@@ -31,9 +31,9 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 
 
 //Options
-#define SCHEDULE_SHAREDCELLS_DISTRIBUTED  //Shared cells are distributed in the slotframe
+//#define SCHEDULE_SHAREDCELLS_DISTRIBUTED  //Shared cells are distributed in the slotframe
 #define CHANNEL_RAND_DEDICATED_SLOTS      //random channel offset when assigning a new cell
-#define TRACK_ACTIVE                      // applications use tracks
+//#define TRACK_ACTIVE                      // applications use tracks
 
 
 

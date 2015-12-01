@@ -40,6 +40,10 @@ if env['forcetopology']==1:
     env.Append(CPPDEFINES    = 'FORCETOPOLOGY')
 if env['noadaptivesync']==1:
     env.Append(CPPDEFINES    = 'NOADAPTIVESYNC')
+if env['distribshared']==1:
+    env.Append(CPPDEFINES    = 'SCHEDULE_SHAREDCELLS_DISTRIBUTED')
+if env['tracks']==1:
+    env.Append(CPPDEFINES    = 'TRACK_ACTIVE')
 
 if   env['toolchain']=='mspgcc':
     
