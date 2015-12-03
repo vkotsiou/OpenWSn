@@ -14,27 +14,32 @@
 //=========================== define ==========================================
 
 //Objective function
-//#define RPL_OFFabrice
-#define   RPL_OF0
+#define RPL_OF0                  1
+#define RPL_OFFabrice            2
+#define RPL_MinHop               3
+#ifndef RPL_METRIC
+   #define RPL_METRIC            RPL_OF0     //default objective function / metric
+#endif
 
 #define MAXNUMNEIGHBORS           15
 #define MAXPREFERENCE             2
 #define BADNEIGHBORMAXRSSI        -80 //dBm
 #define GOODNEIGHBORMINRSSI       -90 //dBm
 #define SWITCHSTABILITYTHRESHOLD  3
-#define DEFAULTLINKCOST           15
-//#define DEFAULTLINKCOST           1.2        //we should try another link if its link is > DEFAULTLINKCOST
+//#define DEFAULTLINKCOST           15
+#define DEFAULTLINKCOST           1.5        //we should try another link if its cost is > DEFAULTLINKCOST (e.g. ETX preferred parent > 1.5)
 
 
 #define MAXDAGRANK                0xffff
 #define DEFAULTDAGRANK            MAXDAGRANK
 
-#ifdef RPL_OF0
-#define MINHOPRANKINCREASE        256  //default value in RPL and Minimal 6TiSCH draft
+
+#if RPL_METRIC == RPL_OF0
+   #define MINHOPRANKINCREASE        256  //default value in RPL and Minimal 6TiSCH draft
 #endif
 
-#ifdef RPL_OFFabrice
-#define MINHOPRANKINCREASE        64
+#if RPL_METRIC == RPL_OFFabrice
+   #define MINHOPRANKINCREASE        64
 #endif
 
 //=========================== typedef =========================================

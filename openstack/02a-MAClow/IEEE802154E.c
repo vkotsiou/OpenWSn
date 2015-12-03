@@ -127,6 +127,7 @@ void ieee154e_init() {
    radio_setEndFrameCb(ieee154e_endOfFrame);
    // have the radio start its timer
    radio_startTimer(TsSlotDuration);
+
 }
 
 //=========================== public ==========================================
@@ -613,12 +614,38 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       
       // declare synchronized
       changeIsSync(TRUE);
-      
+
       // log the info
       openserial_printInfo(COMPONENT_IEEE802154E,ERR_SYNCHRONIZED,
-                            (errorparameter_t)ieee154e_vars.slotOffset,
-                            (errorparameter_t)0);
-      
+            (errorparameter_t)ieee154e_vars.slotOffset,
+            (errorparameter_t)0);
+
+      //to print some parameters value to openvizualizer
+      char str[150];
+
+#ifdef TRACK_ACTIVE
+      sprintf(str, "TRACK=1");
+#else
+      sprintf(str, "TRACK=0");
+#endif
+      openserial_printf(COMPONENT_IEEE802154E, str, strlen(str));
+
+#ifdef SCHEDULE_SHAREDCELLS_DISTRIBUTED
+      sprintf(str, "DISTCELLS=1");
+#else
+      sprintf(str, "DISTCELLS=0");
+#endif
+      openserial_printf(COMPONENT_IEEE802154E, str, strlen(str));
+
+      sprintf(str, "RPLMETRIC=");
+      openserial_ncat_uint32_t(str, (uint32_t)RPL_METRIC, 150);
+      openserial_printf(COMPONENT_IEEE802154E, str, strlen(str));
+
+      sprintf(str, "SCHEDALGO=");
+      openserial_ncat_uint32_t(str, (uint32_t)SCHEDULING_ALGO, 150);
+      openserial_printf(COMPONENT_IEEE802154E, str, strlen(str));
+
+
       //packet received (serial line)
       openserial_statRx(ieee154e_vars.dataReceived);
 
@@ -1379,13 +1406,7 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
       
       // inform schedule of successful transmission
       schedule_indicateTx(&ieee154e_vars.asn,TRUE);
-/*      neighbors_indicateTx(
-            &(ieee154e_vars.dataToSend->l2_nextORpreviousHop),
-            ieee154e_vars.dataToSend->l2_numTxAttempts,
-            TRUE,
-            &ieee154e_vars.dataToSend->l2_asn
-            );
-  */
+
       // inform upper layer
       notif_sendDone(ieee154e_vars.dataToSend,E_SUCCESS);
       ieee154e_vars.dataToSend = NULL;
@@ -1415,23 +1436,6 @@ port_INLINE void activity_ri2() {
    // calculate the frequency to transmit on
    ieee154e_vars.freq = calculateFrequency(schedule_getChannelOffset(), schedule_getType());
    
-   //debug
-   /*if (schedule_getType() == CELLTYPE_RX){
-            openserial_printError(
-                  COMPONENT_IEEE802154E,
-                 ERR_GENERIC,
-                 (errorparameter_t)ieee154e_vars.freq,
-                 (errorparameter_t)11+(ieee154e_vars.asnOffset+schedule_getChannelOffset())%16
-              );
-            openserial_printError(
-                          COMPONENT_IEEE802154E,
-                          ERR_GENERIC,
-                          (errorparameter_t)schedule_getChannelOffset(),
-                          (errorparameter_t)ieee154e_vars.asnOffset
-                       );
-
-   }*/
-
    // configure the radio for that frequency
    radio_setFrequency(ieee154e_vars.freq);
    

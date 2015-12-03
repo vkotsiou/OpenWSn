@@ -155,6 +155,7 @@ void sixtop_init() {
       TIME_MS,
       sixtop_maintenance_timer_cb
    );
+
 }
 
 void sixtop_setKaPeriod(uint16_t kaPeriod) {

@@ -523,28 +523,34 @@ uint32_t neighbors_get_linkcost(uint8_t i){
 
    else {
 
-   //6TiSCH minimal draft using OF0 for rank computation
-   #ifdef RPL_OF0
+      //6TiSCH minimal draft using OF0 for rank computation
+      #if RPL_METRIC == RPL_OF0
       rankIncrease = (uint16_t)
             (
                   ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
                   MINHOPRANKINCREASE
-            );
-   #endif
+                  );
+      #endif
 
-              //my own OF to give a benefit to smaller ETX values (ETX^2)
-   #ifdef RPL_OFFabrice
+      //my own OF to give a benefit to smaller ETX values (ETX^2)
+      #if RPL_METRIC == RPL_OFFabrice
       rankIncrease = (uint16_t)
             (
                   ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
                   ((float)neighbors_vars.neighbors[i].numTx + 1)/((float)neighbors_vars.neighbors[i].numTxACK + 1)*
                   MINHOPRANKINCREASE
-            );
-   #endif
+                  );
+      #endif
+
+      //my own OF to give a benefit to smaller ETX values (ETX^2)
+      #if RPL_METRIC == RPL_MinHop
+         rankIncrease = MINHOPRANKINCREASE;
+      #endif
    }
 
    return(rankIncrease);
 }
+
 
 
 //===== managing routing info
