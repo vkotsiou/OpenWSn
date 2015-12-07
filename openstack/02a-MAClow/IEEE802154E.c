@@ -645,6 +645,9 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       openserial_ncat_uint32_t(str, (uint32_t)SCHEDULING_ALGO, 150);
       openserial_printf(COMPONENT_IEEE802154E, str, strlen(str));
 
+      sprintf(str, "CEX_PERIOD=");
+      openserial_ncat_uint32_t(str, (uint32_t)CEXAMPLE_PERIOD, 150);
+      openserial_printf(COMPONENT_IEEE802154E, str, strlen(str));
 
       //packet received (serial line)
       openserial_statRx(ieee154e_vars.dataReceived);

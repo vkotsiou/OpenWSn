@@ -302,6 +302,8 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
       strncat(str, ", slot ", 150);
       openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);
    }
+   strncat(str, ", timeout ", 150);
+   openserial_ncat_uint32_t(str, (uint32_t)SIX2SIX_TIMEOUT_MS, 150);
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
 

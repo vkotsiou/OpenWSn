@@ -17,9 +17,10 @@
 #define RPL_OF0                  1
 #define RPL_OFFabrice            2
 #define RPL_MinHop               3
-#ifndef RPL_METRIC
-   #define RPL_METRIC            RPL_OF0     //default objective function / metric
-#endif
+#define RPL_RSSI                 4
+//#ifndef RPL_METRIC
+//   #define RPL_METRIC            RPL_OF0     //default objective function / metric
+//#endif
 
 #define MAXNUMNEIGHBORS           15
 #define MAXPREFERENCE             2
@@ -36,11 +37,13 @@
 
 #if RPL_METRIC == RPL_OF0
    #define MINHOPRANKINCREASE        256  //default value in RPL and Minimal 6TiSCH draft
+#elif RPL_METRIC == RPL_OFFabrice
+   #define MINHOPRANKINCREASE        64
+#else
+   #define MINHOPRANKINCREASE        256  //default value in RPL and Minimal 6TiSCH draft
 #endif
 
-#if RPL_METRIC == RPL_OFFabrice
-   #define MINHOPRANKINCREASE        64
-#endif
+
 
 //=========================== typedef =========================================
 

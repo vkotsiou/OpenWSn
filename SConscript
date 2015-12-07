@@ -44,6 +44,13 @@ if env['distribshared']==1:
     env.Append(CPPDEFINES    = 'SCHEDULE_SHAREDCELLS_DISTRIBUTED')
 if env['tracks']==1:
     env.Append(CPPDEFINES    = 'TRACK_ACTIVE')
+if env['rplmetric']>=1:
+    env.Append(CPPDEFINES    = {'RPL_METRIC':env['rplmetric']})
+if env['cex_period']>=1:
+    env.Append(CPPDEFINES    = {'CEXAMPLE_PERIOD':env['cex_period']})
+if env['schedule_algo']>=1:
+    env.Append(CPPDEFINES    = {'SCHEDULING_ALGO':env['schedule_algo']})
+
 
 if   env['toolchain']=='mspgcc':
     

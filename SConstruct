@@ -76,6 +76,10 @@ project:
     noadaptivesync Do not use adaptive synchronization.
     distribshared  Shared cells are not contiguous
     tracks         Use tracks to reserve bandwidth for each application
+    rplmetric      Metric to use with RPL (1=ETX,2=Custom,3=MinHop,4=RSSI)
+    cex_period     Period for cexample to generate data packets
+    schedule_algo  Algorithm to schedule the cells for 6top (1= random,
+                   2=random_contiguous)
     Common variables:
     verbose        Print each complete compile/link command.
                    0 (off), 1 (on)
@@ -129,6 +133,9 @@ command_line_options = {
     'noadaptivesync':   ['0','1'],
     'distribshared':    ['0','1'],
     'tracks':           ['0','1'],
+    'rplmetric':        ['1','2','3','4'],
+    'cex_period':       ['5000'],		#by default, 5seconds
+    'schedule_algo':    ['1','2'],		#by default, random
 }
 
 def validate_option(key, value, env):
@@ -270,6 +277,27 @@ command_line_vars.AddVariables(
         'tracks',                                          # key
         '',                                                # help
         command_line_options['tracks'][0],                 # default
+        validate_option,                                   # validator
+        int,                                               # converter
+    ),
+    (
+        'rplmetric',                                       # key
+        '',                                                # help
+        command_line_options['rplmetric'][0],              # default
+        validate_option,                                   # validator
+        int,                                               # converter
+    ),
+    (
+        'cex_period',                                      # key
+        '',                                                # help
+        command_line_options['cex_period'][0],             # default
+        None,                                              # validator
+        int,                                               # converter
+    ),
+    (
+        'schedule_algo',                                   # key
+        '',                                                # help
+        command_line_options['schedule_algo'][0],          # default
         validate_option,                                   # validator
         int,                                               # converter
     ),

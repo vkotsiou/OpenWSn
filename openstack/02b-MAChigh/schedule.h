@@ -15,14 +15,14 @@
 /**
 \brief The length of the superframe, in slots.
 
-The superframe repears over time and can be arbitrarly long.
+The superframe repeats over time and can be arbitrarily long.
 */
-#define SUPERFRAME_LENGTH    303 //should be 101
+#define SUPERFRAME_LENGTH    101 //should be 101
 
 #define NUMADVSLOTS          1
-#define NUMSHAREDTXRX        8
+#define NUMSHAREDTXRX        12
 #define NUMSERIALRX          3
-#define NUMDYNAMIC           200
+#define NUMDYNAMIC           85
 
 /**
 \brief Maximum number of active slots in a superframe.
@@ -43,17 +43,17 @@ Backoff is used only in slots that are marked as shared in the schedule. When
 not shared, the mote assumes that schedule is collision-free, and therefore
 does not use any backoff mechanism when a transmission fails.
 */
-#define MINBE                3
+#define MINBE                2
 
 /**
 \brief Maximum backoff exponent.
 
 See MINBE for an explanation of backoff.
 */
-#define MAXBE                5
+#define MAXBE                6
 //6tisch minimal draft
 #define SCHEDULE_MINIMAL_6TISCH_ACTIVE_CELLS                    NUMSHAREDTXRX
-#define SCHEDULE_MINIMAL_6TISCH_EB_CELLS                          1
+#define SCHEDULE_MINIMAL_6TISCH_EB_CELLS                        NUMADVSLOTS
 #define SCHEDULE_MINIMAL_6TISCH_SLOTFRAME_SIZE                  SUPERFRAME_LENGTH
 #define SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE          1 //id of slotframe
 #define SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_NUMBER          1 //1 slotframe by default.

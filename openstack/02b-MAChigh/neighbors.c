@@ -546,6 +546,16 @@ uint32_t neighbors_get_linkcost(uint8_t i){
       #if RPL_METRIC == RPL_MinHop
          rankIncrease = MINHOPRANKINCREASE;
       #endif
+
+
+      //I use the RSSI value if it is inferior than a threshold
+      #if RPL_METRIC == RPL_RSSI
+         if (neighbors_vars.neighbors[i].rssi >= GOODNEIGHBORMINRSSI)
+            rankIncrease = MINHOPRANKINCREASE;
+         else
+            rankIncrease = (GOODNEIGHBORMINRSSI - neighbors_vars.neighbors[i].rssi) / ((uint8_t)(-1) - GOODNEIGHBORMINRSSI)  * MINHOPRANKINCREASE;
+
+      #endif
    }
 
    return(rankIncrease);

@@ -12,13 +12,16 @@
 #include "opentimers.h"
 #include "opendefs.h"
 #include "IEEE802154.h"
+#include "IEEE802154E.h"
+#include "schedule.h"
 
 //=========================== define ==========================================
 
 #define QUEUELENGTH           15
 #define QUEUELENGTH_RESERVED  4     //DAO + DIO + 2 * SIXTOP
-#define QUEUE_TIMEOUT_DEFAULT (uint16_t) (3 * 15 * SUPERFRAME_LENGTH)     // 3 slotframes
+//#define QUEUE_TIMEOUT_DEFAULT (uint16_t) (3 * 15 * SUPERFRAME_LENGTH)     // 3 slotframes
 
+#define QUEUE_TIMEOUT_DEFAULT ((uint32_t)(1 + MAXBE / NUMSHAREDTXRX) * TXRETRIES * 3 * SUPERFRAME_LENGTH * TsSlotDuration * PORT_TICS_PER_MS / 1000)
 
 
 

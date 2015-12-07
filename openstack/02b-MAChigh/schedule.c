@@ -50,7 +50,7 @@ void schedule_init() {
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
    for (i=0;i<NUMADVSLOTS;i++) {
       schedule_addActiveSlot(
-         running_slotOffset,      // slot offset
+         running_slotOffset + i * SUPERFRAME_LENGTH / NUMADVSLOTS,      // slot offset
          CELLTYPE_ADV,            // type of slot
          FALSE,                   // shared?
          0,                       // channel offset

@@ -25,12 +25,9 @@ static const uint8_t infoStackName[] = "OpenWSN ";
 
 
 // ALGOS and SCHEDULING
-#define SCHEDULING_FIRST               3     // allocates the first cell (NOT implemented)
+#define SCHEDULING_RANDOM              1     // a random slot nb is assigned when OTF asks for a cell    //default behavior
 #define SCHEDULING_RANDOM_CONTIGUOUS   2     // tries to reserve contiguous cells
-#define SCHEDULING_RANDOM              1     // a random slot nb is assigned when OTF asks for a cell
-#ifndef SCHEDULING_ALGO
-   #define SCHEDULING_ALGO                SCHEDULING_RANDOM_CONTIGUOUS //default algo
-#endif
+#define SCHEDULING_FIRST               3     // allocates the first cell (NOT implemented)
 
 
 //Options
