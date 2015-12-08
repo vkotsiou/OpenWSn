@@ -20,10 +20,9 @@ The superframe repeats over time and can be arbitrarily long.
 #define SUPERFRAME_LENGTH    101 //should be 101
 
 #define NUMADVSLOTS          1
-#define NUMSHAREDTXRX        12
+#define NUMSHAREDTXRX        10
 #define NUMSERIALRX          3
-#define NUMDYNAMIC           85
-
+#define NUMDYNAMIC           80
 /**
 \brief Maximum number of active slots in a superframe.
 

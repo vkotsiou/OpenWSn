@@ -58,9 +58,7 @@ void schedule_init() {
          track       		       //for best effort track
       );
       running_slotOffset++;
-   } 
-   
-
+   }
 
    // shared TXRX anycast slot(s)
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
