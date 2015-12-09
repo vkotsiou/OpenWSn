@@ -303,19 +303,11 @@ void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells, track_t track){
       openserial_ncat_uint32_t(str, (uint32_t)cellList[i].tsNum, 150);
    }
    strncat(str, ", timeout ", 150);
-   openserial_ncat_uint32_t(str, (uint32_t)SIX2SIX_TIMEOUT_MS, 150);
+   openserial_ncat_uint32_t(str, (uint32_t)sixtop_vars.timeout_sixtop_value, 150);
    openserial_printf(COMPONENT_SIXTOP, str, strlen(str));
 #endif
 
-/*
-   // arm timeout
-   opentimers_setPeriod(
-      sixtop_vars.timeoutTimerId,
-      TIME_MS,
-      SIX2SIX_TIMEOUT_MS
-   );
-   opentimers_restart(sixtop_vars.timeoutTimerId);
-*/
+
 }
 
 
@@ -738,9 +730,13 @@ void sixtop_setState(six2six_state_t state){
       if (!previously_idle)
       opentimers_stop(sixtop_vars.timeoutTimerId);
 
-      //and starts a new one
+      //and starts a new one (randomized to avoid all the nodes regenerate one request simultaneously)
+      sixtop_vars.timeout_sixtop_value = openrandom_get16b();    //65536 at most
+      while (sixtop_vars.timeout_sixtop_value > SIX2SIX_TIMEOUT_MS * 1.5){
+         sixtop_vars.timeout_sixtop_value -= SIX2SIX_TIMEOUT_MS / 2;
+      }
       sixtop_vars.timeoutTimerId     = opentimers_start(
-            SIX2SIX_TIMEOUT_MS,
+            sixtop_vars.timeout_sixtop_value,
             TIMER_ONESHOT,
             TIME_MS,
             sixtop_timeout_timer_cb

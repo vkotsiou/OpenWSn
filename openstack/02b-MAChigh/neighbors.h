@@ -28,7 +28,7 @@
 #define GOODNEIGHBORMINRSSI       -90 //dBm
 #define SWITCHSTABILITYTHRESHOLD  3
 //#define DEFAULTLINKCOST           15
-#define DEFAULTLINKCOST           1.5        //we should try another link if its cost is > DEFAULTLINKCOST (e.g. ETX preferred parent > 1.5)
+#define DEFAULTLINKCOST           2        //we should try another link if its cost is > DEFAULTLINKCOST (e.g. ETX preferred parent > X)
 
 
 #define MAXDAGRANK                0xffff

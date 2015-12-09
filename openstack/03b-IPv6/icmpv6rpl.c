@@ -337,6 +337,7 @@ void icmpv6rpl_timer_DIO_task() {
        // pick a new pseudo-random periodDIO
         uint16_t   jitter = openrandom_get16b();
         uint16_t   bool = openrandom_get16b() & 0x0001;
+
         while(jitter > TIMER_DIO_TIMEOUT * TIMER_DIO_JITTER)
            jitter -= TIMER_DIO_TIMEOUT * TIMER_DIO_JITTER;
         if (bool > 0)

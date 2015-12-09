@@ -51,7 +51,7 @@ typedef enum {
 
 //#define SIX2SIX_TIMEOUT_MS 4000
 //4 slotframes
-#define SIX2SIX_TIMEOUT_MS ((uint32_t)(1 + MAXBE / NUMSHAREDTXRX) * TXRETRIES * 3 * SUPERFRAME_LENGTH * TsSlotDuration * PORT_TICS_PER_MS / 1000)
+#define SIX2SIX_TIMEOUT_MS ((uint32_t)(1 + MAXBE / NUMSHAREDTXRX) * TXRETRIES * SUPERFRAME_LENGTH * TsSlotDuration * PORT_TICS_PER_MS / 1000)
 
 //=========================== module variables ================================
 
@@ -63,6 +63,7 @@ typedef struct {
    uint8_t              mgtTaskCounter;          // counter to determine what management task to do
    opentimer_id_t       maintenanceTimerId;
    opentimer_id_t       timeoutTimerId;          // TimeOut timer id
+   uint16_t             timeout_sixtop_value;    // for debug
    uint16_t             kaPeriod;                // period of sending KA
    six2six_state_t      six2six_state;
    uint8_t              commandID;
