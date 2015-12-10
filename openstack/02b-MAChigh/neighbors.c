@@ -459,7 +459,7 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
    if (isNeighbor(&(msg->l2_nextORpreviousHop))==TRUE) {
       for (i=0;i<MAXNUMNEIGHBORS;i++) {
          if (isThisRowMatching(&(msg->l2_nextORpreviousHop),i)) {
-            /*
+
              if (
                   neighbors_vars.dio->rank > neighbors_vars.neighbors[i].DAGrank &&
                   neighbors_vars.dio->rank - neighbors_vars.neighbors[i].DAGrank >(DEFAULTLINKCOST*2*MINHOPRANKINCREASE)
@@ -470,9 +470,9 @@ void neighbors_indicateRxDIO(OpenQueueEntry_t* msg) {
                                (errorparameter_t)neighbors_vars.dio->rank,
                                (errorparameter_t)neighbors_vars.neighbors[i].DAGrank);
             } else {
-            */
+
                neighbors_vars.neighbors[i].DAGrank = neighbors_vars.dio->rank;
-            //}
+            }
             break;
          }
       }
@@ -555,7 +555,7 @@ uint32_t neighbors_get_linkcost(uint8_t i){
          if (neighbors_vars.neighbors[i].rssi >= GOODNEIGHBORMINRSSI)
             rankIncrease = MINHOPRANKINCREASE;
          else
-            rankIncrease = (GOODNEIGHBORMINRSSI - neighbors_vars.neighbors[i].rssi) / ((uint8_t)(-1) - GOODNEIGHBORMINRSSI)  * MINHOPRANKINCREASE;
+            rankIncrease = (GOODNEIGHBORMINRSSI - neighbors_vars.neighbors[i].rssi)  * MINHOPRANKINCREASE;  //MINHOPRANKINCREASE per dB > BAD
 
       #endif
    }
