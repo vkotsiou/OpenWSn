@@ -48,8 +48,8 @@ if env['rplmetric']>=1:
     env.Append(CPPDEFINES    = {'RPL_METRIC':env['rplmetric']})
 if env['cex_period']>=1:
     env.Append(CPPDEFINES    = {'CEXAMPLE_PERIOD':env['cex_period']})
-if env['schedule_algo']>=1:
-    env.Append(CPPDEFINES    = {'SCHEDULING_ALGO':env['schedule_algo']})
+if env['schedalgo']>=1:
+    env.Append(CPPDEFINES    = {'SCHEDULING_ALGO':env['schedalgo']})
 
 
 if   env['toolchain']=='mspgcc':

@@ -18,9 +18,6 @@
 #define RPL_OFFabrice            2
 #define RPL_MinHop               3
 #define RPL_RSSI                 4
-//#ifndef RPL_METRIC
-//   #define RPL_METRIC            RPL_OF0     //default objective function / metric
-//#endif
 
 #define MAXNUMNEIGHBORS           15
 #define MAXPREFERENCE             2

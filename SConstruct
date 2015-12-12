@@ -78,7 +78,7 @@ project:
     tracks         Use tracks to reserve bandwidth for each application
     rplmetric      Metric to use with RPL (1=ETX,2=Custom,3=MinHop,4=RSSI)
     cex_period     Period for cexample to generate data packets
-    schedule_algo  Algorithm to schedule the cells for 6top (1= random,
+    schedalgo      Algorithm to schedule the cells for 6top (1= random,
                    2=random_contiguous)
     Common variables:
     verbose        Print each complete compile/link command.
@@ -135,7 +135,7 @@ command_line_options = {
     'tracks':           ['0','1'],
     'rplmetric':        ['1','2','3','4'],
     'cex_period':       ['5000'],		#by default, 5seconds
-    'schedule_algo':    ['1','2'],		#by default, random
+    'schedalgo':        ['1','2'],		#by default, random
 }
 
 def validate_option(key, value, env):
@@ -295,9 +295,9 @@ command_line_vars.AddVariables(
         int,                                               # converter
     ),
     (
-        'schedule_algo',                                   # key
+        'schedalgo',                                       # key
         '',                                                # help
-        command_line_options['schedule_algo'][0],          # default
+        command_line_options['schedalgo'][0],              # default
         validate_option,                                   # validator
         int,                                               # converter
     ),
