@@ -76,7 +76,7 @@ void cexample_init() {
 
    //starts to generate packets when I am synchronized
    uint64_t  next = openrandom_get16b();
-   while (next > 5 * CEXAMPLE_PERIOD)
+   while (next > 2 * CEXAMPLE_PERIOD)
       next -= CEXAMPLE_PERIOD;
 
    cexample_vars.timerId    = opentimers_start(
@@ -117,6 +117,12 @@ void cexample_timer_start(void){
        return;
    }
 
+   cexample_vars.timerId    = opentimers_start(
+         CEXAMPLE_PERIOD,
+         TIMER_PERIODIC,TIME_MS,
+         cexample_timer_cb);
+
+   /*
    //next verification between CEXAMPLE_PERIOD and 2 * CEXAMPLE_PERIOD
    uint64_t  next = openrandom_get16b();
    while (next > 5 * CEXAMPLE_PERIOD)
@@ -135,6 +141,7 @@ void cexample_timer_start(void){
             TIMER_PERIODIC,TIME_MS,
             cexample_timer_cb);
    }
+   */
 }
 
 //timer fired, but we don't want to execute task in ISR mode
@@ -165,7 +172,9 @@ void cexample_task_cb() {
    openserial_statDataGen(cexample_vars.seqnum, &(cexample_vars.track), idmanager_getMyID(ADDR_64B), &dest_64b);
 
    // don't run if not synch
-   if (ieee154e_isSynch() == FALSE) return;
+   if (ieee154e_isSynch() == FALSE)
+      return;
+
    
    // create a CoAP packet
    pkt = openqueue_getFreePacketBuffer_with_timeout(COMPONENT_CEXAMPLE, cexample_timeout);
